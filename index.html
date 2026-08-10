@@ -1,0 +1,425 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>AMON AI</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #080808;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid #222;
+      background: #0b0b0b;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #168cff, #19d36b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #19d36b;
+    }
+
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 30px 16px 120px;
+    }
+
+    .welcome {
+      max-width: 720px;
+      margin: 12vh auto 0;
+      text-align: center;
+    }
+
+    .welcome h1 {
+      font-size: 38px;
+      margin-bottom: 12px;
+    }
+
+    .welcome p {
+      color: #999;
+      line-height: 1.8;
+    }
+
+    .message {
+      max-width: 720px;
+      margin: 20px auto;
+      padding: 16px;
+      border-radius: 16px;
+      background: #111;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .user-message {
+      border-right: 3px solid #168cff;
+    }
+
+    .amon-message {
+      border-right: 3px solid #19d36b;
+    }
+
+    .composer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 14px;
+      background: linear-gradient(transparent, #080808 30%);
+    }
+
+    .input-box {
+      max-width: 720px;
+      margin: auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: #151515;
+      border: 1px solid #292929;
+      border-radius: 18px;
+      padding: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #fff;
+      font-size: 16px;
+      min-height: 44px;
+      max-height: 140px;
+      padding: 10px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .send {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: #168cff;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .send:hover {
+      opacity: .85;
+    }
+
+    .send:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 600px) {
+      .welcome h1 {
+        font-size: 31px;
+      }
+
+      .chat {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <header>
+      <div class="logo">
+        <div class="logo-mark">A</div>
+        <span>AMON AI</span>
+      </div>
+
+      <div class="status" id="status">
+        ● النظام جاهز
+      </div>
+    </header>
+
+    <main class="chat" id="chat">
+
+      <div class="welcome" id="welcome">
+        <h1>مرحبًا بك في AMON</h1>
+
+        <p>
+          العقل المركزي لمنصة PIXEL للذكاء الاصطناعي.
+          <br>
+          اكتب رسالتك لبدء الاتصال بـ AMON.
+        </p>
+      </div>
+
+    </main>
+
+    <div class="composer">
+
+      <div class="input-box">
+
+        <textarea
+          id="input"
+          placeholder="اكتب رسالتك إلى AMON..."
+          rows="1"></textarea>
+
+        <button
+          id="sendButton"
+          class="send"
+          onclick="sendMessage()">
+          ➤
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    // رابط Cloudflare Worker الخاص بـ AMON
+    const WORKER_URL =
+      "https://amon-ai.vo133vo321.workers.dev";
+
+    const input =
+      document.getElementById("input");
+
+    const chat =
+      document.getElementById("chat");
+
+    const welcome =
+      document.getElementById("welcome");
+
+    const sendButton =
+      document.getElementById("sendButton");
+
+    const status =
+      document.getElementById("status");
+
+
+    async function sendMessage() {
+
+      const text = input.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+
+      // إخفاء شاشة الترحيب
+      if (welcome) {
+        welcome.style.display = "none";
+      }
+
+
+      // إظهار رسالة المستخدم
+      const userMessage =
+        document.createElement("div");
+
+      userMessage.className =
+        "message user-message";
+
+      userMessage.textContent =
+        text;
+
+      chat.appendChild(userMessage);
+
+
+      // تنظيف مربع الكتابة
+      input.value = "";
+
+
+      // تعطيل زر الإرسال أثناء الاتصال
+      sendButton.disabled = true;
+
+      status.textContent =
+        "● جاري الاتصال بـ AMON...";
+
+
+      // إنشاء رسالة AMON
+      const amonMessage =
+        document.createElement("div");
+
+      amonMessage.className =
+        "message amon-message";
+
+      amonMessage.textContent =
+        "AMON يتصل بالعقل المركزي...";
+
+      chat.appendChild(amonMessage);
+
+
+      chat.scrollTop =
+        chat.scrollHeight;
+
+
+      try {
+
+        const response =
+          await fetch(WORKER_URL, {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              message: text
+            })
+
+          });
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Worker HTTP " +
+            response.status
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        // عرض JSON القادم من Worker
+        if (data.message) {
+
+          amonMessage.textContent =
+            data.message;
+
+        } else if (data.response) {
+
+          amonMessage.textContent =
+            data.response;
+
+        } else if (data.reply) {
+
+          amonMessage.textContent =
+            data.reply;
+
+        } else {
+
+          amonMessage.textContent =
+            JSON.stringify(
+              data,
+              null,
+              2
+            );
+
+        }
+
+
+        status.textContent =
+          "● AMON متصل";
+
+
+      } catch (error) {
+
+        console.error(
+          "AMON Worker Error:",
+          error
+        );
+
+
+        amonMessage.textContent =
+          "حدث خطأ أثناء الاتصال بـ AMON.\n\n" +
+          error.message;
+
+
+        status.textContent =
+          "● تعذر الاتصال";
+
+
+      } finally {
+
+        sendButton.disabled =
+          false;
+
+        chat.scrollTop =
+          chat.scrollHeight;
+
+      }
+
+    }
+
+
+    // إرسال الرسالة بالضغط على Enter
+    input.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
+
+          event.preventDefault();
+
+          sendMessage();
+
+        }
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>
+```
