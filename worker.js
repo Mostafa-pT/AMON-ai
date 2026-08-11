@@ -1,16 +1,14 @@
-ll```javascript
+```javascript
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // CORS
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type"
     };
 
-    // التعامل مع طلبات CORS المبدئية
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -18,7 +16,6 @@ export default {
       });
     }
 
-    // فحص حالة AMON
     if (url.pathname === "/health") {
       return Response.json(
         {
@@ -30,7 +27,6 @@ export default {
       );
     }
 
-    // معلومات AMON
     if (url.pathname === "/api/amon" && request.method === "GET") {
       return Response.json(
         {
@@ -43,7 +39,6 @@ export default {
       );
     }
 
-    // استقبال رسالة المستخدم من index.html
     if (url.pathname === "/" && request.method === "POST") {
       let body;
 
@@ -80,11 +75,9 @@ export default {
         );
       }
 
-      // رد AMON المؤقت
-      // سيتم ربط AMON بمحرك ذكاء اصطناعي فعلي لاحقًا.
       const amonReply =
-        `تم استلام رسالتك بنجاح. أنا AMON AI، ` +
-        `والرسالة التي أرسلتها هي: ${userMessage}`;
+        "تم استلام رسالتك بنجاح. أنا AMON AI. رسالتك هي: " +
+        userMessage;
 
       return Response.json(
         {
@@ -102,7 +95,6 @@ export default {
       );
     }
 
-    // اختبار كلمة مرور المالك
     if (url.pathname === "/api/owner" && request.method === "POST") {
       const body = await request.json().catch(() => ({}));
 
@@ -144,7 +136,6 @@ export default {
       );
     }
 
-    // الرد الافتراضي
     return Response.json(
       {
         name: "AMON AI",
@@ -159,4 +150,3 @@ export default {
   }
 };
 ```
-l
