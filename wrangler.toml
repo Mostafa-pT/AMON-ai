@@ -1,3 +1,6 @@
 name = "amon-ai"
 main = "worker.js"
 compatibility_date = "2026-08-08"
+
+[ai]
+binding = "AI"
