@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -5,51 +6,61 @@
 
   <meta
     name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover"
+    content="width=device-width,
+             initial-scale=1,
+             maximum-scale=1,
+             viewport-fit=cover"
   >
 
   <meta name="theme-color" content="#07090d">
 
-  <meta
-    name="description"
-    content="AMON AI - العقل المركزي لمنصة الذكاء"
-  >
-
   <title>AMON AI</title>
 
   <style>
+
+    /* =========================================================
+       AMON AI
+       MOBILE FIRST UI
+       ========================================================= */
+
     :root {
-      --bg:#07090d;
-      --panel:#0d1118;
-      --panel2:#121821;
-      --panel3:#18212c;
-      --border:#26303d;
+      --bg: #07090d;
+      --panel: #0d1118;
+      --panel-2: #121821;
+      --border: #27313d;
 
-      --text:#f5f7fa;
-      --muted:#8995a5;
+      --text: #f5f7fa;
+      --muted: #8d99a8;
 
-      --blue:#168cff;
-      --green:#19d36b;
-      --red:#ff5967;
+      --blue: #168cff;
+      --green: #19d36b;
+      --red: #ff5967;
 
-      --radius:16px;
-      --shadow:0 15px 50px rgba(0,0,0,.35);
+      --header-height: 60px;
     }
+
+
+    /* =========================================================
+       RESET
+       ========================================================= */
 
     * {
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      -webkit-tap-highlight-color:transparent;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
+
 
     html,
     body {
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      background:var(--bg);
-      color:var(--text);
+      width: 100%;
+      height: 100%;
+      margin: 0;
+
+      overflow: hidden;
+
+      background: var(--bg);
+      color: var(--text);
+
       font-family:
         Arial,
         "Segoe UI",
@@ -57,85 +68,92 @@
         sans-serif;
     }
 
-    button,
-    textarea,
-    select {
-      font:inherit;
+
+    body {
+      min-height: 100dvh;
     }
+
+
+    button,
+    textarea {
+      font: inherit;
+    }
+
 
     button {
-      cursor:pointer;
-      border:0;
+      border: 0;
+      outline: none;
+      cursor: pointer;
     }
 
-    button:disabled {
-      opacity:.45;
-      cursor:not-allowed;
-    }
 
     .hidden {
-      display:none!important;
+      display: none !important;
     }
 
-    /* =========================
-       APP
-    ========================= */
+
+    /* =========================================================
+       MAIN APP
+       ========================================================= */
 
     .app {
-      width:100%;
-      height:100dvh;
-      display:flex;
-      overflow:hidden;
+      width: 100%;
+      height: 100dvh;
 
-      background:
-        radial-gradient(
-          circle at 50% -20%,
-          rgba(22,140,255,.10),
-          transparent 45%
-        ),
-        var(--bg);
+      display: flex;
+
+      overflow: hidden;
     }
 
-    /* =========================
+
+    /* =========================================================
        SIDEBAR
-    ========================= */
+       ========================================================= */
 
     .sidebar {
-      width:280px;
-      height:100%;
+      width: 280px;
+      height: 100%;
 
-      flex-shrink:0;
+      flex-shrink: 0;
 
-      display:flex;
-      flex-direction:column;
+      display: flex;
+      flex-direction: column;
 
-      background:rgba(13,17,24,.98);
+      background: var(--panel);
 
-      border-left:1px solid var(--border);
+      border-left: 1px solid var(--border);
 
-      z-index:80;
-
-      transition:transform .25s ease;
+      z-index: 100;
     }
+
 
     .sidebar-top {
-      padding:16px;
-      border-bottom:1px solid var(--border);
+      padding: 15px;
+
+      border-bottom:
+        1px solid var(--border);
     }
+
 
     .brand {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-bottom:16px;
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      margin-bottom: 15px;
     }
 
-    .brand-mark,
-    .amon-avatar,
-    .welcome-logo {
-      display:flex;
-      align-items:center;
-      justify-content:center;
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 12px;
 
       background:
         linear-gradient(
@@ -144,1119 +162,1221 @@
           var(--green)
         );
 
-      color:#00120a;
-      font-weight:900;
+      color: #00150b;
+
+      font-size: 22px;
+      font-weight: 900;
     }
 
-    .brand-mark {
-      width:42px;
-      height:42px;
-      border-radius:12px;
+
+    .brand-title {
+      font-weight: 900;
+      font-size: 15px;
     }
 
-    .brand-text strong {
-      display:block;
-      font-size:17px;
+
+    .brand-subtitle {
+      margin-top: 3px;
+
+      color: var(--muted);
+
+      font-size: 10px;
     }
 
-    .brand-text span {
-      display:block;
-      margin-top:3px;
-      color:var(--muted);
-      font-size:11px;
-    }
 
     .new-chat {
-      width:100%;
-      padding:12px;
+      width: 100%;
 
-      border:1px solid var(--border);
-      border-radius:12px;
+      padding: 12px;
 
-      background:var(--panel2);
-      color:var(--text);
+      border-radius: 12px;
+
+      background: var(--panel-2);
+
+      border:
+        1px solid var(--border);
+
+      color: var(--text);
     }
 
-    .new-chat:hover {
-      border-color:var(--blue);
+
+    .new-chat:active {
+      transform: scale(.98);
     }
+
 
     .sidebar-title {
-      padding:16px 16px 8px;
-      color:var(--muted);
-      font-size:12px;
+      padding:
+        14px 14px 7px;
+
+      color: var(--muted);
+
+      font-size: 12px;
     }
+
 
     .history {
-      flex:1;
-      overflow-y:auto;
-      padding:0 10px 10px;
+      flex: 1;
+
+      overflow-y: auto;
+
+      padding: 8px;
     }
+
+
+    .history-empty {
+      padding: 12px;
+
+      color: var(--muted);
+
+      font-size: 11px;
+    }
+
 
     .history-item {
-      width:100%;
-      display:block;
+      width: 100%;
 
-      margin-bottom:4px;
-      padding:11px;
+      padding: 11px;
 
-      border-radius:10px;
+      margin-bottom: 4px;
 
-      background:transparent;
-      color:var(--text);
+      border-radius: 10px;
 
-      text-align:right;
+      background: transparent;
 
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      color: var(--muted);
+
+      text-align: right;
+
+      overflow: hidden;
+
+      white-space: nowrap;
+
+      text-overflow: ellipsis;
     }
+
 
     .history-item:hover,
-    .history-item.active {
-      background:var(--panel2);
+    .history-item:active {
+      background: var(--panel-2);
+
+      color: var(--text);
     }
+
 
     .sidebar-bottom {
-      padding:12px;
-      border-top:1px solid var(--border);
+      padding: 10px;
+
+      border-top:
+        1px solid var(--border);
     }
 
-    .sidebar-action {
-      width:100%;
-      padding:11px;
-      margin-bottom:4px;
 
-      border-radius:10px;
+    .sidebar-button {
+      width: 100%;
 
-      background:transparent;
-      color:var(--muted);
+      padding: 11px;
 
-      text-align:right;
+      border-radius: 10px;
+
+      background: transparent;
+
+      color: var(--muted);
+
+      text-align: right;
     }
 
-    .sidebar-action:hover {
-      background:var(--panel2);
-      color:var(--text);
+
+    .sidebar-button:active {
+      background: var(--panel-2);
+
+      color: var(--text);
     }
 
-    /* =========================
+
+    /* =========================================================
        MAIN
-    ========================= */
+       ========================================================= */
 
     .main {
-      min-width:0;
-      flex:1;
-      height:100%;
+      position: relative;
 
-      display:flex;
-      flex-direction:column;
+      min-width: 0;
 
-      position:relative;
+      flex: 1;
+
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
     }
 
-    /* =========================
+
+    /* =========================================================
        HEADER
-    ========================= */
+       ========================================================= */
 
     .header {
-      height:62px;
-      flex-shrink:0;
+      height: var(--header-height);
 
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      flex-shrink: 0;
 
-      padding:0 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
-      background:rgba(7,9,13,.94);
+      padding:
+        0 12px;
 
-      border-bottom:1px solid var(--border);
+      background:
+        rgba(7, 9, 13, .97);
 
-      backdrop-filter:blur(16px);
+      border-bottom:
+        1px solid var(--border);
 
-      z-index:30;
+      z-index: 40;
     }
+
 
     .header-left,
     .header-right {
-      display:flex;
-      align-items:center;
-      gap:8px;
+      display: flex;
+      align-items: center;
+
+      gap: 8px;
     }
+
 
     .header-title {
-      font-weight:700;
+      font-size: 16px;
     }
 
-    .connection {
-      display:flex;
-      align-items:center;
-      gap:6px;
 
-      color:var(--green);
-      font-size:11px;
+    .icon-button {
+      width: 38px;
+      height: 38px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 10px;
+
+      background: transparent;
+
+      color: var(--muted);
+
+      font-size: 17px;
     }
 
-    .connection-dot {
-      width:7px;
-      height:7px;
 
-      border-radius:50%;
+    .icon-button:hover,
+    .icon-button:active {
+      background: var(--panel-2);
 
-      background:var(--green);
-
-      box-shadow:0 0 10px var(--green);
+      color: var(--text);
     }
 
-    .connection.offline {
-      color:var(--red);
-    }
-
-    .connection.offline .connection-dot {
-      background:var(--red);
-      box-shadow:0 0 10px var(--red);
-    }
-
-    .icon-btn {
-      width:38px;
-      height:38px;
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-
-      border:1px solid transparent;
-      border-radius:11px;
-
-      background:transparent;
-      color:var(--muted);
-
-      font-size:17px;
-    }
-
-    .icon-btn:hover {
-      background:var(--panel2);
-      color:var(--text);
-      border-color:var(--border);
-    }
 
     .mobile-menu {
-      display:none;
+      display: none;
     }
 
-    /* =========================
-       CHAT
-    ========================= */
 
-    .chat {
-      flex:1;
-      overflow-y:auto;
+    /* =========================================================
+       CONNECTION STATUS
+       ========================================================= */
 
-      padding:
-        25px 15px
-        185px;
+    .connection {
+      display: flex;
+      align-items: center;
 
-      scroll-behavior:smooth;
+      gap: 6px;
+
+      color: var(--green);
+
+      font-size: 10px;
     }
 
-    .chat-inner {
-      width:min(850px,100%);
-      margin:auto;
-    }
 
-    .welcome {
-      text-align:center;
-      padding:8vh 10px 30px;
-    }
+    .connection-dot {
+      width: 7px;
+      height: 7px;
 
-    .welcome-logo {
-      width:72px;
-      height:72px;
+      border-radius: 50%;
 
-      margin:0 auto 18px;
-
-      border-radius:22px;
-
-      font-size:30px;
+      background: var(--green);
 
       box-shadow:
-        0 20px 60px rgba(22,140,255,.12);
+        0 0 8px var(--green);
     }
+
+
+    .connection.offline {
+      color: var(--red);
+    }
+
+
+    .connection.offline
+    .connection-dot {
+      background: var(--red);
+
+      box-shadow:
+        0 0 8px var(--red);
+    }
+
+
+    /* =========================================================
+       CHAT AREA
+       ========================================================= */
+
+    .chat {
+      flex: 1;
+
+      min-height: 0;
+
+      overflow-y: auto;
+
+      -webkit-overflow-scrolling: touch;
+
+      padding:
+        25px 14px 180px;
+    }
+
+
+    .chat-inner {
+      width: min(850px, 100%);
+
+      margin: auto;
+    }
+
+
+    /* =========================================================
+       WELCOME
+       ========================================================= */
+
+    .welcome {
+      text-align: center;
+
+      padding:
+        6vh 8px 25px;
+    }
+
+
+    .welcome-logo {
+      width: 70px;
+      height: 70px;
+
+      margin:
+        0 auto 18px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 22px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--blue),
+          var(--green)
+        );
+
+      color: #00150b;
+
+      font-size: 32px;
+      font-weight: 900;
+    }
+
 
     .welcome h1 {
-      margin-bottom:12px;
-      font-size:clamp(29px,5vw,45px);
+      margin:
+        0 0 10px;
+
+      font-size:
+        clamp(28px, 6vw, 44px);
     }
+
 
     .welcome p {
-      max-width:620px;
-      margin:auto;
+      max-width: 620px;
 
-      color:var(--muted);
+      margin: auto;
 
-      line-height:1.9;
-      font-size:14px;
+      color: var(--muted);
+
+      line-height: 1.9;
+
+      font-size: 14px;
     }
+
+
+    /* =========================================================
+       QUICK ACTIONS
+       ========================================================= */
 
     .quick-actions {
-      display:grid;
+      display: grid;
 
       grid-template-columns:
-        repeat(2,minmax(0,1fr));
+        repeat(2, 1fr);
 
-      gap:10px;
+      gap: 10px;
 
-      max-width:650px;
+      max-width: 650px;
 
-      margin:28px auto;
+      margin:
+        25px auto;
     }
 
-    .quick-action {
-      padding:14px;
 
-      border:1px solid var(--border);
-      border-radius:14px;
+    .quick-button {
+      padding: 15px;
 
-      background:var(--panel);
-      color:var(--text);
+      border:
+        1px solid var(--border);
 
-      text-align:right;
+      border-radius: 14px;
+
+      background: var(--panel);
+
+      color: var(--text);
+
+      text-align: right;
     }
 
-    .quick-action:hover {
-      border-color:var(--blue);
-      background:var(--panel2);
+
+    .quick-button:hover,
+    .quick-button:active {
+      border-color: var(--blue);
+
+      background: #101b28;
     }
 
-    .quick-action small {
-      display:block;
-      margin-top:5px;
 
-      color:var(--muted);
-      font-size:11px;
+    .quick-button small {
+      display: block;
+
+      margin-top: 6px;
+
+      color: var(--muted);
+
+      font-size: 10px;
     }
 
-    /* =========================
+
+    /* =========================================================
        MESSAGES
-    ========================= */
+       ========================================================= */
 
     .message {
-      margin:18px 0;
-      animation:appear .2s ease;
+      margin:
+        18px 0;
     }
 
-    @keyframes appear {
-      from {
-        opacity:0;
-        transform:translateY(5px);
-      }
 
-      to {
-        opacity:1;
-        transform:translateY(0);
-      }
+    .user-message {
+      display: flex;
+
+      justify-content: flex-start;
     }
 
-    .message-user {
-      display:flex;
-      justify-content:flex-start;
-    }
 
-    .message-user .bubble {
-      max-width:82%;
+    .user-bubble {
+      max-width: 90%;
 
-      padding:13px 15px;
+      padding:
+        13px 15px;
 
-      border:1px solid #1b3a5e;
+      border:
+        1px solid #1d4269;
 
       border-radius:
-        18px
-        18px
-        4px
-        18px;
+        18px 18px 4px 18px;
 
-      background:#132238;
+      background:
+        #132238;
 
-      line-height:1.8;
+      line-height: 1.8;
 
-      white-space:pre-wrap;
-      overflow-wrap:anywhere;
+      white-space: pre-wrap;
+
+      overflow-wrap: anywhere;
     }
 
-    .message-amon {
-      display:flex;
-      align-items:flex-start;
-      gap:9px;
+
+    .amon-message {
+      display: flex;
+
+      align-items: flex-start;
+
+      gap: 9px;
     }
+
 
     .amon-avatar {
-      width:34px;
-      height:34px;
+      width: 35px;
+      height: 35px;
 
-      flex-shrink:0;
+      flex-shrink: 0;
 
-      border-radius:11px;
-      font-size:14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 11px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--blue),
+          var(--green)
+        );
+
+      color: #00150b;
+
+      font-weight: 900;
     }
 
-    .message-amon-content {
-      min-width:0;
-      flex:1;
+
+    .amon-content {
+      min-width: 0;
+
+      flex: 1;
     }
 
-    .message-amon .bubble {
-      padding:15px;
 
-      border:1px solid var(--border);
+    .amon-bubble {
+      padding:
+        15px;
+
+      border:
+        1px solid var(--border);
 
       border-radius:
-        18px
-        18px
-        18px
-        4px;
+        18px 18px 18px 4px;
 
-      background:var(--panel);
+      background:
+        var(--panel);
 
-      line-height:1.9;
+      line-height: 1.9;
 
-      white-space:pre-wrap;
-      overflow-wrap:anywhere;
+      white-space: pre-wrap;
+
+      overflow-wrap: anywhere;
     }
+
 
     .message-meta {
-      margin:5px 8px;
+      margin:
+        5px 8px;
 
-      color:var(--muted);
-      font-size:10px;
+      color: var(--muted);
+
+      font-size: 9px;
     }
 
-    .message-actions {
-      display:flex;
-      flex-wrap:wrap;
-      gap:5px;
-      margin-top:7px;
+
+    .copy-button {
+      padding:
+        6px 9px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 9px;
+
+      background: transparent;
+
+      color: var(--muted);
+
+      font-size: 10px;
     }
 
-    .message-action {
-      padding:6px 9px;
 
-      border:1px solid var(--border);
-      border-radius:9px;
+    .copy-button:active {
+      background: var(--panel-2);
 
-      background:transparent;
-      color:var(--muted);
-
-      font-size:11px;
+      color: var(--text);
     }
 
-    .message-action:hover {
-      background:var(--panel2);
-      color:var(--text);
-    }
 
-    /* =========================
+    /* =========================================================
        TYPING
-    ========================= */
+       ========================================================= */
 
     .typing {
-      display:flex;
-      align-items:center;
-      gap:4px;
-      height:22px;
+      display: flex;
+
+      gap: 4px;
     }
+
 
     .typing span {
-      width:6px;
-      height:6px;
+      width: 6px;
+      height: 6px;
 
-      border-radius:50%;
+      border-radius: 50%;
 
-      background:var(--muted);
+      background: var(--muted);
 
-      animation:typing 1s infinite;
+      animation:
+        typing 1s infinite;
     }
+
 
     .typing span:nth-child(2) {
-      animation-delay:.15s;
+      animation-delay: .15s;
     }
+
 
     .typing span:nth-child(3) {
-      animation-delay:.30s;
+      animation-delay: .30s;
     }
 
+
     @keyframes typing {
-      0%,70%,100% {
-        opacity:.25;
+
+      0%,
+      70%,
+      100% {
+        opacity: .2;
       }
 
       35% {
-        opacity:1;
+        opacity: 1;
       }
     }
 
-    /* =========================
+
+    /* =========================================================
        COMPOSER
-    ========================= */
+       ========================================================= */
 
     .composer {
-      position:fixed;
+      position: absolute;
 
-      right:0;
-      bottom:0;
-      left:280px;
+      right: 0;
+      bottom: 0;
+      left: 0;
 
       padding:
-        12px 15px
-        calc(
-          10px +
-          env(safe-area-inset-bottom)
-        );
+        8px 14px
+        calc(8px + env(safe-area-inset-bottom));
 
       background:
         linear-gradient(
           transparent,
-          rgba(7,9,13,.98) 35%
+          rgba(7,9,13,.99) 30%
         );
 
-      z-index:40;
+      z-index: 60;
+
+      pointer-events: none;
     }
+
 
     .composer-inner {
-      width:min(850px,100%);
-      margin:auto;
+      width: min(850px, 100%);
+
+      margin: auto;
+
+      pointer-events: auto;
     }
+
+
+    /* =========================================================
+       MODES
+       ========================================================= */
 
     .mode-row {
-      display:flex;
-      gap:7px;
+      display: flex;
 
-      margin-bottom:8px;
+      gap: 7px;
 
-      overflow-x:auto;
+      margin-bottom: 7px;
 
-      scrollbar-width:none;
+      overflow-x: auto;
+
+      scrollbar-width: none;
     }
+
 
     .mode-row::-webkit-scrollbar {
-      display:none;
+      display: none;
     }
 
-    .mode {
-      flex-shrink:0;
 
-      padding:7px 10px;
+    .mode-button {
+      flex-shrink: 0;
 
-      border:1px solid var(--border);
-      border-radius:10px;
+      padding:
+        7px 11px;
 
-      background:var(--panel);
-      color:var(--muted);
+      border:
+        1px solid var(--border);
 
-      font-size:11px;
+      border-radius: 10px;
+
+      background:
+        var(--panel);
+
+      color: var(--muted);
+
+      font-size: 11px;
     }
 
-    .mode.active {
-      background:#10223a;
-      border-color:var(--blue);
-      color:var(--text);
+
+    .mode-button.active {
+      border-color:
+        var(--blue);
+
+      background:
+        #10223a;
+
+      color:
+        var(--text);
     }
 
-    .input-box {
-      width:100%;
-      min-height:60px;
 
-      display:flex;
-      align-items:flex-end;
-      gap:7px;
+    /* =========================================================
+       INPUT
+       ========================================================= */
 
-      padding:8px;
+    .input-container {
+      display: flex;
 
-      border:1px solid var(--border);
-      border-radius:20px;
+      align-items: flex-end;
 
-      background:var(--panel2);
+      gap: 7px;
 
-      box-shadow:var(--shadow);
-    }
+      width: 100%;
 
-    .input-box:focus-within {
-      border-color:var(--blue);
+      min-height: 59px;
+
+      padding: 7px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 18px;
+
+      background:
+        var(--panel-2);
 
       box-shadow:
-        0 0 0 3px
-        rgba(22,140,255,.08),
-        var(--shadow);
+        0 10px 35px rgba(0,0,0,.35);
     }
 
-    textarea {
-      flex:1;
 
-      width:100%;
-      min-width:0;
-
-      min-height:44px;
-      max-height:150px;
-
-      resize:none;
-      overflow-y:auto;
-
-      outline:none;
-      border:0;
-
-      background:transparent;
-      color:var(--text);
-
-      padding:11px 9px;
-
-      line-height:1.5;
-      font-size:16px;
+    .input-container:focus-within {
+      border-color:
+        var(--blue);
     }
 
-    textarea::placeholder {
-      color:#697585;
+
+    #messageInput {
+      flex: 1;
+
+      min-width: 0;
+
+      height: 44px;
+
+      max-height: 140px;
+
+      resize: none;
+
+      outline: none;
+
+      border: 0;
+
+      background: transparent;
+
+      color: var(--text);
+
+      padding:
+        10px 8px;
+
+      line-height: 1.5;
+
+      font-size: 16px;
     }
 
-    .composer-btn {
-      width:42px;
-      height:42px;
 
-      flex-shrink:0;
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-
-      border:1px solid var(--border);
-      border-radius:13px;
-
-      background:var(--panel3);
-      color:var(--muted);
-
-      font-size:18px;
+    #messageInput::placeholder {
+      color: #697585;
     }
 
-    .composer-btn:hover {
-      color:var(--text);
-      border-color:var(--blue);
+
+    .send-button,
+    .stop-button {
+      width: 43px;
+      height: 43px;
+
+      flex-shrink: 0;
+
+      border-radius: 12px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 17px;
     }
 
-    .send {
-      background:var(--blue);
-      border-color:var(--blue);
-      color:white;
+
+    .send-button {
+      background:
+        var(--blue);
+
+      color: white;
     }
 
-    .stop {
-      background:#351820;
-      border-color:#63303a;
-      color:#ff8b94;
+
+    .send-button:active {
+      transform:
+        scale(.95);
     }
+
+
+    .stop-button {
+      background:
+        #351820;
+
+      color:
+        #ff8b94;
+    }
+
 
     .composer-note {
-      margin-top:6px;
+      text-align: center;
 
-      color:#657080;
+      margin-top: 5px;
 
-      text-align:center;
-      font-size:9px;
+      color: #657080;
+
+      font-size: 9px;
     }
 
-    /* =========================
+
+    /* =========================================================
        PANELS
-    ========================= */
+       ========================================================= */
 
     .overlay {
-      position:fixed;
-      inset:0;
+      position: fixed;
 
-      background:rgba(0,0,0,.6);
+      inset: 0;
 
-      backdrop-filter:blur(5px);
+      background:
+        rgba(0,0,0,.62);
 
-      z-index:90;
+      z-index: 150;
     }
+
 
     .panel {
-      position:fixed;
+      position: fixed;
 
-      top:0;
-      right:0;
-      bottom:0;
+      top: 0;
+      right: 0;
+      bottom: 0;
 
-      width:min(390px,94vw);
+      width:
+        min(390px, 94vw);
 
-      display:flex;
-      flex-direction:column;
+      background:
+        var(--panel);
 
-      background:var(--panel);
+      border-left:
+        1px solid var(--border);
 
-      border-left:1px solid var(--border);
-
-      box-shadow:var(--shadow);
-
-      z-index:100;
+      z-index: 200;
     }
+
 
     .panel-header {
-      height:62px;
+      height: 60px;
 
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
-      padding:0 15px;
+      padding:
+        0 14px;
 
-      border-bottom:1px solid var(--border);
+      border-bottom:
+        1px solid var(--border);
     }
+
 
     .panel-body {
-      flex:1;
-      overflow-y:auto;
-      padding:16px;
+      height:
+        calc(100% - 60px);
+
+      overflow-y: auto;
+
+      padding: 16px;
     }
 
-    .panel-section {
-      margin-bottom:22px;
-    }
-
-    .panel-section h3 {
-      margin-bottom:10px;
-      font-size:13px;
-    }
-
-    .setting {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-
-      gap:10px;
-
-      padding:12px;
-      margin-bottom:8px;
-
-      border:1px solid var(--border);
-      border-radius:13px;
-
-      background:var(--panel2);
-    }
-
-    .setting strong {
-      display:block;
-      font-size:12px;
-    }
-
-    .setting small {
-      display:block;
-      margin-top:4px;
-
-      color:var(--muted);
-
-      font-size:10px;
-      line-height:1.5;
-    }
-
-    .select {
-      min-width:110px;
-
-      padding:8px;
-
-      border:1px solid var(--border);
-      border-radius:9px;
-
-      outline:none;
-
-      background:var(--panel3);
-      color:var(--text);
-    }
 
     .panel-button {
-      width:100%;
+      width: 100%;
 
-      padding:11px;
-      margin-top:7px;
+      padding: 12px;
 
-      border:1px solid var(--border);
-      border-radius:11px;
+      margin-bottom: 8px;
 
-      background:var(--panel2);
-      color:var(--text);
+      border:
+        1px solid var(--border);
+
+      border-radius: 12px;
+
+      background:
+        var(--panel-2);
+
+      color: var(--text);
     }
 
-    .panel-button:hover {
-      border-color:var(--blue);
+
+    .system-card {
+      padding: 13px;
+
+      margin-bottom: 10px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 12px;
+
+      background:
+        var(--panel-2);
     }
 
-    /* =========================
+
+    .system-card small {
+      color: var(--muted);
+
+      line-height: 1.8;
+    }
+
+
+    /* =========================================================
        TOAST
-    ========================= */
+       ========================================================= */
 
     .toast {
-      position:fixed;
+      position: fixed;
 
-      left:50%;
-      bottom:105px;
+      left: 50%;
 
-      transform:translateX(-50%);
+      bottom: 110px;
 
-      max-width:90vw;
+      transform:
+        translateX(-50%);
 
-      padding:10px 14px;
+      padding:
+        10px 14px;
 
-      border:1px solid var(--border);
-      border-radius:12px;
+      border:
+        1px solid var(--border);
 
-      background:var(--panel3);
-      color:var(--text);
+      border-radius: 12px;
 
-      box-shadow:var(--shadow);
+      background:
+        #18212c;
 
-      z-index:200;
+      color:
+        var(--text);
 
-      font-size:12px;
-      text-align:center;
+      z-index: 300;
+
+      font-size: 12px;
     }
 
-    /* =========================
-       MOBILE
-    ========================= */
 
-    @media(max-width:760px) {
+    /* =========================================================
+       MOBILE
+       ========================================================= */
+
+    @media (max-width: 760px) {
 
       .sidebar {
-        position:fixed;
+        position: fixed;
 
-        top:0;
-        right:0;
-        bottom:0;
+        top: 0;
+        right: 0;
+        bottom: 0;
 
-        transform:translateX(105%);
+        transform:
+          translateX(105%);
+
+        transition:
+          transform .2s ease;
       }
+
 
       .sidebar.open {
-        transform:translateX(0);
+        transform:
+          translateX(0);
       }
+
 
       .mobile-menu {
-        display:flex;
+        display: flex;
       }
+
+
+      .chat {
+        padding:
+          20px 9px 175px;
+      }
+
 
       .composer {
-        left:0;
+        padding-left: 7px;
+        padding-right: 7px;
       }
 
-      .header {
-        height:58px;
-        padding:0 9px;
-      }
 
       .quick-actions {
-        grid-template-columns:1fr;
+        grid-template-columns:
+          1fr;
       }
 
-      .message-user .bubble {
-        max-width:90%;
+
+      .user-bubble {
+        max-width: 94%;
       }
 
-      .welcome {
-        padding-top:6vh;
-      }
     }
 
-    @media(max-width:430px) {
+
+    @media (max-width: 430px) {
 
       .header-title {
-        display:none;
+        display: none;
       }
 
-      .welcome h1 {
-        font-size:29px;
+
+      .welcome {
+        padding-top:
+          5vh;
       }
 
-      .welcome p {
-        font-size:13px;
-      }
 
       .welcome-logo {
-        width:62px;
-        height:62px;
-        border-radius:19px;
+        width: 62px;
+        height: 62px;
+
+        font-size: 28px;
       }
 
-      .composer {
-        padding:
-          7px 7px
-          calc(
-            7px +
-            env(safe-area-inset-bottom)
-          );
+
+      .welcome p {
+        font-size: 13px;
       }
 
-      .input-box {
-        min-height:57px;
-        border-radius:17px;
-      }
 
       .composer-note {
-        display:none;
+        display: none;
       }
 
-      .composer-btn {
-        width:40px;
-        height:40px;
-      }
     }
+
+
+    /* =========================================================
+       REDUCED MOTION
+       ========================================================= */
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+
+    }
+
   </style>
 </head>
 
+
 <body>
 
-<div class="app">
-
-  <!-- =========================
-       SIDEBAR
-  ========================== -->
-
-  <aside
-    class="sidebar"
-    id="sidebar"
-  >
-
-    <div class="sidebar-top">
-
-      <div class="brand">
-
-        <div class="brand-mark">
-          A
-        </div>
-
-        <div class="brand-text">
-
-          <strong>
-            AMON AI
-          </strong>
-
-          <span>
-            العقل المركزي
-          </span>
-
-        </div>
-
-      </div>
-
-      <button
-        class="new-chat"
-        id="newChat"
-        type="button"
-      >
-        ＋ محادثة جديدة
-      </button>
-
-    </div>
-
-    <div class="sidebar-title">
-      المحادثات
-    </div>
-
-    <div
-      class="history"
-      id="history"
-    ></div>
-
-    <div class="sidebar-bottom">
-
-      <button
-        class="sidebar-action"
-        id="openSettings"
-        type="button"
-      >
-        ⚙️ الإعدادات
-      </button>
-
-      <button
-        class="sidebar-action"
-        id="openInfo"
-        type="button"
-      >
-        ℹ️ عن AMON
-      </button>
-
-    </div>
-
-  </aside>
+  <div class="app">
 
 
-  <!-- =========================
-       MAIN
-  ========================== -->
+    <!-- =======================================================
+         SIDEBAR
+         ======================================================= -->
 
-  <main class="main">
-
-    <header class="header">
-
-      <div class="header-left">
-
-        <button
-          class="icon-btn mobile-menu"
-          id="menuButton"
-          type="button"
-          aria-label="القائمة"
-        >
-          ☰
-        </button>
-
-        <div class="header-title">
-          AMON
-        </div>
-
-        <div
-          class="connection"
-          id="connection"
-        >
-
-          <span class="connection-dot"></span>
-
-          <span id="status">
-            جارٍ الفحص...
-          </span>
-
-        </div>
-
-      </div>
-
-      <div class="header-right">
-
-        <button
-          class="icon-btn"
-          id="healthButton"
-          type="button"
-          title="فحص الاتصال"
-        >
-          ◉
-        </button>
-
-      </div>
-
-    </header>
-
-
-    <!-- =========================
-         CHAT
-    ========================== -->
-
-    <section
-      class="chat"
-      id="chat"
+    <aside
+      class="sidebar"
+      id="sidebar"
     >
 
-      <div
-        class="chat-inner"
-        id="chatInner"
-      >
+      <div class="sidebar-top">
 
-        <div
-          class="welcome"
-          id="welcome"
-        >
+        <div class="brand">
 
-          <div class="welcome-logo">
+          <div class="brand-logo">
             A
           </div>
 
-          <h1>
-            مرحبًا بك في AMON
-          </h1>
+          <div>
 
-          <p>
-            العقل المركزي لمنصة AMON AI.
-            اكتب سؤالك وسأحاول مساعدتك باستخدام
-            المحرك المتصل حاليًا.
-          </p>
+            <div class="brand-title">
+              AMON AI
+            </div>
 
-
-          <div class="quick-actions">
-
-            <button
-              class="quick-action"
-              data-prompt="اشرح لي فكرة AMON بطريقة بسيطة"
-              type="button"
-            >
-              🧠 تعلّم
-              <small>
-                اشرح لي فكرة أو موضوعًا
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="اشرح لي هذا الموضوع بالتفصيل وبطريقة سهلة"
-              type="button"
-            >
-              📖 شرح
-              <small>
-                شرح واضح ومبسط
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="حلل هذا الموضوع بطريقة بحثية واذكر ما الذي نحتاج إلى التحقق منه"
-              type="button"
-            >
-              🔎 بحث
-              <small>
-                تحليل بحثي
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="قارن بين الخيارين واذكر المزايا والعيوب"
-              type="button"
-            >
-              ⚖️ مقارنة
-              <small>
-                مقارنة منظمة
-              </small>
-            </button>
+            <div class="brand-subtitle">
+              العقل المركزي
+            </div>
 
           </div>
 
         </div>
 
-        <div id="messages"></div>
+
+        <button
+          class="new-chat"
+          id="newChat"
+          type="button"
+        >
+          ＋ محادثة جديدة
+        </button>
 
       </div>
 
-    </section>
+
+      <div class="sidebar-title">
+        المحادثات
+      </div>
 
 
-    <!-- =========================
-         COMPOSER
-    ========================== -->
+      <div
+        class="history"
+        id="history"
+      ></div>
 
-    <div class="composer">
 
-      <div class="composer-inner">
+      <div class="sidebar-bottom">
 
-        <div class="mode-row">
+        <button
+          class="sidebar-button"
+          id="openSettings"
+          type="button"
+        >
+          ⚙️ الإعدادات
+        </button>
+
+
+        <button
+          class="sidebar-button"
+          id="openInfo"
+          type="button"
+        >
+          ℹ️ عن AMON
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- =======================================================
+         MAIN
+         ======================================================= -->
+
+    <main class="main">
+
+
+      <!-- HEADER -->
+
+      <header class="header">
+
+        <div class="header-left">
 
           <button
-            class="mode active"
-            data-mode="learn"
+            class="icon-button mobile-menu"
+            id="menuButton"
             type="button"
+            aria-label="القائمة"
           >
-            تعلم
+            ☰
           </button>
 
-          <button
-            class="mode"
-            data-mode="explain"
-            type="button"
+
+          <strong class="header-title">
+            AMON
+          </strong>
+
+
+          <div
+            class="connection"
+            id="connection"
           >
-            شرح
-          </button>
+
+            <span
+              class="connection-dot"
+            ></span>
+
+            <span id="status">
+              جارٍ الفحص...
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div class="header-right">
 
           <button
-            class="mode"
-   
+            class="icon-button"
+            id="healthButton"
+            type="button"
+            aria-label="فحص الاتصال"
+          >
+            ◉
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <!-- CHAT -->
+
+      <section
+        class="chat"
+        id="chat"
+      >
+
+        <div class="chat-inner">
+
+
+          <!-- WELCOME -->
+
+          <div
+            class="welcome"
+            id="welcome"
+          >
+
+            <div class="welcome-logo">
+              A
+            </div>
+
+
+            <h1>
+              مرحبًا بك في AMON
+            </h1>
+
+
+            <p>
+              العقل المركزي لمنصة AMON AI.
+              اكتب سؤالك وسأحاول مساعدتك بالمحرك المتص
