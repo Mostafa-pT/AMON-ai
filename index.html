@@ -5,56 +5,51 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
   >
 
   <meta name="theme-color" content="#07090d">
 
   <meta
     name="description"
-    content="AMON AI - منصة الذكاء والتعلم والبحث"
+    content="AMON AI - العقل المركزي لمنصة الذكاء"
   >
 
   <title>AMON AI</title>
 
   <style>
     :root {
-      --bg: #07090d;
-      --panel: #0d1118;
-      --panel2: #121821;
-      --panel3: #171f2a;
-      --border: #26303d;
+      --bg:#07090d;
+      --panel:#0d1118;
+      --panel2:#121821;
+      --panel3:#18212c;
+      --border:#26303d;
 
-      --text: #f5f7fa;
-      --muted: #8995a5;
+      --text:#f5f7fa;
+      --muted:#8995a5;
 
-      --blue: #168cff;
-      --green: #19d36b;
-      --red: #ff5967;
-      --yellow: #f5c451;
+      --blue:#168cff;
+      --green:#19d36b;
+      --red:#ff5967;
 
-      --radius: 18px;
-      --shadow: 0 15px 50px rgba(0,0,0,.38);
+      --radius:16px;
+      --shadow:0 15px 50px rgba(0,0,0,.35);
     }
 
     * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      -webkit-tap-highlight-color:transparent;
     }
 
     html,
     body {
-      width: 100%;
-      height: 100%;
-      min-height: 100%;
-      overflow: hidden;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    body {
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--text);
       font-family:
         Arial,
         "Segoe UI",
@@ -63,90 +58,85 @@
     }
 
     button,
-    input,
     textarea,
     select {
-      font: inherit;
+      font:inherit;
     }
 
     button {
-      border: 0;
-      cursor: pointer;
+      cursor:pointer;
+      border:0;
     }
 
     button:disabled {
-      cursor: not-allowed;
-      opacity: .5;
+      opacity:.45;
+      cursor:not-allowed;
     }
 
     .hidden {
-      display: none !important;
+      display:none!important;
     }
 
-    /* =========================================
+    /* =========================
        APP
-    ========================================= */
+    ========================= */
 
     .app {
-      width: 100%;
-      height: 100dvh;
-      min-height: 100dvh;
-
-      display: flex;
-
-      position: relative;
-
-      overflow: hidden;
+      width:100%;
+      height:100dvh;
+      display:flex;
+      overflow:hidden;
 
       background:
         radial-gradient(
           circle at 50% -20%,
-          rgba(22,140,255,.08),
-          transparent 40%
+          rgba(22,140,255,.10),
+          transparent 45%
         ),
         var(--bg);
     }
 
-    /* =========================================
+    /* =========================
        SIDEBAR
-    ========================================= */
+    ========================= */
 
     .sidebar {
-      width: 280px;
-      height: 100%;
+      width:280px;
+      height:100%;
 
-      flex-shrink: 0;
+      flex-shrink:0;
 
-      display: flex;
-      flex-direction: column;
+      display:flex;
+      flex-direction:column;
 
-      background: rgba(13,17,24,.98);
+      background:rgba(13,17,24,.98);
 
-      border-left: 1px solid var(--border);
+      border-left:1px solid var(--border);
 
-      z-index: 80;
+      z-index:80;
 
-      transition: transform .25s ease;
+      transition:transform .25s ease;
     }
 
     .sidebar-top {
-      padding: 16px;
-
-      border-bottom: 1px solid var(--border);
+      padding:16px;
+      border-bottom:1px solid var(--border);
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-
-      gap: 10px;
-
-      margin-bottom: 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:16px;
     }
 
     .brand-mark,
-    .welcome-logo,
-    .amon-avatar {
+    .amon-avatar,
+    .welcome-logo {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
       background:
         linear-gradient(
           135deg,
@@ -154,415 +144,331 @@
           var(--green)
         );
 
-      color: #00120a;
-
-      font-weight: 900;
+      color:#00120a;
+      font-weight:900;
     }
 
     .brand-mark {
-      width: 40px;
-      height: 40px;
-
-      border-radius: 12px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 19px;
-
-      box-shadow:
-        0 0 30px rgba(22,140,255,.15);
+      width:42px;
+      height:42px;
+      border-radius:12px;
     }
 
     .brand-text strong {
-      display: block;
-      font-size: 17px;
+      display:block;
+      font-size:17px;
     }
 
     .brand-text span {
-      display: block;
-
-      margin-top: 3px;
-
-      color: var(--muted);
-
-      font-size: 11px;
+      display:block;
+      margin-top:3px;
+      color:var(--muted);
+      font-size:11px;
     }
 
     .new-chat {
-      width: 100%;
+      width:100%;
+      padding:12px;
 
-      padding: 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
 
-      border: 1px solid var(--border);
-
-      border-radius: 13px;
-
-      background: var(--panel2);
-
-      color: var(--text);
-
-      transition: .2s;
+      background:var(--panel2);
+      color:var(--text);
     }
 
     .new-chat:hover {
-      border-color: var(--blue);
-      background: var(--panel3);
+      border-color:var(--blue);
     }
 
     .sidebar-title {
-      padding: 16px 16px 8px;
-
-      color: var(--muted);
-
-      font-size: 12px;
+      padding:16px 16px 8px;
+      color:var(--muted);
+      font-size:12px;
     }
 
     .history {
-      flex: 1;
-
-      overflow-y: auto;
-
-      padding: 0 10px 10px;
+      flex:1;
+      overflow-y:auto;
+      padding:0 10px 10px;
     }
 
     .history-item {
-      width: 100%;
+      width:100%;
+      display:block;
 
-      display: block;
+      margin-bottom:4px;
+      padding:11px;
 
-      margin-bottom: 4px;
+      border-radius:10px;
 
-      padding: 11px;
+      background:transparent;
+      color:var(--text);
 
-      border-radius: 11px;
+      text-align:right;
 
-      background: transparent;
-
-      color: var(--text);
-
-      text-align: right;
-
-      white-space: nowrap;
-
-      overflow: hidden;
-
-      text-overflow: ellipsis;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     .history-item:hover,
     .history-item.active {
-      background: var(--panel2);
+      background:var(--panel2);
     }
 
     .sidebar-bottom {
-      padding: 12px;
-
-      border-top: 1px solid var(--border);
+      padding:12px;
+      border-top:1px solid var(--border);
     }
 
     .sidebar-action {
-      width: 100%;
+      width:100%;
+      padding:11px;
+      margin-bottom:4px;
 
-      display: block;
+      border-radius:10px;
 
-      padding: 11px;
+      background:transparent;
+      color:var(--muted);
 
-      margin-bottom: 4px;
-
-      border-radius: 10px;
-
-      background: transparent;
-
-      color: var(--muted);
-
-      text-align: right;
+      text-align:right;
     }
 
     .sidebar-action:hover {
-      background: var(--panel2);
-      color: var(--text);
+      background:var(--panel2);
+      color:var(--text);
     }
 
-    /* =========================================
+    /* =========================
        MAIN
-    ========================================= */
+    ========================= */
 
     .main {
-      min-width: 0;
+      min-width:0;
+      flex:1;
+      height:100%;
 
-      flex: 1;
+      display:flex;
+      flex-direction:column;
 
-      height: 100%;
-
-      display: flex;
-      flex-direction: column;
-
-      position: relative;
+      position:relative;
     }
 
-    /* =========================================
+    /* =========================
        HEADER
-    ========================================= */
+    ========================= */
 
     .header {
-      height: 62px;
+      height:62px;
+      flex-shrink:0;
 
-      flex-shrink: 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
 
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding:0 15px;
 
-      padding: 0 15px;
+      background:rgba(7,9,13,.94);
 
-      background: rgba(7,9,13,.92);
+      border-bottom:1px solid var(--border);
 
-      border-bottom: 1px solid var(--border);
+      backdrop-filter:blur(16px);
 
-      backdrop-filter: blur(16px);
-
-      z-index: 30;
+      z-index:30;
     }
 
     .header-left,
     .header-right {
-      display: flex;
-      align-items: center;
-
-      gap: 7px;
+      display:flex;
+      align-items:center;
+      gap:8px;
     }
 
     .header-title {
-      font-weight: 700;
+      font-weight:700;
     }
 
     .connection {
-      display: flex;
-      align-items: center;
+      display:flex;
+      align-items:center;
+      gap:6px;
 
-      gap: 6px;
-
-      color: var(--green);
-
-      font-size: 11px;
+      color:var(--green);
+      font-size:11px;
     }
 
     .connection-dot {
-      width: 7px;
-      height: 7px;
+      width:7px;
+      height:7px;
 
-      border-radius: 50%;
+      border-radius:50%;
 
-      background: var(--green);
+      background:var(--green);
 
-      box-shadow:
-        0 0 10px var(--green);
+      box-shadow:0 0 10px var(--green);
     }
 
     .connection.offline {
-      color: var(--red);
+      color:var(--red);
     }
 
     .connection.offline .connection-dot {
-      background: var(--red);
-
-      box-shadow:
-        0 0 10px var(--red);
+      background:var(--red);
+      box-shadow:0 0 10px var(--red);
     }
 
     .icon-btn {
-      width: 38px;
-      height: 38px;
+      width:38px;
+      height:38px;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
 
-      border: 1px solid transparent;
+      border:1px solid transparent;
+      border-radius:11px;
 
-      border-radius: 11px;
+      background:transparent;
+      color:var(--muted);
 
-      background: transparent;
-
-      color: var(--muted);
-
-      font-size: 17px;
+      font-size:17px;
     }
 
     .icon-btn:hover {
-      background: var(--panel2);
-
-      color: var(--text);
-
-      border-color: var(--border);
+      background:var(--panel2);
+      color:var(--text);
+      border-color:var(--border);
     }
 
     .mobile-menu {
-      display: none;
+      display:none;
     }
 
-    /* =========================================
+    /* =========================
        CHAT
-    ========================================= */
+    ========================= */
 
     .chat {
-      flex: 1;
-
-      overflow-y: auto;
+      flex:1;
+      overflow-y:auto;
 
       padding:
         25px 15px
-        190px;
+        185px;
 
-      scroll-behavior: smooth;
-
-      overscroll-behavior: contain;
+      scroll-behavior:smooth;
     }
 
     .chat-inner {
-      width: min(850px, 100%);
-
-      margin: auto;
+      width:min(850px,100%);
+      margin:auto;
     }
 
     .welcome {
-      text-align: center;
-
-      padding:
-        8vh 10px
-        30px;
+      text-align:center;
+      padding:8vh 10px 30px;
     }
 
     .welcome-logo {
-      width: 70px;
-      height: 70px;
+      width:72px;
+      height:72px;
 
-      margin: 0 auto 18px;
+      margin:0 auto 18px;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius:22px;
 
-      border-radius: 22px;
-
-      font-size: 30px;
+      font-size:30px;
 
       box-shadow:
         0 20px 60px rgba(22,140,255,.12);
     }
 
     .welcome h1 {
-      margin-bottom: 12px;
-
-      font-size:
-        clamp(29px, 5vw, 45px);
+      margin-bottom:12px;
+      font-size:clamp(29px,5vw,45px);
     }
 
     .welcome p {
-      max-width: 620px;
+      max-width:620px;
+      margin:auto;
 
-      margin: auto;
+      color:var(--muted);
 
-      color: var(--muted);
-
-      line-height: 1.9;
-
-      font-size: 14px;
+      line-height:1.9;
+      font-size:14px;
     }
 
-    /* =========================================
-       QUICK ACTIONS
-    ========================================= */
-
     .quick-actions {
-      display: grid;
+      display:grid;
 
       grid-template-columns:
-        repeat(2, minmax(0,1fr));
+        repeat(2,minmax(0,1fr));
 
-      gap: 10px;
+      gap:10px;
 
-      max-width: 650px;
+      max-width:650px;
 
-      margin: 28px auto;
+      margin:28px auto;
     }
 
     .quick-action {
-      padding: 14px;
+      padding:14px;
 
-      border: 1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:14px;
 
-      border-radius: 15px;
+      background:var(--panel);
+      color:var(--text);
 
-      background: var(--panel);
-
-      color: var(--text);
-
-      text-align: right;
-
-      transition: .2s;
+      text-align:right;
     }
 
     .quick-action:hover {
-      border-color: var(--blue);
-
-      background: var(--panel2);
-
-      transform: translateY(-1px);
+      border-color:var(--blue);
+      background:var(--panel2);
     }
 
     .quick-action small {
-      display: block;
+      display:block;
+      margin-top:5px;
 
-      margin-top: 5px;
-
-      color: var(--muted);
-
-      font-size: 11px;
+      color:var(--muted);
+      font-size:11px;
     }
 
-    /* =========================================
+    /* =========================
        MESSAGES
-    ========================================= */
+    ========================= */
 
     .message {
-      margin: 18px 0;
-
-      animation:
-        messageAppear .2s ease;
+      margin:18px 0;
+      animation:appear .2s ease;
     }
 
-    @keyframes messageAppear {
+    @keyframes appear {
       from {
-        opacity: 0;
-
-        transform:
-          translateY(6px);
+        opacity:0;
+        transform:translateY(5px);
       }
 
       to {
-        opacity: 1;
-
-        transform:
-          translateY(0);
+        opacity:1;
+        transform:translateY(0);
       }
     }
 
     .message-user {
-      display: flex;
-
-      justify-content: flex-start;
+      display:flex;
+      justify-content:flex-start;
     }
 
     .message-user .bubble {
-      max-width: 80%;
+      max-width:82%;
 
-      padding: 13px 15px;
+      padding:13px 15px;
 
-      border:
-        1px solid #1b3a5e;
+      border:1px solid #1b3a5e;
 
       border-radius:
         18px
@@ -570,49 +476,39 @@
         4px
         18px;
 
-      background: #132238;
+      background:#132238;
 
-      line-height: 1.8;
+      line-height:1.8;
 
-      white-space: pre-wrap;
-
-      overflow-wrap: anywhere;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
     }
 
     .message-amon {
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 9px;
+      display:flex;
+      align-items:flex-start;
+      gap:9px;
     }
 
     .amon-avatar {
-      width: 34px;
-      height: 34px;
+      width:34px;
+      height:34px;
 
-      flex-shrink: 0;
+      flex-shrink:0;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 11px;
-
-      font-size: 14px;
+      border-radius:11px;
+      font-size:14px;
     }
 
     .message-amon-content {
-      min-width: 0;
-
-      flex: 1;
+      min-width:0;
+      flex:1;
     }
 
     .message-amon .bubble {
-      padding: 15px;
+      padding:15px;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
 
       border-radius:
         18px
@@ -620,110 +516,95 @@
         18px
         4px;
 
-      background: var(--panel);
+      background:var(--panel);
 
-      line-height: 1.9;
+      line-height:1.9;
 
-      white-space: pre-wrap;
-
-      overflow-wrap: anywhere;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
     }
 
     .message-meta {
-      margin: 5px 8px;
+      margin:5px 8px;
 
-      color: var(--muted);
-
-      font-size: 10px;
+      color:var(--muted);
+      font-size:10px;
     }
 
     .message-actions {
-      display: flex;
-
-      flex-wrap: wrap;
-
-      gap: 5px;
-
-      margin-top: 7px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:5px;
+      margin-top:7px;
     }
 
     .message-action {
-      padding: 6px 9px;
+      padding:6px 9px;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:9px;
 
-      border-radius: 9px;
+      background:transparent;
+      color:var(--muted);
 
-      background: transparent;
-
-      color: var(--muted);
-
-      font-size: 11px;
+      font-size:11px;
     }
 
     .message-action:hover {
-      background: var(--panel2);
-
-      color: var(--text);
+      background:var(--panel2);
+      color:var(--text);
     }
 
-    /* =========================================
+    /* =========================
        TYPING
-    ========================================= */
+    ========================= */
 
     .typing {
-      height: 22px;
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 4px;
+      display:flex;
+      align-items:center;
+      gap:4px;
+      height:22px;
     }
 
     .typing span {
-      width: 6px;
-      height: 6px;
+      width:6px;
+      height:6px;
 
-      border-radius: 50%;
+      border-radius:50%;
 
-      background: var(--muted);
+      background:var(--muted);
 
-      animation:
-        typing 1s infinite;
+      animation:typing 1s infinite;
     }
 
     .typing span:nth-child(2) {
-      animation-delay: .15s;
+      animation-delay:.15s;
     }
 
     .typing span:nth-child(3) {
-      animation-delay: .3s;
+      animation-delay:.30s;
     }
 
     @keyframes typing {
-      0%,
-      70%,
-      100% {
-        opacity: .25;
+      0%,70%,100% {
+        opacity:.25;
       }
 
       35% {
-        opacity: 1;
+        opacity:1;
       }
     }
 
-    /* =========================================
+    /* =========================
        COMPOSER
-    ========================================= */
+    ========================= */
 
     .composer {
-      position: fixed;
+      position:fixed;
 
-      right: 0;
-      bottom: 0;
-      left: 280px;
+      right:0;
+      bottom:0;
+      left:280px;
 
       padding:
         12px 15px
@@ -735,89 +616,72 @@
       background:
         linear-gradient(
           transparent,
-          rgba(7,9,13,.98) 34%
+          rgba(7,9,13,.98) 35%
         );
 
-      z-index: 40;
+      z-index:40;
     }
 
     .composer-inner {
-      width: min(850px, 100%);
-
-      margin: auto;
+      width:min(850px,100%);
+      margin:auto;
     }
 
     .mode-row {
-      display: flex;
+      display:flex;
+      gap:7px;
 
-      gap: 7px;
+      margin-bottom:8px;
 
-      margin-bottom: 8px;
+      overflow-x:auto;
 
-      overflow-x: auto;
-
-      scrollbar-width: none;
+      scrollbar-width:none;
     }
 
     .mode-row::-webkit-scrollbar {
-      display: none;
+      display:none;
     }
 
     .mode {
-      flex-shrink: 0;
+      flex-shrink:0;
 
-      padding: 7px 10px;
+      padding:7px 10px;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:10px;
 
-      border-radius: 10px;
+      background:var(--panel);
+      color:var(--muted);
 
-      background: var(--panel);
-
-      color: var(--muted);
-
-      font-size: 11px;
+      font-size:11px;
     }
 
     .mode.active {
-      background: #10223a;
-
-      border-color: var(--blue);
-
-      color: var(--text);
+      background:#10223a;
+      border-color:var(--blue);
+      color:var(--text);
     }
 
     .input-box {
-      width: 100%;
+      width:100%;
+      min-height:60px;
 
-      min-height: 60px;
+      display:flex;
+      align-items:flex-end;
+      gap:7px;
 
-      display: flex;
+      padding:8px;
 
-      align-items: flex-end;
+      border:1px solid var(--border);
+      border-radius:20px;
 
-      gap: 7px;
+      background:var(--panel2);
 
-      padding: 8px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 20px;
-
-      background: var(--panel2);
-
-      box-shadow: var(--shadow);
-
-      transition:
-        border-color .2s,
-        box-shadow .2s;
+      box-shadow:var(--shadow);
     }
 
     .input-box:focus-within {
-      border-color:
-        rgba(22,140,255,.7);
+      border-color:var(--blue);
 
       box-shadow:
         0 0 0 3px
@@ -826,374 +690,297 @@
     }
 
     textarea {
-      flex: 1;
+      flex:1;
 
-      width: 100%;
+      width:100%;
+      min-width:0;
 
-      min-width: 0;
+      min-height:44px;
+      max-height:150px;
 
-      min-height: 44px;
+      resize:none;
+      overflow-y:auto;
 
-      max-height: 150px;
+      outline:none;
+      border:0;
 
-      resize: none;
+      background:transparent;
+      color:var(--text);
 
-      overflow-y: auto;
+      padding:11px 9px;
 
-      outline: none;
-
-      border: 0;
-
-      background: transparent;
-
-      color: var(--text);
-
-      padding: 11px 9px;
-
-      line-height: 1.5;
-
-      font-size: 16px;
-
-      appearance: none;
-
-      -webkit-appearance: none;
+      line-height:1.5;
+      font-size:16px;
     }
 
     textarea::placeholder {
-      color: #697585;
+      color:#697585;
     }
 
     .composer-btn {
-      width: 42px;
-      height: 42px;
+      width:42px;
+      height:42px;
 
-      flex-shrink: 0;
+      flex-shrink:0;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:13px;
 
-      border-radius: 13px;
+      background:var(--panel3);
+      color:var(--muted);
 
-      background: var(--panel3);
-
-      color: var(--muted);
-
-      font-size: 18px;
+      font-size:18px;
     }
 
     .composer-btn:hover {
-      color: var(--text);
-
-      border-color: var(--blue);
+      color:var(--text);
+      border-color:var(--blue);
     }
 
     .send {
-      background: var(--blue);
-
-      border-color: var(--blue);
-
-      color: white;
-
-      font-size: 18px;
-    }
-
-    .send:disabled {
-      opacity: .45;
+      background:var(--blue);
+      border-color:var(--blue);
+      color:white;
     }
 
     .stop {
-      background: #351820;
-
-      border-color: #63303a;
-
-      color: #ff8b94;
+      background:#351820;
+      border-color:#63303a;
+      color:#ff8b94;
     }
 
     .composer-note {
-      margin-top: 6px;
+      margin-top:6px;
 
-      color: #657080;
+      color:#657080;
 
-      text-align: center;
-
-      font-size: 9px;
+      text-align:center;
+      font-size:9px;
     }
 
-    /* =========================================
+    /* =========================
        PANELS
-    ========================================= */
+    ========================= */
 
     .overlay {
-      position: fixed;
+      position:fixed;
+      inset:0;
 
-      inset: 0;
+      background:rgba(0,0,0,.6);
 
-      background:
-        rgba(0,0,0,.6);
+      backdrop-filter:blur(5px);
 
-      backdrop-filter:
-        blur(5px);
-
-      z-index: 90;
+      z-index:90;
     }
 
-    .side-panel {
-      position: fixed;
+    .panel {
+      position:fixed;
 
-      top: 0;
-      right: 0;
-      bottom: 0;
+      top:0;
+      right:0;
+      bottom:0;
 
-      width:
-        min(390px, 94vw);
+      width:min(390px,94vw);
 
-      display: flex;
+      display:flex;
+      flex-direction:column;
 
-      flex-direction: column;
+      background:var(--panel);
 
-      background: var(--panel);
+      border-left:1px solid var(--border);
 
-      border-left:
-        1px solid var(--border);
+      box-shadow:var(--shadow);
 
-      box-shadow: var(--shadow);
-
-      z-index: 100;
+      z-index:100;
     }
 
     .panel-header {
-      height: 62px;
+      height:62px;
 
-      flex-shrink: 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
 
-      display: flex;
+      padding:0 15px;
 
-      align-items: center;
-
-      justify-content: space-between;
-
-      padding: 0 15px;
-
-      border-bottom:
-        1px solid var(--border);
+      border-bottom:1px solid var(--border);
     }
 
     .panel-body {
-      flex: 1;
-
-      overflow-y: auto;
-
-      padding: 16px;
+      flex:1;
+      overflow-y:auto;
+      padding:16px;
     }
 
     .panel-section {
-      margin-bottom: 22px;
+      margin-bottom:22px;
     }
 
     .panel-section h3 {
-      margin-bottom: 10px;
-
-      font-size: 13px;
+      margin-bottom:10px;
+      font-size:13px;
     }
 
     .setting {
-      display: flex;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
 
-      align-items: center;
+      gap:10px;
 
-      justify-content: space-between;
+      padding:12px;
+      margin-bottom:8px;
 
-      gap: 10px;
+      border:1px solid var(--border);
+      border-radius:13px;
 
-      padding: 12px;
-
-      margin-bottom: 8px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 13px;
-
-      background: var(--panel2);
+      background:var(--panel2);
     }
 
-    .setting-text {
-      min-width: 0;
+    .setting strong {
+      display:block;
+      font-size:12px;
     }
 
-    .setting-text strong {
-      display: block;
+    .setting small {
+      display:block;
+      margin-top:4px;
 
-      font-size: 12px;
-    }
+      color:var(--muted);
 
-    .setting-text small {
-      display: block;
-
-      margin-top: 4px;
-
-      color: var(--muted);
-
-      font-size: 10px;
-
-      line-height: 1.5;
+      font-size:10px;
+      line-height:1.5;
     }
 
     .select {
-      min-width: 110px;
+      min-width:110px;
 
-      padding: 8px;
+      padding:8px;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:9px;
 
-      border-radius: 9px;
+      outline:none;
 
-      outline: none;
-
-      background: var(--panel3);
-
-      color: var(--text);
+      background:var(--panel3);
+      color:var(--text);
     }
 
     .panel-button {
-      width: 100%;
+      width:100%;
 
-      padding: 11px;
+      padding:11px;
+      margin-top:7px;
 
-      border:
-        1px solid var(--border);
+      border:1px solid var(--border);
+      border-radius:11px;
 
-      border-radius: 11px;
-
-      background: var(--panel2);
-
-      color: var(--text);
-
-      margin-top: 7px;
+      background:var(--panel2);
+      color:var(--text);
     }
 
     .panel-button:hover {
-      border-color: var(--blue);
+      border-color:var(--blue);
     }
 
-    /* =========================================
+    /* =========================
        TOAST
-    ========================================= */
+    ========================= */
 
     .toast {
-      position: fixed;
+      position:fixed;
 
-      left: 50%;
+      left:50%;
+      bottom:105px;
 
-      bottom: 105px;
+      transform:translateX(-50%);
 
-      transform:
-        translateX(-50%);
+      max-width:90vw;
 
-      max-width: 90vw;
+      padding:10px 14px;
 
-      padding: 10px 14px;
+      border:1px solid var(--border);
+      border-radius:12px;
 
-      border:
-        1px solid var(--border);
+      background:var(--panel3);
+      color:var(--text);
 
-      border-radius: 12px;
+      box-shadow:var(--shadow);
 
-      background: var(--panel3);
+      z-index:200;
 
-      color: var(--text);
-
-      box-shadow: var(--shadow);
-
-      z-index: 200;
-
-      font-size: 12px;
-
-      text-align: center;
+      font-size:12px;
+      text-align:center;
     }
 
-    /* =========================================
+    /* =========================
        MOBILE
-    ========================================= */
+    ========================= */
 
-    @media (max-width: 760px) {
+    @media(max-width:760px) {
 
       .sidebar {
-        position: fixed;
+        position:fixed;
 
-        top: 0;
-        right: 0;
-        bottom: 0;
+        top:0;
+        right:0;
+        bottom:0;
 
-        transform:
-          translateX(105%);
-
-        box-shadow: var(--shadow);
+        transform:translateX(105%);
       }
 
       .sidebar.open {
-        transform:
-          translateX(0);
+        transform:translateX(0);
       }
 
       .mobile-menu {
-        display: flex;
+        display:flex;
       }
 
       .composer {
-        left: 0;
+        left:0;
       }
 
       .header {
-        height: 58px;
-
-        padding: 0 9px;
-      }
-
-      .message-user .bubble {
-        max-width: 90%;
+        height:58px;
+        padding:0 9px;
       }
 
       .quick-actions {
-        grid-template-columns: 1fr;
+        grid-template-columns:1fr;
+      }
+
+      .message-user .bubble {
+        max-width:90%;
       }
 
       .welcome {
-        padding-top: 6vh;
-      }
-
-      .chat {
-        padding-bottom: 185px;
+        padding-top:6vh;
       }
     }
 
-    @media (max-width: 430px) {
+    @media(max-width:430px) {
 
       .header-title {
-        display: none;
-      }
-
-      .connection {
-        font-size: 10px;
+        display:none;
       }
 
       .welcome h1 {
-        font-size: 29px;
+        font-size:29px;
       }
 
       .welcome p {
-        font-size: 13px;
+        font-size:13px;
       }
 
       .welcome-logo {
-        width: 62px;
-        height: 62px;
-        border-radius: 19px;
+        width:62px;
+        height:62px;
+        border-radius:19px;
       }
 
       .composer {
@@ -1206,24 +993,17 @@
       }
 
       .input-box {
-        min-height: 57px;
-
-        border-radius: 17px;
-      }
-
-      textarea {
-        font-size: 16px;
-
-        min-height: 41px;
+        min-height:57px;
+        border-radius:17px;
       }
 
       .composer-note {
-        display: none;
+        display:none;
       }
 
       .composer-btn {
-        width: 40px;
-        height: 40px;
+        width:40px;
+        height:40px;
       }
     }
   </style>
@@ -1231,121 +1011,252 @@
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <!-- =====================================
-         SIDEBAR
-    ====================================== -->
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
 
-    <aside
-      class="sidebar"
-      id="sidebar"
+  <aside
+    class="sidebar"
+    id="sidebar"
+  >
+
+    <div class="sidebar-top">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          A
+        </div>
+
+        <div class="brand-text">
+
+          <strong>
+            AMON AI
+          </strong>
+
+          <span>
+            العقل المركزي
+          </span>
+
+        </div>
+
+      </div>
+
+      <button
+        class="new-chat"
+        id="newChat"
+        type="button"
+      >
+        ＋ محادثة جديدة
+      </button>
+
+    </div>
+
+    <div class="sidebar-title">
+      المحادثات
+    </div>
+
+    <div
+      class="history"
+      id="history"
+    ></div>
+
+    <div class="sidebar-bottom">
+
+      <button
+        class="sidebar-action"
+        id="openSettings"
+        type="button"
+      >
+        ⚙️ الإعدادات
+      </button>
+
+      <button
+        class="sidebar-action"
+        id="openInfo"
+        type="button"
+      >
+        ℹ️ عن AMON
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- =========================
+       MAIN
+  ========================== -->
+
+  <main class="main">
+
+    <header class="header">
+
+      <div class="header-left">
+
+        <button
+          class="icon-btn mobile-menu"
+          id="menuButton"
+          type="button"
+          aria-label="القائمة"
+        >
+          ☰
+        </button>
+
+        <div class="header-title">
+          AMON
+        </div>
+
+        <div
+          class="connection"
+          id="connection"
+        >
+
+          <span class="connection-dot"></span>
+
+          <span id="status">
+            جارٍ الفحص...
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="header-right">
+
+        <button
+          class="icon-btn"
+          id="healthButton"
+          type="button"
+          title="فحص الاتصال"
+        >
+          ◉
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- =========================
+         CHAT
+    ========================== -->
+
+    <section
+      class="chat"
+      id="chat"
     >
 
-      <div class="sidebar-top">
+      <div
+        class="chat-inner"
+        id="chatInner"
+      >
 
-        <div class="brand">
+        <div
+          class="welcome"
+          id="welcome"
+        >
 
-          <div class="brand-mark">
+          <div class="welcome-logo">
             A
           </div>
 
-          <div class="brand-text">
+          <h1>
+            مرحبًا بك في AMON
+          </h1>
 
-            <strong>
-              AMON AI
-            </strong>
+          <p>
+            العقل المركزي لمنصة AMON AI.
+            اكتب سؤالك وسأحاول مساعدتك باستخدام
+            المحرك المتصل حاليًا.
+          </p>
 
-            <span>
-              منصة الذكاء والتعلم
-            </span>
+
+          <div class="quick-actions">
+
+            <button
+              class="quick-action"
+              data-prompt="اشرح لي فكرة AMON بطريقة بسيطة"
+              type="button"
+            >
+              🧠 تعلّم
+              <small>
+                اشرح لي فكرة أو موضوعًا
+              </small>
+            </button>
+
+            <button
+              class="quick-action"
+              data-prompt="اشرح لي هذا الموضوع بالتفصيل وبطريقة سهلة"
+              type="button"
+            >
+              📖 شرح
+              <small>
+                شرح واضح ومبسط
+              </small>
+            </button>
+
+            <button
+              class="quick-action"
+              data-prompt="حلل هذا الموضوع بطريقة بحثية واذكر ما الذي نحتاج إلى التحقق منه"
+              type="button"
+            >
+              🔎 بحث
+              <small>
+                تحليل بحثي
+              </small>
+            </button>
+
+            <button
+              class="quick-action"
+              data-prompt="قارن بين الخيارين واذكر المزايا والعيوب"
+              type="button"
+            >
+              ⚖️ مقارنة
+              <small>
+                مقارنة منظمة
+              </small>
+            </button>
 
           </div>
 
         </div>
 
-        <button
-          class="new-chat"
-          id="newChat"
-          type="button"
-        >
-          ＋ محادثة جديدة
-        </button>
+        <div id="messages"></div>
 
       </div>
 
-      <div class="sidebar-title">
-        المحادثات
-      </div>
-
-      <div
-        class="history"
-        id="history"
-      ></div>
-
-      <div class="sidebar-bottom">
-
-        <button
-          class="sidebar-action"
-          id="openSettings"
-          type="button"
-        >
-          ⚙️ الإعدادات
-        </button>
-
-        <button
-          class="sidebar-action"
-          id="openInfo"
-          type="button"
-        >
-          ℹ️ عن AMON
-        </button>
-
-      </div>
-
-    </aside>
+    </section>
 
 
-    <!-- =====================================
-         MAIN
-    ====================================== -->
+    <!-- =========================
+         COMPOSER
+    ========================== -->
 
-    <main class="main">
+    <div class="composer">
 
-      <header class="header">
+      <div class="composer-inner">
 
-        <div class="header-left">
+        <div class="mode-row">
 
           <button
-            class="icon-btn mobile-menu"
-            id="menuButton"
+            class="mode active"
+            data-mode="learn"
             type="button"
-            aria-label="القائمة"
           >
-            ☰
+            تعلم
           </button>
 
-          <div class="header-title">
-            AMON
-          </div>
-
-          <div
-            class="connection"
-            id="connection"
+          <button
+            class="mode"
+            data-mode="explain"
+            type="button"
           >
-
-            <span class="connection-dot"></span>
-
-            <span id="status">
-              النظام جاهز
-            </span>
-
-          </div>
-
-        </div>
-
-        <div class="header-right">
+            شرح
+          </button>
 
           <button
-            class="icon-btn"
-            
+            class="mode"
+   
