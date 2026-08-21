@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-  <meta name="theme-color" content="#080b10">
-  <meta name="description"
-        content="AMON AI - منصة تعليمية وذكاء اصطناعي">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#07090d">
+
+  <meta
+    name="description"
+    content="AMON AI - منصة الذكاء والتعلم والبحث"
+  >
 
   <title>AMON AI</title>
 
@@ -16,29 +21,37 @@
     :root {
       --bg: #07090d;
       --panel: #0d1118;
-      --panel-2: #121821;
-      --panel-3: #171f2a;
-      --border: #232d3a;
+      --panel2: #121821;
+      --panel3: #171f2a;
+      --border: #26303d;
+
       --text: #f5f7fa;
-      --muted: #8c98a8;
+      --muted: #8995a5;
+
       --blue: #168cff;
       --green: #19d36b;
-      --danger: #ff5b67;
-      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --red: #ff5967;
+      --yellow: #f5c451;
+
       --radius: 18px;
+      --shadow: 0 15px 50px rgba(0,0,0,.38);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html,
     body {
       width: 100%;
       height: 100%;
+      min-height: 100%;
       overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
     }
 
     body {
@@ -47,81 +60,119 @@
         "Segoe UI",
         Tahoma,
         sans-serif;
-
-      background: var(--bg);
-      color: var(--text);
     }
 
     button,
+    input,
     textarea,
-    input {
+    select {
       font: inherit;
     }
 
     button {
+      border: 0;
       cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .5;
     }
 
     .hidden {
       display: none !important;
     }
 
-    /* ==========================================
+    /* =========================================
        APP
-    ========================================== */
+    ========================================= */
 
     .app {
       width: 100%;
       height: 100dvh;
+      min-height: 100dvh;
+
       display: flex;
-      overflow: hidden;
+
       position: relative;
-      background: var(--bg);
+
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at 50% -20%,
+          rgba(22,140,255,.08),
+          transparent 40%
+        ),
+        var(--bg);
     }
 
-    /* ==========================================
+    /* =========================================
        SIDEBAR
-    ========================================== */
+    ========================================= */
 
     .sidebar {
       width: 280px;
+      height: 100%;
+
       flex-shrink: 0;
-      background: var(--panel);
-      border-left: 1px solid var(--border);
+
       display: flex;
       flex-direction: column;
-      z-index: 30;
+
+      background: rgba(13,17,24,.98);
+
+      border-left: 1px solid var(--border);
+
+      z-index: 80;
+
+      transition: transform .25s ease;
     }
 
     .sidebar-top {
       padding: 16px;
+
       border-bottom: 1px solid var(--border);
     }
 
     .brand {
       display: flex;
       align-items: center;
+
       gap: 10px;
+
       margin-bottom: 16px;
     }
 
-    .brand-mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .brand-mark,
+    .welcome-logo,
+    .amon-avatar {
       background:
         linear-gradient(
           135deg,
           var(--blue),
           var(--green)
         );
-      color: #001;
+
+      color: #00120a;
+
       font-weight: 900;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+
+      border-radius: 12px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 19px;
+
       box-shadow:
-        0 0 22px rgba(22,140,255,.18);
+        0 0 30px rgba(22,140,255,.15);
     }
 
     .brand-text strong {
@@ -130,115 +181,157 @@
     }
 
     .brand-text span {
+      display: block;
+
+      margin-top: 3px;
+
       color: var(--muted);
+
       font-size: 11px;
     }
 
     .new-chat {
       width: 100%;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      border-radius: 13px;
+
       padding: 12px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 13px;
+
+      background: var(--panel2);
+
+      color: var(--text);
+
       transition: .2s;
     }
 
     .new-chat:hover {
       border-color: var(--blue);
-      background: var(--panel-3);
+      background: var(--panel3);
     }
 
     .sidebar-title {
-      color: var(--muted);
-      font-size: 12px;
       padding: 16px 16px 8px;
+
+      color: var(--muted);
+
+      font-size: 12px;
     }
 
     .history {
       flex: 1;
+
       overflow-y: auto;
+
       padding: 0 10px 10px;
     }
 
     .history-item {
       width: 100%;
-      border: 0;
-      background: transparent;
-      color: var(--text);
-      text-align: right;
-      padding: 11px;
-      border-radius: 11px;
+
+      display: block;
+
       margin-bottom: 4px;
+
+      padding: 11px;
+
+      border-radius: 11px;
+
+      background: transparent;
+
+      color: var(--text);
+
+      text-align: right;
+
       white-space: nowrap;
+
       overflow: hidden;
+
       text-overflow: ellipsis;
     }
 
     .history-item:hover,
     .history-item.active {
-      background: var(--panel-2);
+      background: var(--panel2);
     }
 
     .sidebar-bottom {
-      border-top: 1px solid var(--border);
       padding: 12px;
+
+      border-top: 1px solid var(--border);
     }
 
     .sidebar-action {
       width: 100%;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      text-align: right;
-      padding: 10px;
+
+      display: block;
+
+      padding: 11px;
+
+      margin-bottom: 4px;
+
       border-radius: 10px;
+
+      background: transparent;
+
+      color: var(--muted);
+
+      text-align: right;
     }
 
     .sidebar-action:hover {
-      background: var(--panel-2);
+      background: var(--panel2);
       color: var(--text);
     }
 
-    /* ==========================================
+    /* =========================================
        MAIN
-    ========================================== */
+    ========================================= */
 
     .main {
       min-width: 0;
+
       flex: 1;
+
       height: 100%;
+
       display: flex;
       flex-direction: column;
+
+      position: relative;
     }
 
-    /* ==========================================
+    /* =========================================
        HEADER
-    ========================================== */
+    ========================================= */
 
     .header {
-      height: 64px;
+      height: 62px;
+
       flex-shrink: 0;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 0 16px;
+
+      padding: 0 15px;
+
       background: rgba(7,9,13,.92);
+
       border-bottom: 1px solid var(--border);
+
       backdrop-filter: blur(16px);
-      z-index: 20;
+
+      z-index: 30;
     }
 
     .header-left,
     .header-right {
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
 
-    .mobile-menu {
-      display: none;
+      gap: 7px;
     }
 
     .header-title {
@@ -248,233 +341,357 @@
     .connection {
       display: flex;
       align-items: center;
+
       gap: 6px;
+
       color: var(--green);
-      font-size: 12px;
+
+      font-size: 11px;
     }
 
     .connection-dot {
       width: 7px;
       height: 7px;
+
       border-radius: 50%;
+
       background: var(--green);
-      box-shadow: 0 0 10px var(--green);
+
+      box-shadow:
+        0 0 10px var(--green);
+    }
+
+    .connection.offline {
+      color: var(--red);
+    }
+
+    .connection.offline .connection-dot {
+      background: var(--red);
+
+      box-shadow:
+        0 0 10px var(--red);
     }
 
     .icon-btn {
       width: 38px;
       height: 38px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
       border: 1px solid transparent;
+
       border-radius: 11px;
+
       background: transparent;
+
       color: var(--muted);
+
+      font-size: 17px;
     }
 
     .icon-btn:hover {
-      background: var(--panel-2);
+      background: var(--panel2);
+
       color: var(--text);
+
       border-color: var(--border);
     }
 
-    /* ==========================================
+    .mobile-menu {
+      display: none;
+    }
+
+    /* =========================================
        CHAT
-    ========================================== */
+    ========================================= */
 
     .chat {
       flex: 1;
+
       overflow-y: auto;
-      padding: 28px 16px 190px;
+
+      padding:
+        25px 15px
+        190px;
+
       scroll-behavior: smooth;
+
+      overscroll-behavior: contain;
     }
 
     .chat-inner {
       width: min(850px, 100%);
+
       margin: auto;
     }
 
     .welcome {
       text-align: center;
-      padding: 9vh 12px 30px;
+
+      padding:
+        8vh 10px
+        30px;
     }
 
     .welcome-logo {
       width: 70px;
       height: 70px;
-      margin: auto auto 18px;
-      border-radius: 22px;
+
+      margin: 0 auto 18px;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      background:
-        linear-gradient(
-          135deg,
-          var(--blue),
-          var(--green)
-        );
-      color: #001;
+
+      border-radius: 22px;
+
       font-size: 30px;
-      font-weight: 900;
+
       box-shadow:
-        0 15px 50px rgba(22,140,255,.15);
+        0 20px 60px rgba(22,140,255,.12);
     }
 
     .welcome h1 {
-      font-size: clamp(29px, 5vw, 46px);
       margin-bottom: 12px;
+
+      font-size:
+        clamp(29px, 5vw, 45px);
     }
 
     .welcome p {
-      color: var(--muted);
-      line-height: 1.9;
       max-width: 620px;
+
       margin: auto;
+
+      color: var(--muted);
+
+      line-height: 1.9;
+
+      font-size: 14px;
     }
+
+    /* =========================================
+       QUICK ACTIONS
+    ========================================= */
 
     .quick-actions {
       display: grid;
+
       grid-template-columns:
         repeat(2, minmax(0,1fr));
+
       gap: 10px;
+
       max-width: 650px;
+
       margin: 28px auto;
     }
 
     .quick-action {
-      text-align: right;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      border-radius: 15px;
       padding: 14px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 15px;
+
+      background: var(--panel);
+
+      color: var(--text);
+
+      text-align: right;
+
       transition: .2s;
     }
 
     .quick-action:hover {
       border-color: var(--blue);
+
+      background: var(--panel2);
+
       transform: translateY(-1px);
     }
 
     .quick-action small {
       display: block;
-      color: var(--muted);
+
       margin-top: 5px;
+
+      color: var(--muted);
+
       font-size: 11px;
     }
 
-    /* ==========================================
+    /* =========================================
        MESSAGES
-    ========================================== */
+    ========================================= */
 
     .message {
       margin: 18px 0;
-      animation: appear .2s ease;
+
+      animation:
+        messageAppear .2s ease;
     }
 
-    @keyframes appear {
+    @keyframes messageAppear {
       from {
         opacity: 0;
-        transform: translateY(5px);
+
+        transform:
+          translateY(6px);
       }
 
       to {
         opacity: 1;
-        transform: translateY(0);
+
+        transform:
+          translateY(0);
       }
     }
 
     .message-user {
       display: flex;
+
       justify-content: flex-start;
     }
 
     .message-user .bubble {
-      max-width: 78%;
-      background: #132238;
-      border: 1px solid #1b3a5e;
-      border-radius: 18px 18px 4px 18px;
+      max-width: 80%;
+
       padding: 13px 15px;
+
+      border:
+        1px solid #1b3a5e;
+
+      border-radius:
+        18px
+        18px
+        4px
+        18px;
+
+      background: #132238;
+
       line-height: 1.8;
+
       white-space: pre-wrap;
+
+      overflow-wrap: anywhere;
     }
 
     .message-amon {
       display: flex;
-      justify-content: flex-start;
-      gap: 10px;
+
+      align-items: flex-start;
+
+      gap: 9px;
     }
 
     .amon-avatar {
       width: 34px;
       height: 34px;
+
       flex-shrink: 0;
-      border-radius: 11px;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, var(--blue), var(--green));
-      color: #001;
-      font-weight: 900;
+
+      border-radius: 11px;
+
+      font-size: 14px;
     }
 
     .message-amon-content {
       min-width: 0;
+
       flex: 1;
     }
 
     .message-amon .bubble {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px 18px 18px 4px;
       padding: 15px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius:
+        18px
+        18px
+        18px
+        4px;
+
+      background: var(--panel);
+
       line-height: 1.9;
+
       white-space: pre-wrap;
+
       overflow-wrap: anywhere;
     }
 
     .message-meta {
-      color: var(--muted);
-      font-size: 10px;
       margin: 5px 8px;
+
+      color: var(--muted);
+
+      font-size: 10px;
     }
 
     .message-actions {
       display: flex;
+
       flex-wrap: wrap;
+
       gap: 5px;
+
       margin-top: 7px;
     }
 
     .message-action {
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      border-radius: 9px;
       padding: 6px 9px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 9px;
+
+      background: transparent;
+
+      color: var(--muted);
+
       font-size: 11px;
     }
 
     .message-action:hover {
+      background: var(--panel2);
+
       color: var(--text);
-      background: var(--panel-2);
     }
 
-    /* ==========================================
+    /* =========================================
        TYPING
-    ========================================== */
+    ========================================= */
 
     .typing {
+      height: 22px;
+
       display: flex;
-      gap: 4px;
+
       align-items: center;
-      height: 20px;
+
+      gap: 4px;
     }
 
     .typing span {
       width: 6px;
       height: 6px;
+
       border-radius: 50%;
+
       background: var(--muted);
-      animation: typing 1s infinite;
+
+      animation:
+        typing 1s infinite;
     }
 
     .typing span:nth-child(2) {
@@ -486,7 +703,9 @@
     }
 
     @keyframes typing {
-      0%, 70%, 100% {
+      0%,
+      70%,
+      100% {
         opacity: .25;
       }
 
@@ -495,36 +714,48 @@
       }
     }
 
-    /* ==========================================
+    /* =========================================
        COMPOSER
-    ========================================== */
+    ========================================= */
 
     .composer {
       position: fixed;
+
       right: 0;
       bottom: 0;
       left: 280px;
+
       padding:
-        14px 16px
-        calc(14px + env(safe-area-inset-bottom));
+        12px 15px
+        calc(
+          10px +
+          env(safe-area-inset-bottom)
+        );
+
       background:
         linear-gradient(
           transparent,
-          rgba(7,9,13,.96) 35%
+          rgba(7,9,13,.98) 34%
         );
-      z-index: 15;
+
+      z-index: 40;
     }
 
     .composer-inner {
       width: min(850px, 100%);
+
       margin: auto;
     }
 
     .mode-row {
       display: flex;
+
       gap: 7px;
+
       margin-bottom: 8px;
+
       overflow-x: auto;
+
       scrollbar-width: none;
     }
 
@@ -534,43 +765,98 @@
 
     .mode {
       flex-shrink: 0;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--muted);
-      border-radius: 10px;
+
       padding: 7px 10px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 10px;
+
+      background: var(--panel);
+
+      color: var(--muted);
+
       font-size: 11px;
     }
 
     .mode.active {
-      color: var(--text);
-      border-color: var(--blue);
       background: #10223a;
+
+      border-color: var(--blue);
+
+      color: var(--text);
     }
 
     .input-box {
+      width: 100%;
+
+      min-height: 60px;
+
       display: flex;
+
       align-items: flex-end;
+
       gap: 7px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+
       padding: 8px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 20px;
+
+      background: var(--panel2);
+
       box-shadow: var(--shadow);
+
+      transition:
+        border-color .2s,
+        box-shadow .2s;
+    }
+
+    .input-box:focus-within {
+      border-color:
+        rgba(22,140,255,.7);
+
+      box-shadow:
+        0 0 0 3px
+        rgba(22,140,255,.08),
+        var(--shadow);
     }
 
     textarea {
       flex: 1;
+
+      width: 100%;
+
       min-width: 0;
-      min-height: 46px;
+
+      min-height: 44px;
+
       max-height: 150px;
+
       resize: none;
+
+      overflow-y: auto;
+
       outline: none;
+
       border: 0;
+
       background: transparent;
+
       color: var(--text);
-      padding: 12px 9px;
+
+      padding: 11px 9px;
+
       line-height: 1.5;
+
+      font-size: 16px;
+
+      appearance: none;
+
+      -webkit-appearance: none;
     }
 
     textarea::placeholder {
@@ -580,81 +866,127 @@
     .composer-btn {
       width: 42px;
       height: 42px;
+
       flex-shrink: 0;
-      border: 1px solid var(--border);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border:
+        1px solid var(--border);
+
       border-radius: 13px;
-      background: var(--panel-3);
+
+      background: var(--panel3);
+
       color: var(--muted);
+
+      font-size: 18px;
     }
 
     .composer-btn:hover {
       color: var(--text);
+
+      border-color: var(--blue);
     }
 
     .send {
       background: var(--blue);
+
       border-color: var(--blue);
+
       color: white;
-      font-size: 17px;
+
+      font-size: 18px;
     }
 
     .send:disabled {
       opacity: .45;
-      cursor: not-allowed;
     }
 
     .stop {
-      background: #3a1820;
-      border-color: #65303a;
+      background: #351820;
+
+      border-color: #63303a;
+
       color: #ff8b94;
     }
 
     .composer-note {
-      text-align: center;
+      margin-top: 6px;
+
       color: #657080;
+
+      text-align: center;
+
       font-size: 9px;
-      margin-top: 7px;
     }
 
-    /* ==========================================
+    /* =========================================
        PANELS
-    ========================================== */
+    ========================================= */
 
     .overlay {
       position: fixed;
+
       inset: 0;
-      background: rgba(0,0,0,.58);
-      backdrop-filter: blur(4px);
-      z-index: 50;
+
+      background:
+        rgba(0,0,0,.6);
+
+      backdrop-filter:
+        blur(5px);
+
+      z-index: 90;
     }
 
     .side-panel {
       position: fixed;
+
       top: 0;
-      bottom: 0;
       right: 0;
-      width: min(380px, 92vw);
-      background: var(--panel);
-      border-left: 1px solid var(--border);
-      z-index: 60;
+      bottom: 0;
+
+      width:
+        min(390px, 94vw);
+
       display: flex;
+
       flex-direction: column;
+
+      background: var(--panel);
+
+      border-left:
+        1px solid var(--border);
+
       box-shadow: var(--shadow);
+
+      z-index: 100;
     }
 
     .panel-header {
-      height: 64px;
+      height: 62px;
+
       flex-shrink: 0;
+
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
+
       padding: 0 15px;
-      border-bottom: 1px solid var(--border);
+
+      border-bottom:
+        1px solid var(--border);
     }
 
     .panel-body {
       flex: 1;
+
       overflow-y: auto;
+
       padding: 16px;
     }
 
@@ -663,80 +995,154 @@
     }
 
     .panel-section h3 {
-      font-size: 13px;
       margin-bottom: 10px;
+
+      font-size: 13px;
     }
 
     .setting {
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
+
       gap: 10px;
+
       padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 13px;
+
       margin-bottom: 8px;
-      background: var(--panel-2);
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 13px;
+
+      background: var(--panel2);
     }
 
-    .setting small {
+    .setting-text {
+      min-width: 0;
+    }
+
+    .setting-text strong {
       display: block;
+
+      font-size: 12px;
+    }
+
+    .setting-text small {
+      display: block;
+
+      margin-top: 4px;
+
       color: var(--muted);
-      margin-top: 3px;
+
+      font-size: 10px;
+
+      line-height: 1.5;
     }
 
-    .select,
-    .text-input {
-      border: 1px solid var(--border);
-      background: var(--panel-3);
-      color: var(--text);
-      border-radius: 9px;
+    .select {
+      min-width: 110px;
+
       padding: 8px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 9px;
+
       outline: none;
+
+      background: var(--panel3);
+
+      color: var(--text);
     }
 
-    /* ==========================================
+    .panel-button {
+      width: 100%;
+
+      padding: 11px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 11px;
+
+      background: var(--panel2);
+
+      color: var(--text);
+
+      margin-top: 7px;
+    }
+
+    .panel-button:hover {
+      border-color: var(--blue);
+    }
+
+    /* =========================================
        TOAST
-    ========================================== */
+    ========================================= */
 
     .toast {
       position: fixed;
+
       left: 50%;
+
       bottom: 105px;
-      transform: translateX(-50%);
-      z-index: 100;
-      background: var(--panel-3);
-      border: 1px solid var(--border);
-      color: var(--text);
+
+      transform:
+        translateX(-50%);
+
+      max-width: 90vw;
+
       padding: 10px 14px;
+
+      border:
+        1px solid var(--border);
+
       border-radius: 12px;
-      font-size: 12px;
+
+      background: var(--panel3);
+
+      color: var(--text);
+
       box-shadow: var(--shadow);
+
+      z-index: 200;
+
+      font-size: 12px;
+
+      text-align: center;
     }
 
-    /* ==========================================
+    /* =========================================
        MOBILE
-    ========================================== */
+    ========================================= */
 
     @media (max-width: 760px) {
 
       .sidebar {
         position: fixed;
+
         top: 0;
-        bottom: 0;
         right: 0;
-        transform: translateX(105%);
-        transition: transform .25s ease;
-        z-index: 70;
+        bottom: 0;
+
+        transform:
+          translateX(105%);
+
         box-shadow: var(--shadow);
       }
 
       .sidebar.open {
-        transform: translateX(0);
+        transform:
+          translateX(0);
       }
 
       .mobile-menu {
-        display: block;
+        display: flex;
       }
 
       .composer {
@@ -744,11 +1150,9 @@
       }
 
       .header {
-        padding: 0 10px;
-      }
+        height: 58px;
 
-      .header-title {
-        font-size: 14px;
+        padding: 0 9px;
       }
 
       .message-user .bubble {
@@ -760,7 +1164,7 @@
       }
 
       .welcome {
-        padding-top: 7vh;
+        padding-top: 6vh;
       }
 
       .chat {
@@ -769,10 +1173,6 @@
     }
 
     @media (max-width: 430px) {
-
-      .header {
-        height: 58px;
-      }
 
       .header-title {
         display: none;
@@ -790,275 +1190,162 @@
         font-size: 13px;
       }
 
+      .welcome-logo {
+        width: 62px;
+        height: 62px;
+        border-radius: 19px;
+      }
+
       .composer {
         padding:
-          8px
-          8px
-          calc(8px + env(safe-area-inset-bottom));
+          7px 7px
+          calc(
+            7px +
+            env(safe-area-inset-bottom)
+          );
       }
 
       .input-box {
+        min-height: 57px;
+
         border-radius: 17px;
       }
 
       textarea {
-        font-size: 15px;
+        font-size: 16px;
+
+        min-height: 41px;
       }
 
       .composer-note {
         display: none;
       }
-    }
 
+      .composer-btn {
+        width: 40px;
+        height: 40px;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-<div class="app">
+  <div class="app">
 
-  <!-- ========================================
-       SIDEBAR
-  ========================================= -->
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
 
-  <aside class="sidebar" id="sidebar">
+    <aside
+      class="sidebar"
+      id="sidebar"
+    >
 
-    <div class="sidebar-top">
+      <div class="sidebar-top">
 
-      <div class="brand">
+        <div class="brand">
 
-        <div class="brand-mark">
-          A
-        </div>
-
-        <div class="brand-text">
-          <strong>AMON AI</strong>
-          <span>منصة الذكاء والتعلم</span>
-        </div>
-
-      </div>
-
-      <button
-        class="new-chat"
-        id="newChat">
-        ＋ محادثة جديدة
-      </button>
-
-    </div>
-
-    <div class="sidebar-title">
-      المحادثات
-    </div>
-
-    <div
-      class="history"
-      id="history">
-    </div>
-
-    <div class="sidebar-bottom">
-
-      <button
-        class="sidebar-action"
-        id="openSettings">
-        ⚙️ الإعدادات
-      </button>
-
-      <button
-        class="sidebar-action"
-        id="openInfo">
-        ℹ️ عن AMON
-      </button>
-
-    </div>
-
-  </aside>
-
-
-  <!-- ========================================
-       MAIN
-  ========================================= -->
-
-  <main class="main">
-
-    <header class="header">
-
-      <div class="header-left">
-
-        <button
-          class="icon-btn mobile-menu"
-          id="menuButton">
-          ☰
-        </button>
-
-        <div class="header-title">
-          AMON
-        </div>
-
-        <div class="connection">
-
-          <span class="connection-dot"></span>
-
-          <span id="status">
-            النظام جاهز
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <div class="header-right">
-
-        <button
-          class="icon-btn"
-          id="searchButton"
-          title="بحث">
-          🔎
-        </button>
-
-        <button
-          class="icon-btn"
-          id="themeButton"
-          title="الوضع الليلي">
-          ◐
-        </button>
-
-        <button
-          class="icon-btn"
-          id="settingsButton"
-          title="الإعدادات">
-          ⚙
-        </button>
-
-      </div>
-
-    </header>
-
-
-    <!-- ======================================
-         CHAT
-    ======================================= -->
-
-    <section
-      class="chat"
-      id="chat">
-
-      <div
-        class="chat-inner"
-        id="chatInner">
-
-        <div
-          class="welcome"
-          id="welcome">
-
-          <div class="welcome-logo">
+          <div class="brand-mark">
             A
           </div>
 
-          <h1>
-            مرحبًا بك في AMON
-          </h1>
+          <div class="brand-text">
 
-          <p>
-            مساعدك الذكي للتعلم والبحث والفهم.
-            اطرح سؤالًا، اطلب شرحًا، أو ابدأ موضوعًا جديدًا.
-          </p>
+            <strong>
+              AMON AI
+            </strong>
 
-
-          <div class="quick-actions">
-
-            <button
-              class="quick-action"
-              data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة">
-              🎓 شرح موضوع
-              <small>
-                تعلم بطريقة مبسطة
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="ساعدني على فهم هذا الموضوع مع أمثلة">
-              💡 فهم وأمثلة
-              <small>
-                أمثلة وتطبيقات
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="قارن بين المعلومات المختلفة واذكر نقاط الاتفاق والاختلاف">
-              ⚖️ مقارنة
-              <small>
-                مقارنة المعلومات مستقبلًا
-              </small>
-            </button>
-
-            <button
-              class="quick-action"
-              data-prompt="ساعدني في إنشاء خطة لتعلم هذا الموضوع">
-              🧭 خطة تعلم
-              <small>
-                بناء مسار تعليمي
-              </small>
-            </button>
+            <span>
+              منصة الذكاء والتعلم
+            </span>
 
           </div>
 
         </div>
 
+        <button
+          class="new-chat"
+          id="newChat"
+          type="button"
+        >
+          ＋ محادثة جديدة
+        </button>
+
       </div>
 
-    </section>
+      <div class="sidebar-title">
+        المحادثات
+      </div>
+
+      <div
+        class="history"
+        id="history"
+      ></div>
+
+      <div class="sidebar-bottom">
+
+        <button
+          class="sidebar-action"
+          id="openSettings"
+          type="button"
+        >
+          ⚙️ الإعدادات
+        </button>
+
+        <button
+          class="sidebar-action"
+          id="openInfo"
+          type="button"
+        >
+          ℹ️ عن AMON
+        </button>
+
+      </div>
+
+    </aside>
 
 
-    <!-- ======================================
-         COMPOSER
-    ======================================= -->
+    <!-- =====================================
+         MAIN
+    ====================================== -->
 
-    <div class="composer">
+    <main class="main">
 
-      <div class="composer-inner">
+      <header class="header">
 
-        <div class="mode-row">
+        <div class="header-left">
 
           <button
-            class="mode active"
-            data-mode="learn">
-            🎓 تعلم
+            class="icon-btn mobile-menu"
+            id="menuButton"
+            type="button"
+            aria-label="القائمة"
+          >
+            ☰
           </button>
 
-          <button
-            class="mode"
-            data-mode="explain">
-            💡 شرح
-          </button>
+          <div class="header-title">
+            AMON
+          </div>
 
-          <button
-            class="mode"
-            data-mode="research">
-            🔎 بحث
-          </button>
+          <div
+            class="connection"
+            id="connection"
+          >
 
-          <button
-            class="mode"
-            data-mode="compare">
-            ⚖️ مقارنة
-          </button>
+            <span class="connection-dot"></span>
+
+            <span id="status">
+              النظام جاهز
+            </span>
+
+          </div>
 
         </div>
 
-
-        <div class="input-box">
+        <div class="header-right">
 
           <button
-            class="composer-btn"
-            id="attachButton"
-            title="إرفاق ملف">
-            ＋
-          </button>
-
-          <textarea
-            id="input"
-            rows="1"
-            plac
+            class="icon-btn"
+            
