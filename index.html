@@ -1,1382 +1,185 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width,
-             initial-scale=1,
-             maximum-scale=1,
-             viewport-fit=cover"
-  >
-
-  <meta name="theme-color" content="#07090d">
-
-  <title>AMON AI</title>
-
-  <style>
-
-    /* =========================================================
-       AMON AI
-       MOBILE FIRST UI
-       ========================================================= */
-
-    :root {
-      --bg: #07090d;
-      --panel: #0d1118;
-      --panel-2: #121821;
-      --border: #27313d;
-
-      --text: #f5f7fa;
-      --muted: #8d99a8;
-
-      --blue: #168cff;
-      --green: #19d36b;
-      --red: #ff5967;
-
-      --header-height: 60px;
-    }
-
-
-    /* =========================================================
-       RESET
-       ========================================================= */
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-
-      overflow: hidden;
-
-      background: var(--bg);
-      color: var(--text);
-
-      font-family:
-        Arial,
-        "Segoe UI",
-        Tahoma,
-        sans-serif;
-    }
-
-
-    body {
-      min-height: 100dvh;
-    }
-
-
-    button,
-    textarea {
-      font: inherit;
-    }
-
-
-    button {
-      border: 0;
-      outline: none;
-      cursor: pointer;
-    }
-
-
-    .hidden {
-      display: none !important;
-    }
-
-
-    /* =========================================================
-       MAIN APP
-       ========================================================= */
-
-    .app {
-      width: 100%;
-      height: 100dvh;
-
-      display: flex;
-
-      overflow: hidden;
-    }
-
-
-    /* =========================================================
-       SIDEBAR
-       ========================================================= */
-
-    .sidebar {
-      width: 280px;
-      height: 100%;
-
-      flex-shrink: 0;
-
-      display: flex;
-      flex-direction: column;
-
-      background: var(--panel);
-
-      border-left: 1px solid var(--border);
-
-      z-index: 100;
-    }
-
-
-    .sidebar-top {
-      padding: 15px;
-
-      border-bottom:
-        1px solid var(--border);
-    }
-
-
-    .brand {
-      display: flex;
-      align-items: center;
-
-      gap: 10px;
-
-      margin-bottom: 15px;
-    }
-
-
-    .brand-logo {
-      width: 42px;
-      height: 42px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 12px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--blue),
-          var(--green)
-        );
-
-      color: #00150b;
-
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-
-    .brand-title {
-      font-weight: 900;
-      font-size: 15px;
-    }
-
-
-    .brand-subtitle {
-      margin-top: 3px;
-
-      color: var(--muted);
-
-      font-size: 10px;
-    }
-
-
-    .new-chat {
-      width: 100%;
-
-      padding: 12px;
-
-      border-radius: 12px;
-
-      background: var(--panel-2);
-
-      border:
-        1px solid var(--border);
-
-      color: var(--text);
-    }
-
-
-    .new-chat:active {
-      transform: scale(.98);
-    }
-
-
-    .sidebar-title {
-      padding:
-        14px 14px 7px;
-
-      color: var(--muted);
-
-      font-size: 12px;
-    }
-
-
-    .history {
-      flex: 1;
-
-      overflow-y: auto;
-
-      padding: 8px;
-    }
-
-
-    .history-empty {
-      padding: 12px;
-
-      color: var(--muted);
-
-      font-size: 11px;
-    }
-
-
-    .history-item {
-      width: 100%;
-
-      padding: 11px;
-
-      margin-bottom: 4px;
-
-      border-radius: 10px;
-
-      background: transparent;
-
-      color: var(--muted);
-
-      text-align: right;
-
-      overflow: hidden;
-
-      white-space: nowrap;
-
-      text-overflow: ellipsis;
-    }
-
-
-    .history-item:hover,
-    .history-item:active {
-      background: var(--panel-2);
-
-      color: var(--text);
-    }
-
-
-    .sidebar-bottom {
-      padding: 10px;
-
-      border-top:
-        1px solid var(--border);
-    }
-
-
-    .sidebar-button {
-      width: 100%;
-
-      padding: 11px;
-
-      border-radius: 10px;
-
-      background: transparent;
-
-      color: var(--muted);
-
-      text-align: right;
-    }
-
-
-    .sidebar-button:active {
-      background: var(--panel-2);
-
-      color: var(--text);
-    }
-
-
-    /* =========================================================
-       MAIN
-       ========================================================= */
-
-    .main {
-      position: relative;
-
-      min-width: 0;
-
-      flex: 1;
-
-      height: 100%;
-
-      display: flex;
-      flex-direction: column;
-    }
-
-
-    /* =========================================================
-       HEADER
-       ========================================================= */
-
-    .header {
-      height: var(--header-height);
-
-      flex-shrink: 0;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      padding:
-        0 12px;
-
-      background:
-        rgba(7, 9, 13, .97);
-
-      border-bottom:
-        1px solid var(--border);
-
-      z-index: 40;
-    }
-
-
-    .header-left,
-    .header-right {
-      display: flex;
-      align-items: center;
-
-      gap: 8px;
-    }
-
-
-    .header-title {
-      font-size: 16px;
-    }
-
-
-    .icon-button {
-      width: 38px;
-      height: 38px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 10px;
-
-      background: transparent;
-
-      color: var(--muted);
-
-      font-size: 17px;
-    }
-
-
-    .icon-button:hover,
-    .icon-button:active {
-      background: var(--panel-2);
-
-      color: var(--text);
-    }
-
-
-    .mobile-menu {
-      display: none;
-    }
-
-
-    /* =========================================================
-       CONNECTION STATUS
-       ========================================================= */
-
-    .connection {
-      display: flex;
-      align-items: center;
-
-      gap: 6px;
-
-      color: var(--green);
-
-      font-size: 10px;
-    }
-
-
-    .connection-dot {
-      width: 7px;
-      height: 7px;
-
-      border-radius: 50%;
-
-      background: var(--green);
-
-      box-shadow:
-        0 0 8px var(--green);
-    }
-
-
-    .connection.offline {
-      color: var(--red);
-    }
-
-
-    .connection.offline
-    .connection-dot {
-      background: var(--red);
-
-      box-shadow:
-        0 0 8px var(--red);
-    }
-
-
-    /* =========================================================
-       CHAT AREA
-       ========================================================= */
-
-    .chat {
-      flex: 1;
-
-      min-height: 0;
-
-      overflow-y: auto;
-
-      -webkit-overflow-scrolling: touch;
-
-      padding:
-        25px 14px 180px;
-    }
-
-
-    .chat-inner {
-      width: min(850px, 100%);
-
-      margin: auto;
-    }
-
-
-    /* =========================================================
-       WELCOME
-       ========================================================= */
-
-    .welcome {
-      text-align: center;
-
-      padding:
-        6vh 8px 25px;
-    }
-
-
-    .welcome-logo {
-      width: 70px;
-      height: 70px;
-
-      margin:
-        0 auto 18px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 22px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--blue),
-          var(--green)
-        );
-
-      color: #00150b;
-
-      font-size: 32px;
-      font-weight: 900;
-    }
-
-
-    .welcome h1 {
-      margin:
-        0 0 10px;
-
-      font-size:
-        clamp(28px, 6vw, 44px);
-    }
-
-
-    .welcome p {
-      max-width: 620px;
-
-      margin: auto;
-
-      color: var(--muted);
-
-      line-height: 1.9;
-
-      font-size: 14px;
-    }
-
-
-    /* =========================================================
-       QUICK ACTIONS
-       ========================================================= */
-
-    .quick-actions {
-      display: grid;
-
-      grid-template-columns:
-        repeat(2, 1fr);
-
-      gap: 10px;
-
-      max-width: 650px;
-
-      margin:
-        25px auto;
-    }
-
-
-    .quick-button {
-      padding: 15px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 14px;
-
-      background: var(--panel);
-
-      color: var(--text);
-
-      text-align: right;
-    }
-
-
-    .quick-button:hover,
-    .quick-button:active {
-      border-color: var(--blue);
-
-      background: #101b28;
-    }
-
-
-    .quick-button small {
-      display: block;
-
-      margin-top: 6px;
-
-      color: var(--muted);
-
-      font-size: 10px;
-    }
-
-
-    /* =========================================================
-       MESSAGES
-       ========================================================= */
-
-    .message {
-      margin:
-        18px 0;
-    }
-
-
-    .user-message {
-      display: flex;
-
-      justify-content: flex-start;
-    }
-
-
-    .user-bubble {
-      max-width: 90%;
-
-      padding:
-        13px 15px;
-
-      border:
-        1px solid #1d4269;
-
-      border-radius:
-        18px 18px 4px 18px;
-
-      background:
-        #132238;
-
-      line-height: 1.8;
-
-      white-space: pre-wrap;
-
-      overflow-wrap: anywhere;
-    }
-
-
-    .amon-message {
-      display: flex;
-
-      align-items: flex-start;
-
-      gap: 9px;
-    }
-
-
-    .amon-avatar {
-      width: 35px;
-      height: 35px;
-
-      flex-shrink: 0;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 11px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--blue),
-          var(--green)
-        );
-
-      color: #00150b;
-
-      font-weight: 900;
-    }
-
-
-    .amon-content {
-      min-width: 0;
-
-      flex: 1;
-    }
-
-
-    .amon-bubble {
-      padding:
-        15px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius:
-        18px 18px 18px 4px;
-
-      background:
-        var(--panel);
-
-      line-height: 1.9;
-
-      white-space: pre-wrap;
-
-      overflow-wrap: anywhere;
-    }
-
-
-    .message-meta {
-      margin:
-        5px 8px;
-
-      color: var(--muted);
-
-      font-size: 9px;
-    }
-
-
-    .copy-button {
-      padding:
-        6px 9px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 9px;
-
-      background: transparent;
-
-      color: var(--muted);
-
-      font-size: 10px;
-    }
-
-
-    .copy-button:active {
-      background: var(--panel-2);
-
-      color: var(--text);
-    }
-
-
-    /* =========================================================
-       TYPING
-       ========================================================= */
-
-    .typing {
-      display: flex;
-
-      gap: 4px;
-    }
-
-
-    .typing span {
-      width: 6px;
-      height: 6px;
-
-      border-radius: 50%;
-
-      background: var(--muted);
-
-      animation:
-        typing 1s infinite;
-    }
-
-
-    .typing span:nth-child(2) {
-      animation-delay: .15s;
-    }
-
-
-    .typing span:nth-child(3) {
-      animation-delay: .30s;
-    }
-
-
-    @keyframes typing {
-
-      0%,
-      70%,
-      100% {
-        opacity: .2;
-      }
-
-      35% {
-        opacity: 1;
-      }
-    }
-
-
-    /* =========================================================
-       COMPOSER
-       ========================================================= */
-
-    .composer {
-      position: absolute;
-
-      right: 0;
-      bottom: 0;
-      left: 0;
-
-      padding:
-        8px 14px
-        calc(8px + env(safe-area-inset-bottom));
-
-      background:
-        linear-gradient(
-          transparent,
-          rgba(7,9,13,.99) 30%
-        );
-
-      z-index: 60;
-
-      pointer-events: none;
-    }
-
-
-    .composer-inner {
-      width: min(850px, 100%);
-
-      margin: auto;
-
-      pointer-events: auto;
-    }
-
-
-    /* =========================================================
-       MODES
-       ========================================================= */
-
-    .mode-row {
-      display: flex;
-
-      gap: 7px;
-
-      margin-bottom: 7px;
-
-      overflow-x: auto;
-
-      scrollbar-width: none;
-    }
-
-
-    .mode-row::-webkit-scrollbar {
-      display: none;
-    }
-
-
-    .mode-button {
-      flex-shrink: 0;
-
-      padding:
-        7px 11px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 10px;
-
-      background:
-        var(--panel);
-
-      color: var(--muted);
-
-      font-size: 11px;
-    }
-
-
-    .mode-button.active {
-      border-color:
-        var(--blue);
-
-      background:
-        #10223a;
-
-      color:
-        var(--text);
-    }
-
-
-    /* =========================================================
-       INPUT
-       ========================================================= */
-
-    .input-container {
-      display: flex;
-
-      align-items: flex-end;
-
-      gap: 7px;
-
-      width: 100%;
-
-      min-height: 59px;
-
-      padding: 7px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 18px;
-
-      background:
-        var(--panel-2);
-
-      box-shadow:
-        0 10px 35px rgba(0,0,0,.35);
-    }
-
-
-    .input-container:focus-within {
-      border-color:
-        var(--blue);
-    }
-
-
-    #messageInput {
-      flex: 1;
-
-      min-width: 0;
-
-      height: 44px;
-
-      max-height: 140px;
-
-      resize: none;
-
-      outline: none;
-
-      border: 0;
-
-      background: transparent;
-
-      color: var(--text);
-
-      padding:
-        10px 8px;
-
-      line-height: 1.5;
-
-      font-size: 16px;
-    }
-
-
-    #messageInput::placeholder {
-      color: #697585;
-    }
-
-
-    .send-button,
-    .stop-button {
-      width: 43px;
-      height: 43px;
-
-      flex-shrink: 0;
-
-      border-radius: 12px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 17px;
-    }
-
-
-    .send-button {
-      background:
-        var(--blue);
-
-      color: white;
-    }
-
-
-    .send-button:active {
-      transform:
-        scale(.95);
-    }
-
-
-    .stop-button {
-      background:
-        #351820;
-
-      color:
-        #ff8b94;
-    }
-
-
-    .composer-note {
-      text-align: center;
-
-      margin-top: 5px;
-
-      color: #657080;
-
-      font-size: 9px;
-    }
-
-
-    /* =========================================================
-       PANELS
-       ========================================================= */
-
-    .overlay {
-      position: fixed;
-
-      inset: 0;
-
-      background:
-        rgba(0,0,0,.62);
-
-      z-index: 150;
-    }
-
-
-    .panel {
-      position: fixed;
-
-      top: 0;
-      right: 0;
-      bottom: 0;
-
-      width:
-        min(390px, 94vw);
-
-      background:
-        var(--panel);
-
-      border-left:
-        1px solid var(--border);
-
-      z-index: 200;
-    }
-
-
-    .panel-header {
-      height: 60px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      padding:
-        0 14px;
-
-      border-bottom:
-        1px solid var(--border);
-    }
-
-
-    .panel-body {
-      height:
-        calc(100% - 60px);
-
-      overflow-y: auto;
-
-      padding: 16px;
-    }
-
-
-    .panel-button {
-      width: 100%;
-
-      padding: 12px;
-
-      margin-bottom: 8px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 12px;
-
-      background:
-        var(--panel-2);
-
-      color: var(--text);
-    }
-
-
-    .system-card {
-      padding: 13px;
-
-      margin-bottom: 10px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 12px;
-
-      background:
-        var(--panel-2);
-    }
-
-
-    .system-card small {
-      color: var(--muted);
-
-      line-height: 1.8;
-    }
-
-
-    /* =========================================================
-       TOAST
-       ========================================================= */
-
-    .toast {
-      position: fixed;
-
-      left: 50%;
-
-      bottom: 110px;
-
-      transform:
-        translateX(-50%);
-
-      padding:
-        10px 14px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 12px;
-
-      background:
-        #18212c;
-
-      color:
-        var(--text);
-
-      z-index: 300;
-
-      font-size: 12px;
-    }
-
-
-    /* =========================================================
-       MOBILE
-       ========================================================= */
-
-    @media (max-width: 760px) {
-
-      .sidebar {
-        position: fixed;
-
-        top: 0;
-        right: 0;
-        bottom: 0;
-
-        transform:
-          translateX(105%);
-
-        transition:
-          transform .2s ease;
-      }
-
-
-      .sidebar.open {
-        transform:
-          translateX(0);
-      }
-
-
-      .mobile-menu {
-        display: flex;
-      }
-
-
-      .chat {
-        padding:
-          20px 9px 175px;
-      }
-
-
-      .composer {
-        padding-left: 7px;
-        padding-right: 7px;
-      }
-
-
-      .quick-actions {
-        grid-template-columns:
-          1fr;
-      }
-
-
-      .user-bubble {
-        max-width: 94%;
-      }
-
-    }
-
-
-    @media (max-width: 430px) {
-
-      .header-title {
-        display: none;
-      }
-
-
-      .welcome {
-        padding-top:
-          5vh;
-      }
-
-
-      .welcome-logo {
-        width: 62px;
-        height: 62px;
-
-        font-size: 28px;
-      }
-
-
-      .welcome p {
-        font-size: 13px;
-      }
-
-
-      .composer-note {
-        display: none;
-      }
-
-    }
-
-
-    /* =========================================================
-       REDUCED MOTION
-       ========================================================= */
-
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation: none !important;
-        transition: none !important;
-      }
-
-    }
-
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>AMON AI</title>
+<style>
+:root{
+--bg:#ffffff;--panel:#ffffff;--panel2:#f7f8fa;--line:#e5e7eb;
+--text:#17181a;--muted:#6b7280;--blue:#2563eb;--blue2:#eff6ff;
+--green:#16a34a;--danger:#dc2626;--shadow:0 8px 30px rgba(15,23,42,.08)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}button,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.app{height:100dvh;display:flex;overflow:hidden}.sidebar{width:var(--sidebar);flex:none;height:100%;display:flex;flex-direction:column;background:#101419;border-left:1px solid var(--border);z-index:100}.side-top{padding:14px;border-bottom:1px solid var(--border)}.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-weight:900;font-size:20px}.brand b{font-size:15px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.new-chat,.side-btn{width:100%;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:11px;padding:11px 12px;text-align:right}.side-btn{background:transparent;color:var(--muted);margin-top:5px}.new-chat:hover,.side-btn:hover{background:#1c2229;color:var(--text)}.side-title{padding:13px 14px 6px;color:var(--muted);font-size:11px}.history{flex:1;overflow:auto;padding:7px}.history-empty{padding:10px;color:#707985;font-size:11px}.history-item{width:100%;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}.history-item:hover{background:var(--panel2);color:var(--text)}.side-bottom{padding:9px;border-top:1px solid var(--border)}.main{min-width:0;flex:1;height:100%;display:flex;flex-direction:column;position:relative}.header{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border);background:rgba(11,13,16,.96);z-index:20}.head-left,.head-right{display:flex;align-items:center;gap:8px}.head-title{font-weight:750;font-size:15px}.icon{width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;font-size:17px}.icon:hover{background:var(--panel2);color:var(--text)}.mobile-menu{display:none}.status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green)}.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}.status.offline{color:var(--danger)}.chat{flex:1;min-height:0;overflow:auto;padding:24px 14px 180px}.chat-inner{width:min(850px,100%);margin:0 auto}.welcome{text-align:center;padding:7vh 8px 25px}.welcome-logo{width:68px;height:68px;margin:0 auto 17px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-size:30px;font-weight:900}.welcome h1{font-size:clamp(27px,5vw,42px);margin:0 0 8px}.welcome p{max-width:620px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.9}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:650px;margin:25px auto}.quick button{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:13px;padding:14px;text-align:right}.quick button:hover{border-color:#3b7fc8;background:#151d27}.quick strong{display:block;font-size:13px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.message{display:flex;margin:18px 0;gap:9px}.user{justify-content:flex-start}.user-bubble{max-width:90%;background:#162235;border:1px solid #23466d;border-radius:17px 17px 4px 17px;padding:12px 14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}.amon{align-items:flex-start}.avatar{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-weight:900}.amon-body{min-width:0;flex:1}.amon-bubble{background:var(--panel);border:1px solid var(--border);border-radius:17px 17px 17px 4px;padding:13px 14px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}.meta{margin:5px 7px;color:#737d88;font-size:9px}.copy{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;padding:5px 8px;font-size:10px}.copy:hover{color:var(--text);background:var(--panel2)}.typing{display:flex;gap:4px;padding:4px}.typing i{width:6px;height:6px;border-radius:50%;background:#9aa3ad;animation:pulse 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes pulse{0%,70%,100%{opacity:.2}35%{opacity:1}}.composer{position:absolute;right:0;bottom:0;left:0;padding:8px 14px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(11,13,16,.99) 30%);z-index:30}.composer-inner{width:min(850px,100%);margin:auto}.modes{display:flex;gap:7px;overflow:auto;padding-bottom:7px;scrollbar-width:none}.modes::-webkit-scrollbar{display:none}.mode{flex:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:10px;padding:7px 11px;font-size:11px}.mode.active{border-color:var(--blue);background:#132640;color:var(--text)}.input-box{display:flex;align-items:flex-end;gap:7px;border:1px solid var(--border);background:var(--panel2);border-radius:17px;padding:7px;min-height:58px;box-shadow:0 10px 35px rgba(0,0,0,.35)}.input-box:focus-within{border-color:var(--blue)}#messageInput{flex:1;min-width:0;min-height:42px;max-height:140px;resize:none;border:0;outline:0;background:transparent;color:var(--text);padding:10px 7px;line-height:1.5;font-size:16px}#messageInput::placeholder{color:#68727e}.send,.stop{width:43px;height:43px;flex:none;border:0;border-radius:12px;display:grid;place-items:center;font-size:17px}.send{background:var(--blue);color:#fff}.stop{background:#382027;color:#ff9aa2}.note{text-align:center;color:#626c77;font-size:9px;margin-top:5px}.overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:150}.panel{position:fixed;top:0;bottom:0;right:0;width:min(390px,94vw);background:#11161c;border-left:1px solid var(--border);z-index:160;display:flex;flex-direction:column}.panel-head{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border)}.panel-body{padding:15px;overflow:auto}.card{border:1px solid var(--border);background:var(--panel2);border-radius:12px;padding:13px;margin-bottom:9px}.card h3{margin:0 0 7px;font-size:13px}.card p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}.toast{position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#1b232c;border:1px solid var(--border);padding:9px 13px;border-radius:10px;font-size:11px;z-index:300}.hidden{display:none!important}@media(max-width:760px){.sidebar{position:fixed;right:0;top:0;bottom:0;transform:translateX(105%);transition:transform .2s}.sidebar.open{transform:translateX(0)}.mobile-menu{display:grid}.chat{padding:19px 9px 175px}.composer{padding-left:7px;padding-right:7px}.quick{grid-template-columns:1fr}.user-bubble{max-width:94%}}@media(max-width:430px){.head-title{display:none}.welcome{padding-top:5vh}.welcome p{font-size:13px}.note{display:none}}
+
+.amon-services{padding:8px 10px;border-bottom:1px solid var(--line)}
+.service-title{font-size:11px;font-weight:700;color:var(--muted);padding:6px 10px}
+.service{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--text);padding:9px 10px;border-radius:9px;cursor:pointer;text-align:right;font:inherit;font-size:13px}
+.service:hover{background:#f3f4f6}
+.service.active{background:var(--blue2);color:var(--blue);font-weight:700}
+.service span{flex:1}
+.service em{font-style:normal;font-size:9px;border:1px solid #bfdbfe;color:var(--blue);border-radius:5px;padding:2px 5px}
+.side-quota{margin:10px;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fafafa}
+.quota-head,.quota-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.quota-head{font-size:12px;margin-bottom:10px}
+.quota-head button{border:0;background:var(--blue);color:#fff;border-radius:7px;padding:5px 9px;font-weight:700;cursor:pointer}
+.quota-row{font-size:10px;color:var(--muted);margin-top:7px}
+.quota-row b{color:var(--text)}
+.quota-bar{height:4px;background:#e5e7eb;border-radius:9px;overflow:hidden;margin-top:4px}
+.quota-bar i{display:block;height:100%;width:0;background:var(--blue);border-radius:9px}
+.side-quota small{display:block;color:var(--muted);font-size:9px;line-height:1.5;margin-top:8px}
+body{background:#fff;color:var(--text)}
+.sidebar{background:#fff;border-color:var(--line)}
+.header{background:rgba(255,255,255,.96);border-color:var(--line)}
+.input-box{background:#fff;border-color:#d9dde4;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+.input-box:focus-within{border-color:#93c5fd;box-shadow:0 4px 22px rgba(37,99,235,.10)}
+.composer{background:linear-gradient(to top,#fff,rgba(255,255,255,.94))}
+.message .bubble{background:#f5f6f8;border-color:var(--line);color:var(--text)}
+.user-bubble{background:#eff6ff!important;border-color:#dbeafe!important;color:#172554!important}
+.quick button{background:#fff;border-color:var(--line);box-shadow:0 2px 8px rgba(15,23,42,.04)}
+.quick button:hover{border-color:#bfdbfe;background:#f8fbff}
+.mode{background:#fff;border-color:var(--line);color:#4b5563}
+.mode.active{background:#eff6ff;border-color:#bfdbfe;color:var(--blue)}
+.icon,.side-btn{color:#4b5563}
+.icon:hover,.side-btn:hover{background:#f3f4f6}
+</style>
+
+<style>
+/* AMON V4 — organized single workspace */
+.sidebar{position:fixed;right:0;top:0;bottom:0;width:min(340px,92vw);z-index:180;background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 35px rgba(15,23,42,.10);transform:translateX(105%);transition:transform .2s ease;overflow:auto}.sidebar.open{transform:translateX(0)}
+.main{width:100%;flex:1}.header{height:64px;background:#fff}.tools-menu{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;padding:9px 13px;font-size:12px;font-weight:700}.tools-menu:hover{background:#f7f8fa;border-color:#cbd5e1}.head-right{gap:8px}.chat{padding-bottom:175px}.chat-inner{width:min(900px,100%)}
+.welcome{padding-top:11vh}.welcome-logo{background:linear-gradient(135deg,var(--blue),var(--green));color:#fff}.quick{max-width:720px}.mode-line{display:flex;gap:7px;padding-bottom:7px}.mode{padding:7px 12px}.mode.active{background:#eff6ff;color:var(--blue);border-color:#bfdbfe}.input-box{min-height:60px;border-radius:18px;padding:7px 8px}.input-tool{width:42px;height:42px;flex:none;border:0;border-radius:12px;background:transparent;color:#4b5563;font-size:21px;display:grid;place-items:center}.input-tool:hover{background:#f3f4f6;color:var(--blue)}.send{order:5}.stop{order:5}.attachments{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.attachment{display:flex;align-items:center;gap:6px;background:#f3f6fa;border:1px solid var(--line);border-radius:9px;padding:5px 8px;font-size:10px;color:#475569}.attachment button{border:0;background:transparent;color:#94a3b8;cursor:pointer}.panel{background:#fff;border-left:1px solid var(--line)}.panel-head{background:#fff}.panel-body{background:#fff}.overlay{background:rgba(15,23,42,.28);z-index:170}.card{background:#fff}.side-quota{background:#fafafa}.side-title{color:#64748b}.service.active{background:#eff6ff}.message .amon-bubble{background:#fff}.user-bubble{background:#eff6ff!important}.note{color:#7c8795}
+@media(max-width:760px){.tools-menu span{display:none}.tools-menu{width:40px;height:38px;padding:0;display:grid;place-items:center}.welcome{padding-top:7vh}.sidebar{width:min(330px,92vw)}}
+</style>
 </head>
-
-
 <body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="side-top">
+    <div class="brand"><div class="logo">A</div><div><b>AMON AI</b><small>العقل المركزي</small></div></div>
+    <button class="new-chat" id="newChat" type="button">＋ محادثة جديدة</button>
+  </div>
+  <div class="side-title">الخدمات</div>
+  <nav class="amon-services" aria-label="خدمات AMON">
+    <button class="service active" type="button" data-service="chat">💬 <span>المحادثة</span></button>
+    <button class="service" type="button" data-service="image">🖼️ <span>الصور</span><em>FREE</em></button>
+    <button class="service" type="button" data-service="library">📚 <span>المكتبة</span></button>
+    <button class="service" type="button" data-service="tasks">📋 <span>المهام</span></button>
+    <button class="service" type="button" data-service="schedule">⏰ <span>المهام المجدولة</span></button>
+    <button class="service" type="button" data-service="projects">📁 <span>المشروعات</span></button>
+    <button class="service" type="button" data-service="tools">🧩 <span>الأدوات</span></button>
+    <button class="service" type="button" data-service="models">🤖 <span>النماذج</span><em>PRO</em></button>
+    <button class="service" type="button" data-service="memory">🧠 <span>الذاكرة</span></button>
+    <button class="service" type="button" data-service="sources">🌐 <span>المصادر</span></button>
+  </nav>
+  <div class="side-quota">
+    <div class="quota-head"><strong>الخطة المجانية</strong><button id="upgradeBtn" type="button">ترقية</button></div>
+    <div class="quota-row"><span>الرسائل</span><b id="msgQuota">0 / 50</b></div><div class="quota-bar"><i id="msgBar"></i></div>
+    <div class="quota-row"><span>الصور</span><b id="imgQuota">0 / 5</b></div><div class="quota-bar"><i id="imgBar"></i></div>
+  </div>
+  <div class="side-title">المحادثات</div><div class="history" id="history"></div>
+  <div class="side-bottom"><button class="side-btn" id="openSettings" type="button">⚙️ الإعدادات</button><button class="side-btn" id="openInfo" type="button">ℹ️ عن AMON</button></div>
+</aside>
+<main class="main">
+<header class="header">
+  <div class="head-left"><strong class="head-title">AMON</strong><div class="status" id="connection"><span class="dot"></span><span id="statusText">جارٍ الفحص...</span></div></div>
+  <div class="head-right"><button class="tools-menu" id="menuButton" type="button">☰ <span>الأدوات</span></button><button class="icon" id="healthButton" type="button" aria-label="فحص الاتصال">◉</button></div>
+</header>
+<section class="chat" id="chat"><div class="chat-inner" id="chatInner">
+  <div class="welcome" id="welcome"><div class="welcome-logo">A</div><h1>مرحبًا بك في AMON</h1><p>اسأل، ابحث، فكّر، أو أرفق ملفًا. AMON هو محركك المركزي.</p>
+    <div class="quick"><button type="button" data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="ابحث وحلل المعلومات المهمة حول هذا الموضوع"><strong>🔎 بحث</strong><small>بحث وتحليل</small></button><button type="button" data-prompt="فكّر في هذه المشكلة بعمق وقدم أفضل حل ممكن"><strong>💭 تفكير</strong><small>تحليل أعمق</small></button><button type="button" data-prompt="قارن بين الخيارين التاليين واذكر المميزات والعيوب"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div>
+  </div>
+</div></section>
+<div class="composer"><div class="composer-inner">
+  <div class="mode-line"><button class="mode active" type="button" data-mode="learn">💬 محادثة</button><button class="mode" type="button" data-mode="research">🔎 بحث</button><button class="mode" type="button" data-mode="thinking">💭 تفكير</button></div>
+  <div id="attachments" class="attachments"></div>
+  <div class="input-box">
+    <button class="input-tool" id="attachButton" type="button" aria-label="إضافة ملفات">＋</button>
+    <input id="fileInput" type="file" hidden multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx">
+    <textarea id="messageInput" rows="1" maxlength="12000" placeholder="اسأل AMON... "></textarea>
+    <button class="input-tool" id="voiceButton" type="button" aria-label="الصوت">🎤</button>
+    <button class="send" id="sendButton" type="button" aria-label="إرسال">➤</button>
+    <button class="stop hidden" id="stopButton" type="button" aria-label="إيقاف">■</button>
+  </div>
+  <div class="note">AMON قد يخطئ. تحقق من المعلومات المهمة.</div>
+</div></div>
+</main></div>
+<div class="hidden" id="overlay"></div><aside class="panel hidden" id="panel"><div class="panel-head"><strong id="panelTitle">الأدوات</strong><button class="icon" id="closePanel" type="button">✕</button></div><div class="panel-body" id="panelBody"></div></aside><div class="toast hidden" id="toast"></div>
+<script>
+(() => {
+  'use strict';
+  const API = '';
+  const state = { mode:'learn', history:[], abort:null, busy:false };
+  const $ = id => document.getElementById(id);
+  const input = $('messageInput'), chat = $('chat'), chatInner = $('chatInner');
 
-  <div class="app">
+  function toast(text){ const el=$('toast'); el.textContent=text; el.classList.remove('hidden'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.add('hidden'),2600); }
+  function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function scrollBottom(){ requestAnimationFrame(()=>{ chat.scrollTop=chat.scrollHeight; }); }
+  function renderHistory(){ const box=$('history'); if(!state.history.length){box.innerHTML='<div class="history-empty">لا توجد محادثات محفوظة بعد.</div>';return;} box.innerHTML=state.history.slice(-30).reverse().map((x,i)=>`<button class="history-item" type="button" data-history="${i}">${escapeHTML(x.title||'محادثة')}</button>`).join(''); }
+  function saveHistory(){ try{localStorage.setItem('amon_history',JSON.stringify(state.history.slice(-30)));}catch{} }
+  function loadHistory(){ try{const x=JSON.parse(localStorage.getItem('amon_history')||'[]');if(Array.isArray(x))state.history=x;}catch{} renderHistory(); }
+  function addUser(text){ const el=document.createElement('div');el.className='message user';el.innerHTML=`<div class="user-bubble">${escapeHTML(text)}</div>`;chatInner.appendChild(el);scrollBottom(); }
+  function addAmon(text,typing=false){ const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.innerHTML=`<div class="avatar">A</div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeHTML(text)}</div>${typing?'':'<div class="meta"><button class="copy" type="button">نسخ</button></div>'}</div>`;chatInner.appendChild(el);scrollBottom();return el; }
+  function removeWelcome(){ const w=$('welcome'); if(w)w.remove(); }
+  function resizeInput(){ input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px'; }
+  function setBusy(v){ state.busy=v;$('sendButton').classList.toggle('hidden',v);$('stopButton').classList.toggle('hidden',!v);input.disabled=v; }
+  function setMode(mode){ state.mode=mode;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode)); }
+  async function health(){ const conn=$('connection'); try{const r=await fetch(API+'/health',{cache:'no-store'});const d=await r.json();if(r.ok&&d.success){conn.classList.remove('offline');$('statusText').textContent=d.ai?'متصل':'الواجهة متصلة';}else throw Error();}catch{conn.classList.add('offline');$('statusText').textContent='غير متصل';} }
+  async function send(){ if(state.busy)return;const text=input.value.trim();if(!text)return;removeWelcome();addUser(text);input.value='';resizeInput();const oldHistory=state.history.slice(-20).flatMap(x=>x.messages||[]);const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;try{const r=await fetch(API+'/',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,history:oldHistory}),signal:controller.signal});let data=null;try{data=await r.json();}catch{}if(!r.ok||!data?.success){throw Error(data?.message||'تعذر الاتصال بـ AMON');}const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');typing.querySelector('.amon-bubble').textContent=answer;const entry={title:text.slice(0,60),messages:[{role:'user',content:text},{role:'assistant',content:answer}],time:Date.now()};state.history.push(entry);saveHistory();renderHistory();}catch(e){if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}else{typing.querySelector('.amon-bubble').textContent='حدث خطأ: '+e.message;toast('تعذر تنفيذ الطلب');}}finally{state.abort=null;setBusy(false);scrollBottom();}}
+  function newChat(){ document.querySelectorAll('.message').forEach(x=>x.remove()); if(!$('welcome')){chatInner.innerHTML='<div class="welcome" id="welcome"><div class="welcome-logo">A</div><h1>مرحبًا بك في AMON</h1><p>عقل مركزي بسيط واحترافي. اكتب ما تريد، واختر وضع AMON المناسب لمهمتك.</p><div class="quick"><button type="button" data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="اشرح لي الفكرة التالية بالتفصيل مع مثال عملي"><strong>💡 شرح</strong><small>فهم الفكرة بوضوح</small></button><button type="button" data-prompt="حلل هذا السؤال بعقلية بحثية واذكر ما تعرفه وما لست متأكدًا منه"><strong>🔎 بحث</strong><small>تحليل منظم</small></button><button type="button" data-prompt="قارن بين الخيارين التاليين واذكر المميزات والعيوب"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focus(); }
+  function openPanel(title,body){$('panelTitle').textContent=title;$('panelBody').innerHTML=body;$('overlay').classList.remove('hidden');$('panel').classList.remove('hidden');}
+  function closePanel(){$('overlay').classList.add('hidden');$('panel').classList.add('hidden');}
+  document.addEventListener('click',e=>{const q=e.target.closest('[data-prompt]');if(q){input.value=q.dataset.prompt;resizeInput();input.focus();}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const h=e.target.closest('[data-history]');if(h)toast('المحادثات محفوظة محليًا في هذا المتصفح.');});
+  $('sendButton').addEventListener('click',send);$('stopButton').addEventListener('click',()=>state.abort?.abort());$('newChat').addEventListener('click',newChat);$('menuButton').addEventListener('click',()=>$('sidebar').classList.toggle('open'));$('healthButton').addEventListener('click',health);$('closePanel').addEventListener('click',closePanel);$('overlay').addEventListener('click',closePanel);$('openInfo').addEventListener('click',()=>openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>واجهة AMON مصممة ببساطة واحترافية، مع تشغيل عبر نفس Worker والـ API الموجود في المشروع.</p></div><div class="card"><h3>الحالة الحالية</h3><p>المحادثة تعمل عبر Workers AI عندما يكون ربط AI متاحًا في Cloudflare.</p></div>'));$('openSettings').addEventListener('click',()=>openPanel('الإعدادات','<div class="card"><h3>الوضع الحالي</h3><p>يمكنك تغيير وضع AMON من أزرار الوضع أسفل الشاشة.</p></div><div class="card"><h3>الخصوصية</h3><p>سجل المحادثات المحلي محفوظ في هذا المتصفح فقط عبر localStorage.</p></div>'));
+  input.addEventListener('input',resizeInput);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+  const attachments=[];
+  function renderAttachments(){const box=$('attachments');box.innerHTML=attachments.map((f,i)=>`<span class="attachment">📎 ${escapeHTML(f.name)} <button type="button" data-remove-file="${i}" aria-label="حذف">×</button></span>`).join('');}
+  $('attachButton').addEventListener('click',()=>$('fileInput').click());
+  $('fileInput').addEventListener('change',e=>{for(const f of e.target.files){if(attachments.length>=6){toast('يمكن إرفاق 6 ملفات كحد أقصى');break;}attachments.push(f);}renderAttachments();e.target.value='';});
+  document.addEventListener('click',e=>{const r=e.target.closest('[data-remove-file]');if(r){attachments.splice(Number(r.dataset.removeFile),1);renderAttachments();}});
+  $('voiceButton').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('التحدث الصوتي غير مدعوم في هذا المتصفح');return;}const rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;rec.onstart=()=>toast('استمع إليك الآن…');rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript;resizeInput();input.focus();};rec.onerror=()=>toast('تعذر تشغيل الميكروفون');rec.start();});
+  const AMON_QUOTA={messages:50,images:5};
+  const amonQuota=JSON.parse(localStorage.getItem('amonQuotaV3')||'{"messages":0,"images":0}');
+  function renderQuota(){
+    $('msgQuota').textContent=`${amonQuota.messages} / ${AMON_QUOTA.messages}`;
+    $('imgQuota').textContent=`${amonQuota.images} / ${AMON_QUOTA.images}`;
+    $('msgBar').style.width=Math.min(100,amonQuota.messages/AMON_QUOTA.messages*100)+'%';
+    $('imgBar').style.width=Math.min(100,amonQuota.images/AMON_QUOTA.images*100)+'%';
+  }
+  function saveQuota(){localStorage.setItem('amonQuotaV3',JSON.stringify(amonQuota));renderQuota();}
+  const serviceNames={image:'الصور',library:'المكتبة',tasks:'المهام',schedule:'المهام المجدولة',projects:'المشروعات',tools:'الأدوات',models:'النماذج',memory:'الذاكرة',sources:'المصادر'};
+  function openService(k){
+    if(!serviceNames[k])return;
+    let extra=k==='image'?`<p><b>الحصة المجانية:</b> ${amonQuota.images} / ${AMON_QUOTA.images} صورة</p>`:'';
+    openPanel(serviceNames[k],`<div class="card"><h3>${serviceNames[k]}</h3><p>هذه مساحة الخدمة في AMON، جاهزة للربط بالمحرك المركزي والخدمة الفعلية.</p>${extra}</div>`);
+  }
+  document.addEventListener('click',e=>{
+    const s=e.target.closest('[data-service]');
+    if(s){
+      document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      if(s.dataset.service!=='chat')openService(s.dataset.service); $('sidebar').classList.remove('open');
+    }
+    if(e.target.closest('#upgradeBtn')){
+      openPanel('الاشتراك','<div class="card"><h3>👑 خطط AMON</h3><p><b>FREE</b> — محادثة وتوليد صور ضمن حصص مجانية.</p><p><b>PLUS / PRO</b> — حدود أعلى وأدوات ونماذج متقدمة حسب الخطة.</p><p>الأسعار ووسائل الدفع ستُربط لاحقًا بنظام الاشتراكات الحقيقي.</p></div>');
+    }
+  });
+  const amonOriginalSend=send;
+  send=async function(){
+    if(amonQuota.messages>=AMON_QUOTA.messages){
+      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى الحد المجاني</h3><p>يمكنك الانتظار حتى التجديد أو اختيار الترقية.</p></div>');
+      return;
+    }
+    amonQuota.messages++;
+    saveQuota();
+    return amonOriginalSend();
+  };
+  renderQuota();
 
-
-    <!-- =======================================================
-         SIDEBAR
-         ======================================================= -->
-
-    <aside
-      class="sidebar"
-      id="sidebar"
-    >
-
-      <div class="sidebar-top">
-
-        <div class="brand">
-
-          <div class="brand-logo">
-            A
-          </div>
-
-          <div>
-
-            <div class="brand-title">
-              AMON AI
-            </div>
-
-            <div class="brand-subtitle">
-              العقل المركزي
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <button
-          class="new-chat"
-          id="newChat"
-          type="button"
-        >
-          ＋ محادثة جديدة
-        </button>
-
-      </div>
-
-
-      <div class="sidebar-title">
-        المحادثات
-      </div>
-
-
-      <div
-        class="history"
-        id="history"
-      ></div>
-
-
-      <div class="sidebar-bottom">
-
-        <button
-          class="sidebar-button"
-          id="openSettings"
-          type="button"
-        >
-          ⚙️ الإعدادات
-        </button>
-
-
-        <button
-          class="sidebar-button"
-          id="openInfo"
-          type="button"
-        >
-          ℹ️ عن AMON
-        </button>
-
-      </div>
-
-    </aside>
-
-
-    <!-- =======================================================
-         MAIN
-         ======================================================= -->
-
-    <main class="main">
-
-
-      <!-- HEADER -->
-
-      <header class="header">
-
-        <div class="header-left">
-
-          <button
-            class="icon-button mobile-menu"
-            id="menuButton"
-            type="button"
-            aria-label="القائمة"
-          >
-            ☰
-          </button>
-
-
-          <strong class="header-title">
-            AMON
-          </strong>
-
-
-          <div
-            class="connection"
-            id="connection"
-          >
-
-            <span
-              class="connection-dot"
-            ></span>
-
-            <span id="status">
-              جارٍ الفحص...
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div class="header-right">
-
-          <button
-            class="icon-button"
-            id="healthButton"
-            type="button"
-            aria-label="فحص الاتصال"
-          >
-            ◉
-          </button>
-
-        </div>
-
-      </header>
-
-
-      <!-- CHAT -->
-
-      <section
-        class="chat"
-        id="chat"
-      >
-
-        <div class="chat-inner">
-
-
-          <!-- WELCOME -->
-
-          <div
-            class="welcome"
-            id="welcome"
-          >
-
-            <div class="welcome-logo">
-              A
-            </div>
-
-
-            <h1>
-              مرحبًا بك في AMON
-            </h1>
-
-
-            <p>
-              العقل المركزي لمنصة AMON AI.
-              اكتب سؤالك وسأحاول مساعدتك بالمحرك المتص
+  window.addEventListener('load',()=>{loadHistory();resizeInput();health();input.focus();});
+})();
+</script>
+</body>
+</html>
