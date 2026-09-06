@@ -451,7 +451,7 @@ function amonInfo(env) {
 
     ownerControl:
       Boolean(
-        env.AMON_OWNER_PASSWORD
+        env.AMON_MASTER_ACCESS
       ),
 
     aiProvider:
@@ -799,7 +799,7 @@ function getBearer(request) {
   return value.startsWith("Bearer ") ? value.slice(7) : "";
 }
 async function requireOwner(request, env) {
-  return readOwnerToken(getBearer(request), env.AMON_OWNER_TOKEN_SECRET || "");
+  return readOwnerToken(getBearer(request), env.AMON_PRIVATE_CORE_KEY || "");
 }
 
 async function handleOwnerLogin(request, env) {
@@ -807,15 +807,15 @@ async function handleOwnerLogin(request, env) {
   if (!body || typeof body.password !== "string" || !body.password) {
     return errorResponse("OWNER_PASSWORD_REQUIRED", "كلمة مرور المالك مطلوبة.", 400);
   }
-  if (!env.AMON_OWNER_PASSWORD || !env.AMON_OWNER_TOKEN_SECRET) {
+  if (!env.AMON_MASTER_ACCESS || !env.AMON_PRIVATE_CORE_KEY) {
     return errorResponse("OWNER_SECRETS_MISSING", "أسرار نظام المالك غير مكتملة في Cloudflare.", 503);
   }
-  if (body.password !== env.AMON_OWNER_PASSWORD) {
+  if (body.password !== env.AMON_MASTER_ACCESS) {
     return errorResponse("INVALID_OWNER_PASSWORD", "تعذر التحقق من بيانات المالك.", 401);
   }
   const now = Date.now();
   const expiresAt = now + 12 * 60 * 60 * 1000;
-  const token = await createOwnerToken({ role: "owner", iat: now, exp: expiresAt }, env.AMON_OWNER_TOKEN_SECRET);
+  const token = await createOwnerToken({ role: "owner", iat: now, exp: expiresAt }, env.AMON_PRIVATE_CORE_KEY);
   return json({
     success: true,
     authenticated: true,
