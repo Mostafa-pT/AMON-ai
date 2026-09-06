@@ -1,14 +1,11 @@
 {
   "name": "amon-ai",
-  "version": "1.0.0",
-  "description": "AMON AI - Central thinking and orchestration system",
-  "main": "server.js",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AMON AI central runtime and Cloudflare Worker deployment",
   "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
   }
 }

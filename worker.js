@@ -6,7 +6,7 @@
 
 const AMON = {
   name: "AMON AI",
-  version: "3.0.0",
+  version: "4.0.0",
   mode: "FREE_ONLY",
 
   model: "@cf/zai-org/glm-4.7-flash",
@@ -758,80 +758,119 @@ ${modeInstruction}`
 // OWNER AUTHENTICATION
 // ============================================================
 
-async function handleOwner(
-  request,
-  env
-) {
-
-  const body =
-    await readJSON(
-      request
-    );
-
-
-  if (
-    !body ||
-    typeof body.password !== "string" ||
-    !body.password
-  ) {
-
-    return errorResponse(
-      "OWNER_PASSWORD_REQUIRED",
-      "كلمة المرور مطلوبة.",
-      400
-    );
-
-  }
-
-
-  if (
-    !env.AMON_OWNER_PASSWORD
-  ) {
-
-    return errorResponse(
-      "OWNER_SECRET_MISSING",
-      "سر المالك غير مضبوط في Cloudflare.",
-      500
-    );
-
-  }
-
-
-  if (
-    body.password !==
-    env.AMON_OWNER_PASSWORD
-  ) {
-
-    return errorResponse(
-      "INVALID_OWNER_PASSWORD",
-      "كلمة المرور غير صحيحة.",
-      401
-    );
-
-  }
-
-
-  return json({
-
-    success:
-      true,
-
-    name:
-      AMON.name,
-
-    version:
-      AMON.version,
-
-    authenticated:
-      true,
-
-    message:
-      "تم التحقق من المالك."
-
-  });
-
+function ownerB64(bytes) {
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+function ownerUnb64(value) {
+  value = value.replace(/-/g, "+").replace(/_/g, "/");
+  while (value.length % 4) value += "=";
+  return Uint8Array.from(atob(value), x => x.charCodeAt(0));
+}
+async function ownerKey(secret) {
+  return crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]
+  );
+}
+async function createOwnerToken(payload, secret) {
+  const data = ownerB64(new TextEncoder().encode(JSON.stringify(payload)));
+  const signature = await crypto.subtle.sign(
+    "HMAC", await ownerKey(secret), new TextEncoder().encode(data)
+  );
+  return data + "." + ownerB64(new Uint8Array(signature));
+}
+async function readOwnerToken(token, secret) {
+  if (!token || !secret) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const valid = await crypto.subtle.verify(
+    "HMAC", await ownerKey(secret), ownerUnb64(parts[1]),
+    new TextEncoder().encode(parts[0])
+  );
+  if (!valid) return null;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(ownerUnb64(parts[0])));
+    return payload && payload.role === "owner" && payload.exp > Date.now() ? payload : null;
+  } catch { return null; }
+}
+function getBearer(request) {
+  const value = request.headers.get("Authorization") || "";
+  return value.startsWith("Bearer ") ? value.slice(7) : "";
+}
+async function requireOwner(request, env) {
+  return readOwnerToken(getBearer(request), env.AMON_OWNER_TOKEN_SECRET || "");
 }
 
+async function handleOwnerLogin(request, env) {
+  const body = await readJSON(request);
+  if (!body || typeof body.password !== "string" || !body.password) {
+    return errorResponse("OWNER_PASSWORD_REQUIRED", "كلمة مرور المالك مطلوبة.", 400);
+  }
+  if (!env.AMON_OWNER_PASSWORD || !env.AMON_OWNER_TOKEN_SECRET) {
+    return errorResponse("OWNER_SECRETS_MISSING", "أسرار نظام المالك غير مكتملة في Cloudflare.", 503);
+  }
+  if (body.password !== env.AMON_OWNER_PASSWORD) {
+    return errorResponse("INVALID_OWNER_PASSWORD", "تعذر التحقق من بيانات المالك.", 401);
+  }
+  const now = Date.now();
+  const expiresAt = now + 12 * 60 * 60 * 1000;
+  const token = await createOwnerToken({ role: "owner", iat: now, exp: expiresAt }, env.AMON_OWNER_TOKEN_SECRET);
+  return json({
+    success: true,
+    authenticated: true,
+    token,
+    expiresAt,
+    profile: { role: "owner", title: "Owner" },
+    message: "تم تفعيل وضع المالك."
+  });
+}
+
+async function handleOwnerStatus(request, env) {
+  const owner = await requireOwner(request, env);
+  if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك.", 401);
+  return json({
+    success: true,
+    owner: true,
+    session: { expiresAt: owner.exp },
+    capabilities: [
+      "system-overview", "user-management", "group-management",
+      "individual-permissions", "feature-flags", "limits-management",
+      "maintenance-control"
+    ]
+  });
+}
+
+async function handleOwnerOverview(request, env) {
+  const owner = await requireOwner(request, env);
+  if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك.", 401);
+  return json({
+    success: true,
+    system: {
+      name: AMON.name,
+      version: AMON.version,
+      status: "online",
+      ai: Boolean(env.AI),
+      model: AMON.model
+    },
+    plans: {
+      core: { name: "AMON Core", messages: 50, images: 5 },
+      advanced: { name: "AMON Advanced", messages: 100, images: 10 },
+      pro: { name: "AMON Pro", messages: 500, images: 50 },
+      elite: { name: "AMON Elite", messages: 2000, images: 200 },
+      custom: { name: "AMON Custom", messages: "مخصص", images: "مخصص" }
+    },
+    capabilities: [
+      "إدارة المستخدمين", "إدارة المجموعات", "صلاحيات فردية",
+      "إدارة الحدود", "تشغيل وإيقاف الميزات", "وضع الصيانة"
+    ],
+    storage: {
+      connected: false,
+      status: "PLANNED",
+      note: "لن يعرض AMON إحصاءات مستخدمين وهمية. التحكم الدائم والإحصاءات الحقيقية سيُربطان بقاعدة بيانات أو KV في المرحلة التالية."
+    }
+  });
+}
 
 // ============================================================
 // FRONTEND
@@ -956,16 +995,16 @@ async function router(
   // OWNER
   // ----------------------------------------------------------
 
-  if (
-    url.pathname === "/api/owner" &&
-    request.method === "POST"
-  ) {
+  if (url.pathname === "/api/owner/login" && request.method === "POST") {
+    return handleOwnerLogin(request, env);
+  }
 
-    return handleOwner(
-      request,
-      env
-    );
+  if (url.pathname === "/api/owner/status" && request.method === "GET") {
+    return handleOwnerStatus(request, env);
+  }
 
+  if (url.pathname === "/api/owner/overview" && request.method === "GET") {
+    return handleOwnerOverview(request, env);
   }
 
 
