@@ -327,9 +327,15 @@ function extractAIResponse(result) {
     result.result &&
     typeof result.result.response === "string"
   ) {
-
     return result.result.response.trim();
+  }
 
+  const choiceContent =
+    result?.choices?.[0]?.message?.content ||
+    result?.choices?.[0]?.text;
+
+  if (typeof choiceContent === "string") {
+    return choiceContent.trim();
   }
 
   return "";
@@ -1108,15 +1114,10 @@ async function router(
   // ----------------------------------------------------------
 
   if (
-    url.pathname === "/" &&
+    (url.pathname === "/" || url.pathname === "/api/amon") &&
     request.method === "POST"
   ) {
-
-    return handleChat(
-      request,
-      env
-    );
-
+    return handleChat(request, env);
   }
 
 
