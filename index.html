@@ -116,6 +116,37 @@ body{background:#fff;color:var(--text)}
 .avatar{background-size:150%!important;background-position:center 35%!important}
 .header-brand-logo,.brand-logo-full{object-fit:cover!important;object-position:center!important;background:#fff!important;border:1px solid #e6e9ee!important}
 @media(max-width:760px){.welcome-logo{width:185px!important;height:185px!important;border-radius:24px!important}.welcome::before{background-size:85vw}}
+</style><style id="amon-genius-symbol">
+.avatar.genius-symbol{
+  background:#fff!important;
+  background-image:none!important;
+  color:#111827!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  border-radius:50%!important;
+  border:1px solid #e5e7eb!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-family:Arial,sans-serif!important;
+  font-size:24px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  box-shadow:0 4px 14px rgba(15,23,42,.08)!important;
+  position:relative;
+}
+.avatar.genius-symbol::after{
+  content:"";
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#2f80ed;
+  box-shadow:0 0 0 3px rgba(47,128,237,.10);
+  right:1px;
+  bottom:1px;
+}
 </style></head>
 <body>
 <div class="app">
@@ -185,7 +216,7 @@ body{background:#fff;color:var(--text)}
   function saveHistory(){ try{localStorage.setItem('amon_history',JSON.stringify(state.history.slice(-30)));}catch{} }
   function loadHistory(){ try{const x=JSON.parse(localStorage.getItem('amon_history')||'[]');if(Array.isArray(x))state.history=x;}catch{} renderHistory(); }
   function addUser(text){ const el=document.createElement('div');el.className='message user';el.innerHTML=`<div class="user-bubble">${escapeHTML(text)}</div>`;chatInner.appendChild(el);scrollBottom(); }
-  function addAmon(text,typing=false){ const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.innerHTML=`<div class="avatar" aria-label="AMON AI"></div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeHTML(text)}</div>${typing?'':'<div class="meta"><button class="copy" type="button">نسخ</button></div>'}</div>`;chatInner.appendChild(el);scrollBottom();return el; }
+  function addAmon(text,typing=false){ const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.innerHTML=`<div class="avatar genius-symbol" aria-label="AMON intelligence" title="AMON Intelligence">✦</div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeHTML(text)}</div>${typing?'':'<div class="meta"><button class="copy" type="button">نسخ</button></div>'}</div>`;chatInner.appendChild(el);scrollBottom();return el; }
   function removeWelcome(){ const w=$('welcome'); if(w)w.remove(); }
   function resizeInput(){ input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px'; }
   function setBusy(v){ state.busy=v;$('sendButton').classList.toggle('hidden',v);$('stopButton').classList.toggle('hidden',!v);input.disabled=v; }
