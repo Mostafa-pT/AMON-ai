@@ -193,9 +193,9 @@ body{background:#fff;color:var(--text)}
       return;
     }
     // Count only a completed request. Failed/aborted requests should not consume a message.
-    const before=state.messages?.length||0;
+    const before=state.history?.length||0;
     const result=await amonOriginalSend();
-    const after=state.messages?.length||0;
+    const after=state.history?.length||0;
     if(after>before){amonQuota.messages++;saveQuota();}
     return result;
   };
