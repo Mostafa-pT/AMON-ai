@@ -140,15 +140,34 @@ body{background:#fff;color:var(--text)}
   $('fileInput').addEventListener('change',e=>{for(const f of e.target.files){if(attachments.length>=6){toast('يمكن إرفاق 6 ملفات كحد أقصى');break;}attachments.push(f);}renderAttachments();e.target.value='';});
   document.addEventListener('click',e=>{const r=e.target.closest('[data-remove-file]');if(r){attachments.splice(Number(r.dataset.removeFile),1);renderAttachments();}});
   $('voiceButton').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('التحدث الصوتي غير مدعوم في هذا المتصفح');return;}const rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;rec.onstart=()=>toast('استمع إليك الآن…');rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript;resizeInput();input.focus();};rec.onerror=()=>toast('تعذر تشغيل الميكروفون');rec.start();});
-  const AMON_QUOTA={messages:50,images:5};
-  const amonQuota=JSON.parse(localStorage.getItem('amonQuotaV3')||'{"messages":0,"images":0}');
+  // AMON FREE ACCESS: 50 successful chat requests + 5 image actions per rolling 24 hours.
+  // Persistent server-side enforcement will be added with an account/KV binding.
+  const AMON_QUOTA={messages:50,images:5,windowMs:24*60*60*1000};
+  const rawQuota=JSON.parse(localStorage.getItem('amonQuotaV4')||'{}');
+  const amonQuota={
+    messages:Number(rawQuota.messages)||0,
+    images:Number(rawQuota.images)||0,
+    windowStartedAt:Number(rawQuota.windowStartedAt)||Date.now()
+  };
+  function quotaExpired(){return Date.now()-amonQuota.windowStartedAt>=AMON_QUOTA.windowMs;}
+  function resetQuota(){amonQuota.messages=0;amonQuota.images=0;amonQuota.windowStartedAt=Date.now();}
+  function ensureQuota(){if(quotaExpired())resetQuota();}
+  function remainingTime(){
+    ensureQuota();
+    const ms=Math.max(0,AMON_QUOTA.windowMs-(Date.now()-amonQuota.windowStartedAt));
+    const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
+    return h+' ساعة و '+m+' دقيقة';
+  }
   function renderQuota(){
-    $('msgQuota').textContent=`${amonQuota.messages} / ${AMON_QUOTA.messages}`;
-    $('imgQuota').textContent=`${amonQuota.images} / ${AMON_QUOTA.images}`;
+    ensureQuota();
+    $('msgQuota').textContent=amonQuota.messages+' / '+AMON_QUOTA.messages;
+    $('imgQuota').textContent=amonQuota.images+' / '+AMON_QUOTA.images;
     $('msgBar').style.width=Math.min(100,amonQuota.messages/AMON_QUOTA.messages*100)+'%';
     $('imgBar').style.width=Math.min(100,amonQuota.images/AMON_QUOTA.images*100)+'%';
+    const quotaNote=document.getElementById('quotaNote');
+    if(quotaNote)quotaNote.textContent='التجديد الكامل بعد: '+remainingTime();
   }
-  function saveQuota(){localStorage.setItem('amonQuotaV3',JSON.stringify(amonQuota));renderQuota();}
+  function saveQuota(){localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));renderQuota();}
   const serviceNames={image:'الصور',library:'المكتبة',tasks:'المهام',schedule:'المهام المجدولة',projects:'المشروعات',tools:'الأدوات',models:'النماذج',memory:'الذاكرة',sources:'المصادر'};
   function openService(k){
     if(!serviceNames[k])return;
@@ -168,15 +187,20 @@ body{background:#fff;color:var(--text)}
   });
   const amonOriginalSend=send;
   send=async function(){
+    ensureQuota();
     if(amonQuota.messages>=AMON_QUOTA.messages){
-      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى الحد المجاني</h3><p>يمكنك الانتظار حتى التجديد أو اختيار الترقية.</p></div>');
+      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى 50 رسالة</h3><p>تم استخدام الحد المجاني خلال نافذة الـ24 ساعة الحالية.</p><p><b>التجديد الكامل بعد: '+remainingTime()+'</b></p></div>');
       return;
     }
-    amonQuota.messages++;
-    saveQuota();
-    return amonOriginalSend();
+    // Count only a completed request. Failed/aborted requests should not consume a message.
+    const before=state.messages?.length||0;
+    const result=await amonOriginalSend();
+    const after=state.messages?.length||0;
+    if(after>before){amonQuota.messages++;saveQuota();}
+    return result;
   };
   renderQuota();
+  setInterval(renderQuota,60000);
 
   window.addEventListener('load',()=>{loadHistory();resizeInput();health();input.focus();});
 })();
