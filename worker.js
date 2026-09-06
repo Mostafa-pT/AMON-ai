@@ -9,7 +9,7 @@ const AMON = {
   version: "4.0.0",
   mode: "FREE_ONLY",
 
-  model: "@cf/zai-org/glm-4.7-flash",
+  model: "@cf/meta/llama-3.1-8b-instruct-fast",
 
   limits: {
     maxMessageLength: 12000,
@@ -262,6 +262,9 @@ async function runAI(
   env,
   messages
 ) {
+  if (!env || !env.AI || typeof env.AI.run !== "function") {
+    throw new Error("AI_BINDING_MISSING");
+  }
 
   if (!env.AI) {
 
