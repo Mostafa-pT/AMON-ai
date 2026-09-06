@@ -1072,6 +1072,21 @@ async function router(
   // AMON INFO
   // ----------------------------------------------------------
 
+  if (url.pathname === "/api/test-ai" && request.method === "GET") {
+    try {
+      if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
+      const result = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
+        messages: [
+          { role: "system", content: "You are AMON AI. Reply briefly and clearly in Arabic." },
+          { role: "user", content: "مرحبا AMON، هل تعمل الآن؟" }
+        ]
+      });
+      return json({ success:true, response: result?.response || "", raw: result });
+    } catch (error) {
+      return json({ success:false, error:String(error?.message || error), stack:String(error?.stack || "") }, 500);
+    }
+  }
+
   if (url.pathname === "/api/tools" && request.method === "GET") {
     return json({ success:true, name:AMON.name, tools:publicTools() });
   }
