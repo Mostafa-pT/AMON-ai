@@ -258,34 +258,23 @@ function publicTools() {
 // AI ENGINE
 // ============================================================
 
-async function runAI(
-  env,
-  messages
-) {
-  if (!env || !env.AI || typeof env.AI.run !== "function") {
+async function runAI(env, messages) {
+  if (!env?.AI || typeof env.AI.run !== "function") {
     throw new Error("AI_BINDING_MISSING");
   }
 
-  if (!env.AI) {
+  // Use the exact request format that passed /api/test-ai successfully.
+  try {
+    return await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", { messages });
+  } catch (firstError) {
+    // Automatic retry with a minimal context. This prevents a malformed
+    // history or oversized context from taking the whole chat offline.
+    const safeMessages = Array.isArray(messages)
+      ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
+      : messages;
 
-    throw new Error(
-      "AI_BINDING_MISSING"
-    );
-
+    return await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", { messages: safeMessages });
   }
-
-  return await env.AI.run(
-    AMON.model,
-    {
-      messages,
-
-      max_tokens:
-        AMON.limits.maxTokens,
-
-      temperature: 0.3
-    }
-  );
-
 }
 
 
