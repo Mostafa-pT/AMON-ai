@@ -203,6 +203,57 @@ function buildSystemPrompt() {
 }
 
 
+
+
+// ============================================================
+// AMON TOOL REGISTRY + ROUTER
+// ============================================================
+// Tools are declared separately from providers so new free providers
+// can be enabled without changing the central chat protocol.
+
+const AMON_TOOLS = {
+  chat:        { type:"text",        enabled:true,  provider:"workers-ai" },
+  reasoning:   { type:"reasoning",   enabled:true,  provider:"workers-ai" },
+  code:        { type:"code",        enabled:true,  provider:"workers-ai" },
+  explain:     { type:"education",   enabled:true,  provider:"workers-ai" },
+  translate:   { type:"language",    enabled:true,  provider:"workers-ai" },
+  summarize:   { type:"document",    enabled:true,  provider:"workers-ai" },
+  vision:      { type:"vision",      enabled:false, provider:"not-bound" },
+  image:       { type:"image",       enabled:false, provider:"not-bound" },
+  speechToText:{ type:"audio",       enabled:false, provider:"not-bound" },
+  textToSpeech:{ type:"audio",       enabled:false, provider:"not-bound" },
+  webResearch: { type:"research",    enabled:false, provider:"not-bound" },
+  files:       { type:"files",       enabled:false, provider:"not-bound" }
+};
+
+function detectTool(message, mode="learn") {
+  const m = String(message||"").toLowerCase();
+  if (/\b(html|css|javascript|typescript|python|java|c\+\+|php|sql|api|function|class|bug|error|debug|code)\b|\bكود|برمج|موقع|تطبيق|خطأ برمجي|جافاسكربت|بايثون/.test(m)) return "code";
+  if (/ترجم|translation|translate|لغة أخرى/.test(m)) return "translate";
+  if (/لخص|تلخيص|summarize|summary/.test(m)) return "summarize";
+  if (/حلل بعمق|فكر بعمق|reason|استدل|منطق/.test(m) || mode==="thinking") return "reasoning";
+  if (/اشرح|علمني|explain|teach/.test(m) || mode==="explain") return "explain";
+  return "chat";
+}
+
+function toolInstruction(tool) {
+  const instructions = {
+    code:"أنت تعمل الآن كأداة AMON Code. اكتب كودًا صحيحًا وقابلًا للتشغيل، اشرح أين يضع المستخدم كل جزء، وراجع الأخطاء المنطقية قبل الإجابة.",
+    reasoning:"أنت تعمل الآن كأداة AMON Reasoning. حلل المشكلة خطوة بخطوة وقدّم النتيجة والاستنتاج بوضوح دون ادعاء استخدام أدوات خارجية.",
+    explain:"أنت تعمل الآن كأداة AMON Explain. اشرح بتدرج من الأساسيات إلى التطبيق مع مثال عملي.",
+    translate:"أنت تعمل الآن كأداة AMON Translate. ترجم بدقة مع الحفاظ على المعنى والأسلوب.",
+    summarize:"أنت تعمل الآن كأداة AMON Summary. استخرج أهم النقاط بوضوح دون اختلاق معلومات.",
+    chat:"أنت تعمل الآن كأداة AMON Chat. قدّم أفضل إجابة مفيدة ودقيقة ضمن المعلومات المتاحة."
+  };
+  return instructions[tool] || instructions.chat;
+}
+
+function publicTools() {
+  return Object.entries(AMON_TOOLS).map(([id,tool])=>({
+    id, type:tool.type, enabled:tool.enabled, provider:tool.provider
+  }));
+}
+
 // ============================================================
 // AI ENGINE
 // ============================================================
@@ -413,7 +464,7 @@ function health(env) {
 
       tasks: false,
 
-      tools: false,
+      tools: true,
 
       plugins: false
 
@@ -494,8 +545,9 @@ function amonInfo(env) {
       },
 
       tools: {
-        enabled: false,
-        status: "PLANNED"
+        enabled: true,
+        status: "PARTIAL",
+        available: publicTools()
       },
 
       plugins: {
@@ -632,6 +684,13 @@ async function handleChat(
 
 
   // ----------------------------------------------------------
+  // AMON TOOL SELECTION
+  // ----------------------------------------------------------
+
+  const selectedTool = detectTool(userMessage, selectedMode);
+  const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
+
+  // ----------------------------------------------------------
   // MESSAGES
   // ----------------------------------------------------------
 
@@ -651,7 +710,9 @@ async function handleChat(
 
       content:
         `وضع AMON الحالي: ${selectedMode}.
-${modeInstruction}`
+${modeInstruction}
+الأداة المختارة تلقائيًا: ${selectedTool}.
+${toolInstruction(selectedTool)}`
     },
 
     ...history,
@@ -716,6 +777,15 @@ ${modeInstruction}`
 
       model:
         AMON.model,
+
+      tool:
+        selectedTool,
+
+      toolType:
+        tool.type,
+
+      provider:
+        tool.provider,
 
       message:
         answer,
@@ -998,6 +1068,10 @@ async function router(
   // ----------------------------------------------------------
   // AMON INFO
   // ----------------------------------------------------------
+
+  if (url.pathname === "/api/tools" && request.method === "GET") {
+    return json({ success:true, name:AMON.name, tools:publicTools() });
+  }
 
   if (
     url.pathname === "/api/amon" &&
