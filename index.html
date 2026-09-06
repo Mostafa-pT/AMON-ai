@@ -61,6 +61,53 @@ body{background:#fff;color:var(--text)}
 .brand-logo-full{width:58px;height:58px;border-radius:16px;object-fit:cover;object-position:center 38%;border:1px solid #e5e7eb;background:#fff}
 .header-brand-logo{width:42px;height:42px;border-radius:12px;object-fit:cover;object-position:center 38%;border:1px solid #e5e7eb}
 @media(max-width:760px){.welcome-logo{width:170px!important;height:170px!important}}
+</style>
+<style id="amon-interface-art">
+/* AMON identity artwork — make the approved geometric logo the main visual interface */
+.welcome{
+  position:relative;
+  isolation:isolate;
+  min-height:calc(100vh - 230px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:8vh 18px 42px!important;
+}
+.welcome::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background-image:var(--amon-logo);
+  background-repeat:no-repeat;
+  background-position:center 42%;
+  background-size:min(620px,72vw);
+  opacity:.035;
+  filter:grayscale(1) contrast(1.08);
+  pointer-events:none;
+}
+.welcome-logo{
+  width:260px!important;
+  height:260px!important;
+  flex:none;
+  background-image:var(--amon-logo)!important;
+  background-color:#fff!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  border-radius:30px!important;
+  border:1px solid #e6e9ee!important;
+  box-shadow:0 18px 55px rgba(15,23,42,.10)!important;
+  margin:0 auto 24px!important;
+}
+.welcome h1{letter-spacing:-.02em}
+@media(max-width:760px){
+  .welcome{min-height:calc(100vh - 190px);padding:5vh 12px 28px!important}
+  .welcome::before{background-size:90vw;opacity:.028}
+  .welcome-logo{width:190px!important;height:190px!important;border-radius:25px!important;margin-bottom:19px!important}
+}
 </style></head>
 <body>
 <div class="app">
