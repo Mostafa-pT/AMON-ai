@@ -36,13 +36,13 @@
   async function dashboard(){
     try{
       const d=await request("/api/owner/overview");
-      const plans=Object.entries(d.access.plans).map(([id,p])=>`<div class="card"><h3>${esc(p.name)}</h3><p>الرسائل: ${p.messages} / الصور: ${p.images}</p></div>`).join("");
+      const plans=Object.entries(d.plans).map(([id,p])=>`<div class="card"><h3>${esc(p.name)}</h3><p>الرسائل: ${p.messages} / الصور: ${p.images}</p></div>`).join("");
       panel("👑 AMON COMMAND CENTER",`
         <div class="card"><h3>مرحبًا سيدي</h3><p>تم تفعيل جلسة المالك بنجاح.</p></div>
         <div class="card"><h3>حالة النظام</h3><p><b>${esc(d.system.status)}</b> — الإصدار ${esc(d.system.version)}<br>الذكاء: ${d.system.ai?"متصل":"غير متصل"}</p></div>
         <div class="card"><h3>مركز التحكم</h3><p>إدارة المستخدمين، المجموعات، الصلاحيات الفردية، حدود الاستخدام، الميزات ووضع الصيانة هي بنية التحكم التي سيتم ربطها بالتخزين الدائم في المرحلة التالية.</p></div>
         <h3 style="margin:16px 0 8px">خطط الوصول</h3>${plans}
-        <div class="card"><h3>⚠️ حالة التخزين</h3><p>${esc(d.notice)}</p></div>
+        <div class="card"><h3>⚠️ حالة التخزين</h3><p>${esc(d.storage.note)}</p></div>
         <button id="amonOwnerLogout" style="width:100%;padding:11px;border:1px solid #fecaca;border-radius:10px;background:#fff;color:#b91c1c">تسجيل الخروج من وضع المالك</button>`);
       document.getElementById("amonOwnerLogout").onclick=()=>{sessionStorage.removeItem(key);loginUI();};
     }catch(e){sessionStorage.removeItem(key);loginUI();}
