@@ -196,25 +196,36 @@ function buildSystemPrompt() {
 // can be enabled without changing the central chat protocol.
 
 const AMON_TOOLS = {
-  chat:        { type:"text",        enabled:true,  provider:"workers-ai" },
-  reasoning:   { type:"reasoning",   enabled:true,  provider:"workers-ai" },
-  code:        { type:"code",        enabled:true,  provider:"workers-ai" },
-  explain:     { type:"education",   enabled:true,  provider:"workers-ai" },
-  translate:   { type:"language",    enabled:true,  provider:"workers-ai" },
-  summarize:   { type:"document",    enabled:true,  provider:"workers-ai" },
-  vision:      { type:"vision",      enabled:false, provider:"not-bound" },
-  image:       { type:"image",       enabled:false, provider:"not-bound" },
-  speechToText:{ type:"audio",       enabled:false, provider:"not-bound" },
-  textToSpeech:{ type:"audio",       enabled:false, provider:"not-bound" },
-  webResearch: { type:"research",    enabled:false, provider:"not-bound" },
-  files:       { type:"files",       enabled:false, provider:"not-bound" }
+  chat:          { type:"text",        enabled:true, provider:"workers-ai" },
+  reasoning:     { type:"reasoning",   enabled:true, provider:"workers-ai" },
+  code:          { type:"code",        enabled:true, provider:"workers-ai" },
+  explain:       { type:"education",   enabled:true, provider:"workers-ai" },
+  translate:     { type:"language",    enabled:true, provider:"workers-ai" },
+  summarize:     { type:"document",    enabled:true, provider:"workers-ai" },
+  math:          { type:"mathematics", enabled:true, provider:"local-engine" },
+  textAnalysis:  { type:"nlp",         enabled:true, provider:"local-engine+workers-ai" },
+  algorithms:    { type:"algorithms",  enabled:true, provider:"workers-ai" },
+  knowledge:     { type:"knowledge",   enabled:true, provider:"workers-ai" },
+  vision:        { type:"vision",      enabled:false,provider:"not-bound" },
+  image:         { type:"image",       enabled:false,provider:"not-bound" },
+  speechToText:  { type:"audio",       enabled:false,provider:"not-bound" },
+  textToSpeech:  { type:"audio",       enabled:false,provider:"not-bound" },
+  webResearch:   { type:"research",    enabled:false,provider:"not-bound" },
+  files:         { type:"files",       enabled:false,provider:"not-bound" }
 };
 
 function detectTool(message, mode="learn") {
-  const m = String(message||"").toLowerCase();
-  if (/\b(html|css|javascript|typescript|python|java|c\+\+|php|sql|api|function|class|bug|error|debug|code)\b|\bكود|برمج|موقع|تطبيق|خطأ برمجي|جافاسكربت|بايثون/.test(m)) return "code";
+  const m = String(message || "").toLowerCase();
+
+  if (/\b(html|css|javascript|typescript|python|java|c\+\+|php|sql|api|function|class|bug|error|debug|code|algorithm|data structure)\b|كود|برمج|خوارزم|موقع|تطبيق|خطأ برمجي|جافاسكربت|بايثون/.test(m)) {
+    if (/خوارزم|algorithm|data structure/.test(m)) return "algorithms";
+    return "code";
+  }
+  if (/^[0-9+\-*/().,%\s]+$/.test(m) || /احسب|حساب|معادلة|نسبة|قسمة|ضرب|جمع|طرح/.test(m)) return "math";
+  if (/حلل النص|تحليل النص|مشاعر النص|استخرج الكلمات|keywords|sentiment|nlp/.test(m)) return "textAnalysis";
   if (/ترجم|translation|translate|لغة أخرى/.test(m)) return "translate";
   if (/لخص|تلخيص|summarize|summary/.test(m)) return "summarize";
+  if (/معلوماتك|قاعدة المعرفة|knowledge/.test(m)) return "knowledge";
   if (/حلل بعمق|فكر بعمق|reason|استدل|منطق/.test(m) || mode==="thinking") return "reasoning";
   if (/اشرح|علمني|explain|teach/.test(m) || mode==="explain") return "explain";
   return "chat";
@@ -222,20 +233,49 @@ function detectTool(message, mode="learn") {
 
 function toolInstruction(tool) {
   const instructions = {
-    code:"أنت تعمل الآن كأداة AMON Code. اكتب كودًا صحيحًا وقابلًا للتشغيل، اشرح أين يضع المستخدم كل جزء، وراجع الأخطاء المنطقية قبل الإجابة.",
-    reasoning:"أنت تعمل الآن كأداة AMON Reasoning. حلل المشكلة خطوة بخطوة وقدّم النتيجة والاستنتاج بوضوح دون ادعاء استخدام أدوات خارجية.",
-    explain:"أنت تعمل الآن كأداة AMON Explain. اشرح بتدرج من الأساسيات إلى التطبيق مع مثال عملي.",
-    translate:"أنت تعمل الآن كأداة AMON Translate. ترجم بدقة مع الحفاظ على المعنى والأسلوب.",
-    summarize:"أنت تعمل الآن كأداة AMON Summary. استخرج أهم النقاط بوضوح دون اختلاق معلومات.",
-    chat:"أنت تعمل الآن كأداة AMON Chat. قدّم أفضل إجابة مفيدة ودقيقة ضمن المعلومات المتاحة."
+    code:"أنت تعمل كأداة AMON Code. اكتب كودًا صحيحًا وقابلًا للتشغيل، واشرحه للمبتدئ وراجع الأخطاء المنطقية.",
+    algorithms:"أنت تعمل كأداة AMON Algorithms. حدد المدخلات والمخرجات، اختر الخوارزمية المناسبة، اشرح التعقيد الزمني والذاكرة وقدّم مثالًا أو كودًا عند الحاجة.",
+    reasoning:"أنت تعمل كأداة AMON Reasoning. حلل المشكلة على مراحل وقدّم الاستنتاج النهائي بوضوح.",
+    explain:"أنت تعمل كأداة AMON Explain. اشرح من الأساسيات إلى التطبيق مع مثال عملي.",
+    translate:"أنت تعمل كأداة AMON Translate. ترجم بدقة مع الحفاظ على المعنى والأسلوب.",
+    summarize:"أنت تعمل كأداة AMON Summary. استخرج أهم النقاط دون اختلاق معلومات.",
+    textAnalysis:"أنت تعمل كأداة AMON NLP. حلل البنية والمعنى والموضوع والنبرة والمشاعر عند طلب ذلك، وميّز بين الحقائق والاستنتاجات.",
+    knowledge:"أنت تعمل كأداة AMON Knowledge. نظّم الإجابة، واذكر حدود المعرفة الحالية بدل اختلاق مصادر أو قواعد بيانات غير متاحة.",
+    math:"أنت تعمل كأداة AMON Math. تحقق من الحساب خطوة بخطوة، واستخدم النتيجة الحسابية المتاحة إن تم تمريرها.",
+    chat:"أنت تعمل كأداة AMON Chat. قدّم أفضل إجابة مفيدة ودقيقة ضمن المعلومات المتاحة."
   };
   return instructions[tool] || instructions.chat;
 }
 
 function publicTools() {
-  return Object.entries(AMON_TOOLS).map(([id,tool])=>({
+  return Object.entries(AMON_TOOLS).map(([id,tool]) => ({
     id, type:tool.type, enabled:tool.enabled, provider:tool.provider
   }));
+}
+
+function safeMath(expression) {
+  const raw = String(expression || "")
+    .replace(/احسب|حساب|الناتج|يساوي|كم/gi, "")
+    .replace(/×/g, "*").replace(/÷/g, "/").replace(/,/g, ".")
+    .trim();
+  if (!raw || raw.length > 200 || !/^[0-9+\-*/().%\s]+$/.test(raw)) return null;
+  try {
+    const value = Function('"use strict"; return (' + raw + ')')();
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function localTextAnalysis(text) {
+  const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+  const unique = new Set(words.map(w => w.toLowerCase()));
+  return {
+    characters: String(text || "").length,
+    words: words.length,
+    uniqueWords: unique.size,
+    sentences: (String(text || "").match(/[.!؟!?]+/g) || []).length || (words.length ? 1 : 0)
+  };
 }
 
 // ============================================================
@@ -673,6 +713,24 @@ async function handleChat(
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
 
   // ----------------------------------------------------------
+  // LOCAL TOOL CONTEXT
+  // ----------------------------------------------------------
+
+  let localToolContext = "";
+
+  if (selectedTool === "math") {
+    const value = safeMath(userMessage);
+    if (value !== null) {
+      localToolContext = "نتيجة محرك الحساب المحلي الموثوقة: " + String(value);
+    }
+  }
+
+  if (selectedTool === "textAnalysis") {
+    const analysis = localTextAnalysis(userMessage);
+    localToolContext = "إحصاءات تحليل النص المحلي: " + JSON.stringify(analysis);
+  }
+
+  // ----------------------------------------------------------
   // MESSAGES
   // ----------------------------------------------------------
 
@@ -694,7 +752,8 @@ async function handleChat(
         `وضع AMON الحالي: ${selectedMode}.
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
-${toolInstruction(selectedTool)}`
+${toolInstruction(selectedTool)}
+${localToolContext ? "\n" + localToolContext : ""}`
     },
 
     ...history,
@@ -1064,6 +1123,26 @@ async function router(
     } catch (error) {
       return json({ success:false, error:String(error?.message || error), stack:String(error?.stack || "") }, 500);
     }
+  }
+
+  if (url.pathname === "/api/capabilities" && request.method === "GET") {
+    return json({
+      success:true,
+      name:AMON.name,
+      organization:"PIXEL GAMES",
+      designer:"مصطفى السيد برغوت",
+      ceo:"خالد عبدالناصر عسل",
+      capabilities:{
+        language:"تحسين مستمر عبر ضبط التعليمات والنموذج الحالي",
+        knowledge:"إجابات منظمة مع عدم ادعاء قاعدة بيانات أو بحث غير متاح",
+        machineLearning:"يعتمد حاليًا على Workers AI ولا يدّعي تدريبًا ذاتيًا",
+        security:"حماية التعليمات والأسرار والصلاحيات",
+        mathematics:"محرك حساب محلي للعمليات الرياضية الأساسية",
+        textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
+        algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
+      },
+      tools:publicTools()
+    });
   }
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
