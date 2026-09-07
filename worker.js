@@ -1,3 +1,5 @@
+import { zipSync, strToU8 } from "fflate";
+
 // ============================================================
 // AMON AI WORKER
 // Central Runtime / API Gateway
@@ -228,7 +230,7 @@ const AMON_TOOLS = {
   speechToText:  { type:"audio",       enabled:false,provider:"not-bound" },
   textToSpeech:  { type:"audio",       enabled:false,provider:"not-bound" },
   webResearch:   { type:"research",    enabled:true, provider:"safe-google-gateway" },
-  files:         { type:"files",       enabled:false,provider:"not-bound" }
+  files:         { type:"files",       enabled:true, provider:"amon-file-studio" }
 };
 
 function detectTool(message, mode="learn") {
@@ -631,7 +633,11 @@ const AMON_FILE_FORMATS = {
   html: { ext:"html", mime:"text/html;charset=utf-8", label:"HTML" },
   json: { ext:"json", mime:"application/json;charset=utf-8", label:"JSON" },
   csv:  { ext:"csv",  mime:"text/csv;charset=utf-8", label:"CSV" },
-  xml:  { ext:"xml",  mime:"application/xml;charset=utf-8", label:"XML" }
+  xml:  { ext:"xml",  mime:"application/xml;charset=utf-8", label:"XML" },
+  pdf:  { ext:"pdf",  mime:"application/pdf", label:"PDF" },
+  docx: { ext:"docx", mime:"application/vnd.openxmlformats-officedocument.wordprocessingml.document", label:"Word DOCX" },
+  xlsx: { ext:"xlsx", mime:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", label:"Excel XLSX" },
+  pptx: { ext:"pptx", mime:"application/vnd.openxmlformats-officedocument.presentationml.presentation", label:"PowerPoint PPTX" }
 };
 
 function safeFileName(value) {
@@ -649,6 +655,16 @@ function buildCsv(text) {
   return ["row,text", ...lines.map((line,i)=>String(i+1)+",\""+line.replace(/\"/g,'\"\"')+"\"")].join("\n");
 }
 
+function xmlEsc(v){return String(v||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function zipOffice(parts){return zipSync(Object.fromEntries(Object.entries(parts).map(([k,v])=>[k,strToU8(v)])),{level:6});}
+function makeOffice(format,title,content){
+ const esc=xmlEsc, lines=[String(title||"AMON File"),...String(content||"").split(/\\r?\\n/)];
+ if(format==="docx"){const body=lines.map(x=>"<w:p><w:r><w:t>"+esc(x)+"</w:t></w:r></w:p>").join("");return zipOffice({"[Content_Types].xml":"<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/></Types>","_rels/.rels":"<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/></Relationships>","word/document.xml":"<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body>"+body+"<w:sectPr/></w:body></w:document>"});}
+ if(format==="xlsx"){const rows=lines.map((x,i)=>"<row r=\""+(i+1)+"\"><c r=\"A"+(i+1)+"\" t=\"inlineStr\"><is><t>"+esc(x)+"</t></is></c></row>").join("");return zipOffice({"[Content_Types].xml":"<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/><Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/></Types>","_rels/.rels":"<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>","xl/workbook.xml":"<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\"AMON\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>","xl/_rels/workbook.xml.rels":"<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/></Relationships>","xl/worksheets/sheet1.xml":"<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>"+rows+"</sheetData></worksheet>"});}
+ const text=esc(lines.join(" — "));return zipOffice({"[Content_Types].xml":"<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/ppt/presentation.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml\"/><Override PartName=\"/ppt/slides/slide1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/></Types>","_rels/.rels":"<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"ppt/presentation.xml\"/></Relationships>","ppt/presentation.xml":"<p:presentation xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><p:sldIdLst><p:sldId id=\"256\" r:id=\"rId1\"/></p:sldIdLst></p:presentation>","ppt/_rels/presentation.xml.rels":"<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide1.xml\"/></Relationships>","ppt/slides/slide1.xml":"<p:sld xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:spTree><p:nvGrpSpPr/><p:grpSpPr/><p:sp><p:nvSpPr/><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>"+text+"</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>"});
+}
+function makePdf(title,content){const text=String(title||"")+" "+String(content||"");const safe=text.replace(/[\\()]/g,"\\function buildFileContent(format, title, content) {").slice(0,6000);const body="BT /F1 12 Tf 50 760 Td ("+safe+") Tj ET";const objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>","<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Length "+body.length+" >>\\nstream\\n"+body+"\\nendstream"];let pdf="%PDF-1.4\\n",offs=[0];objs.forEach((o,i)=>{offs.push(pdf.length);pdf+=(i+1)+" 0 obj\\n"+o+"\\nendobj\\n";});const x=pdf.length;pdf+="xref\\n0 6\\n0000000000 65535 f \\n";for(let i=1;i<offs.length;i++)pdf+=String(offs[i]).padStart(10,"0")+" 00000 n \\n";pdf+="trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n"+x+"\\n%%EOF";return new TextEncoder().encode(pdf);}
+
 function buildFileContent(format, title, content) {
   const text=String(content || "");
   if(format==="html") return "<!doctype html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(title)+"</title></head><body><h1>"+escapeHtml(title)+"</h1><pre>"+escapeHtml(text)+"</pre></body></html>";
@@ -660,11 +676,12 @@ function buildFileContent(format, title, content) {
 }
 
 function buildDownloadPayload(format, name, title, content) {
-  const spec=AMON_FILE_FORMATS[format];
-  if(!spec) return null;
+  const spec=AMON_FILE_FORMATS[format]; if(!spec) return null;
   const fileName=safeFileName(name || title || "AMON_File").replace(/\.[a-z0-9]+$/i,"")+"."+spec.ext;
-  const data=buildFileContent(format,title,content);
-  const bytes=new TextEncoder().encode(data);
+  let bytes;
+  if(format==="pdf") bytes=makePdf(title,content);
+  else if(["docx","xlsx","pptx"].includes(format)) bytes=makeOffice(format,title,content);
+  else bytes=new TextEncoder().encode(buildFileContent(format,title,content));
   let binary=""; for(const b of bytes) binary+=String.fromCharCode(b);
   return {fileName,mime:spec.mime,base64:btoa(binary),format:spec.ext,size:bytes.length};
 }
