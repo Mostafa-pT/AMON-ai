@@ -13,8 +13,8 @@ const AMON = {
 
   limits: {
     maxMessageLength: 12000,
-    maxHistoryMessages: 20,
-    maxTokens: 1024
+    maxHistoryMessages: 24,
+    maxTokens: 4096
   }
 };
 
@@ -168,7 +168,10 @@ function buildSystemPrompt() {
 - ابدأ بإجابة مباشرة على السؤال، ثم أضف الشرح والسياق عند الحاجة.
 - استخدم عناوين واضحة، نقاطًا مرقمة، وأمثلة عملية عندما تجعل الإجابة أسهل.
 - في الأسئلة المعقدة، حلّل الموضوع خطوة بخطوة، ثم قدّم خلاصة أو توصية عملية.
-- لا تطِل بلا فائدة: اجعل الطول متناسبًا مع تعقيد السؤال. السؤال البسيط له إجابة واضحة، والسؤال المعقد يستحق إجابة مفصلة.
+- اجعل الإجابات الافتراضية أكثر تفصيلًا واحترافية. لا تتوقف عند فقرة قصيرة إذا كان السؤال يحتاج شرحًا.
+- في الأسئلة المتوسطة أو المعقدة، استهدف إجابة متعددة الأقسام والفقرات، وغالبًا 15 إلى 40 سطرًا أو أكثر عندما يكون ذلك مفيدًا.
+- لا تجعل عدد الأسطر هدفًا فارغًا: أضف تحليلًا وأمثلة وخطوات ومقارنات وملاحظات عملية بدل الحشو.
+- السؤال البسيط جدًا يمكن أن يكون مختصرًا، لكن عندما يطلب المستخدم شرحًا أو تحليلًا أو خطة، قدّم شرحًا موسعًا.
 - لا تستخدم عبارات عامة مثل "يمكن تحسين الأداء" دون شرح كيف ولماذا وما الخطوة العملية التالية.
 - عند وجود أكثر من خيار، قارن بينها بوضوح واذكر المزايا والقيود.
 - في البرمجة: اشرح الفكرة، قدّم كودًا قابلًا للتشغيل عند الحاجة، ثم وضّح طريقة الاستخدام والأخطاء المحتملة.
@@ -303,7 +306,7 @@ async function runAI(env, messages) {
 
   // Use the exact request format that passed /api/test-ai successfully.
   try {
-    return await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", { messages });
+    return await env.AI.run(AMON.model, { messages, max_tokens: AMON.limits.maxTokens });
   } catch (firstError) {
     // Automatic retry with a minimal context. This prevents a malformed
     // history or oversized context from taking the whole chat offline.
@@ -311,7 +314,7 @@ async function runAI(env, messages) {
       ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
       : messages;
 
-    return await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", { messages: safeMessages });
+    return await env.AI.run(AMON.model, { messages: safeMessages, max_tokens: AMON.limits.maxTokens });
   }
 }
 
