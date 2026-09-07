@@ -44,6 +44,36 @@ body{background:#fff;color:var(--text)}
 .mode.active{background:#eff6ff;border-color:#bfdbfe;color:var(--blue)}
 .icon,.side-btn{color:#4b5563}
 .icon:hover,.side-btn:hover{background:#f3f4f6}
+
+/* ===== AMON DEVELOPERS AI — OWNER CHAT PROFESSIONAL OVERRIDE ===== */
+.owner-chat-panel{width:min(1120px,97vw)!important;background:#f7f9fc!important;color:#172033!important;border-left:1px solid #dbe3ee!important;box-shadow:-28px 0 80px rgba(15,23,42,.22)!important}
+.owner-chat-panel .panel-head{height:70px!important;background:#ffffff!important;color:#172033!important;border-bottom:1px solid #e2e8f0!important;padding:0 22px!important}
+.owner-chat-panel .panel-body{background:#f7f9fc!important;color:#172033!important}
+.owner-chat-shell{height:calc(100vh - 70px)!important;background:#f7f9fc!important}
+.owner-chat-top{background:#fff!important;border-bottom:1px solid #e2e8f0!important;padding:18px 26px!important}
+.owner-chat-title{color:#111827!important;font-size:20px!important;letter-spacing:.1px}
+.owner-chat-sub{color:#64748b!important;font-size:12px!important}
+.owner-status{color:#166534!important;background:#ecfdf3!important;border-color:#bbf7d0!important;font-weight:800}
+.owner-chat-messages{background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)!important;padding:30px clamp(18px,4vw,70px)!important}
+.owner-chat-empty{color:#64748b!important}
+.owner-chat-empty b{color:#111827!important}
+.owner-msg{max-width:min(84%,820px)!important;font-size:15px!important;line-height:1.9!important;padding:15px 18px!important}
+.owner-msg.user{background:#2563eb!important;color:#fff!important;box-shadow:0 10px 28px rgba(37,99,235,.18)!important}
+.owner-msg.amon{background:#fff!important;color:#172033!important;border:1px solid #dbe3ee!important;box-shadow:0 10px 30px rgba(15,23,42,.07)!important}
+.owner-msg-label{font-size:11px!important;opacity:.78!important}
+.owner-msg-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px solid rgba(148,163,184,.22)}
+.owner-msg-action{border:1px solid #dbe3ee;background:#f8fafc;color:#334155;border-radius:9px;padding:6px 9px;font:inherit;font-size:11px;cursor:pointer;transition:.15s}
+.owner-msg-action:hover{background:#eef2f7;border-color:#cbd5e1}
+.owner-msg.user .owner-msg-actions{border-top-color:rgba(255,255,255,.22)}
+.owner-msg.user .owner-msg-action{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.26);color:#fff}
+.owner-chat-composer{background:#fff!important;border-top:1px solid #e2e8f0!important;padding:18px clamp(18px,4vw,70px) 24px!important}
+.owner-input-wrap{background:#fff!important;border:1px solid #cbd5e1!important;box-shadow:0 12px 35px rgba(15,23,42,.08)!important}
+.owner-input-wrap:focus-within{border-color:#2563eb!important;box-shadow:0 0 0 4px rgba(37,99,235,.10)!important}
+#oi{color:#172033!important;background:#fff!important}
+#oi::placeholder{color:#94a3b8!important}
+#os{background:#2563eb!important;color:#fff!important;box-shadow:0 8px 18px rgba(37,99,235,.20)!important}
+@media(max-width:700px){.owner-chat-panel .panel-head{height:62px!important}.owner-chat-shell{height:calc(100vh - 62px)!important}.owner-chat-messages{padding:18px 12px!important}.owner-msg{max-width:96%!important;font-size:14px!important}}
+
 </style>
 
 <style>
@@ -226,7 +256,7 @@ body{background:#fff;color:var(--text)}
   async function send(){
     ensureQuota();
     if(amonQuota.messages>=AMON_QUOTA.messages){
-      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى 50 رسالة</h3><p>تم استخدام الحد المجاني خلال نافذة الـ24 ساعة الحالية.</p><p><b>التجديد الكامل بعد: '+remainingTime()+'</b></p></div>');
+      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى 50 رسالة</h3><p>تم استخدام الحد المجاني خلال نافذة الـ6 ساعات الحالية.</p><p><b>التجديد الكامل بعد: '+remainingTime()+'</b></p></div>');
       return;
     }
     if(state.busy)return;
@@ -250,9 +280,9 @@ body{background:#fff;color:var(--text)}
   $('fileInput').addEventListener('change',e=>{for(const f of e.target.files){if(attachments.length>=6){toast('يمكن إرفاق 6 ملفات كحد أقصى');break;}attachments.push(f);}renderAttachments();e.target.value='';});
   document.addEventListener('click',e=>{const r=e.target.closest('[data-remove-file]');if(r){attachments.splice(Number(r.dataset.removeFile),1);renderAttachments();}});
   $('voiceButton').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('التحدث الصوتي غير مدعوم في هذا المتصفح');return;}const rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;rec.onstart=()=>toast('استمع إليك الآن…');rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript;resizeInput();input.focus();};rec.onerror=()=>toast('تعذر تشغيل الميكروفون');rec.start();});
-  // AMON FREE ACCESS: 50 successful chat requests + 5 image actions per rolling 24 hours.
+  // AMON FREE ACCESS: 50 successful chat requests + 5 image actions per rolling 6 hours.
   // Persistent server-side enforcement will be added with an account/KV binding.
-  const AMON_QUOTA={messages:50,images:5,windowMs:24*60*60*1000};
+  const AMON_QUOTA={messages:50,images:5,windowMs:6*60*60*1000};
   const rawQuota=JSON.parse(localStorage.getItem('amonQuotaV4')||'{}');
   const amonQuota={
     messages:Number(rawQuota.messages)||0,
