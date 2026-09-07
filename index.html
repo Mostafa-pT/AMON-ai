@@ -74,6 +74,22 @@ body{background:#fff;color:var(--text)}
 #os{background:#2563eb!important;color:#fff!important;box-shadow:0 8px 18px rgba(37,99,235,.20)!important}
 @media(max-width:700px){.owner-chat-panel .panel-head{height:62px!important}.owner-chat-shell{height:calc(100vh - 62px)!important}.owner-chat-messages{padding:18px 12px!important}.owner-msg{max-width:96%!important;font-size:14px!important}}
 
+
+/* ===== PERSISTENT CHAT HISTORY + RESPONSE FEEDBACK ===== */
+.history-item{position:relative;width:100%;display:flex!important;align-items:center;gap:7px;text-align:right}
+.history-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.history-actions{display:flex;gap:3px}
+.history-action{border:0;background:transparent;color:inherit;opacity:.65;cursor:pointer;padding:3px 5px;border-radius:7px}
+.history-action:hover{background:rgba(127,127,127,.12);opacity:1}
+.history-item.pinned .history-title::before{content:"📌 ";font-size:11px}
+.history-item.archived{opacity:.62}
+.history-section-label{font-size:11px;color:var(--muted);padding:10px 8px 5px;font-weight:800}
+.response-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.response-action{border:1px solid var(--border);background:transparent;color:var(--muted);padding:5px 8px;border-radius:8px;font:inherit;font-size:11px;cursor:pointer}
+.response-action:hover{color:var(--text);background:rgba(127,127,127,.08)}
+.response-action.active{border-color:#2563eb;color:#2563eb;background:rgba(37,99,235,.08)}
+.feedback-note{font-size:11px;color:var(--muted)}
+
 </style>
 
 <style>
@@ -236,42 +252,90 @@ body{background:#fff;color:var(--text)}
 (() => {
   'use strict';
   const API = '';
-  const state = { mode:'learn', history:[], abort:null, busy:false };
+  const state = { mode:'learn', history:[], activeChatId:null, abort:null, busy:false };
   const $ = id => document.getElementById(id);
   const input = $('messageInput'), chat = $('chat'), chatInner = $('chatInner');
 
   function toast(text){ const el=$('toast'); el.textContent=text; el.classList.remove('hidden'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.add('hidden'),2600); }
   function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function scrollBottom(){ requestAnimationFrame(()=>{ chat.scrollTop=chat.scrollHeight; }); }
-  function renderHistory(){ const box=$('history'); if(!state.history.length){box.innerHTML='<div class="history-empty">لا توجد محادثات محفوظة بعد.</div>';return;} box.innerHTML=state.history.slice(-30).reverse().map((x,i)=>`<button class="history-item" type="button" data-history="${i}">${escapeHTML(x.title||'محادثة')}</button>`).join(''); }
-  function saveHistory(){ try{localStorage.setItem('amon_history',JSON.stringify(state.history.slice(-30)));}catch{} }
-  function loadHistory(){ try{const x=JSON.parse(localStorage.getItem('amon_history')||'[]');if(Array.isArray(x))state.history=x;}catch{} renderHistory(); }
+  function uid(){return 'chat_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);}
+  function normalizeHistory(list){
+    if(!Array.isArray(list))return [];
+    return list.map(x=>{
+      if(x&&Array.isArray(x.messages)) return {id:x.id||uid(),title:x.title||'محادثة',messages:x.messages,time:Number(x.time)||Date.now(),updatedAt:Number(x.updatedAt||x.time)||Date.now(),pinned:!!x.pinned,archived:!!x.archived};
+      return null;
+    }).filter(Boolean);
+  }
+  function saveHistory(){try{localStorage.setItem('amon_history',JSON.stringify(state.history));}catch{}}
+  function loadHistory(){try{state.history=normalizeHistory(JSON.parse(localStorage.getItem('amon_history')||'[]'));}catch{state.history=[]}renderHistory();}
+  function renderHistory(){
+    const box=$('history');
+    const visible=state.history.filter(x=>!x.archived).sort((a,b)=>(b.pinned-a.pinned)||(b.updatedAt-a.updatedAt));
+    if(!visible.length){box.innerHTML='<div class="history-empty">لا توجد محادثات محفوظة بعد.</div>';return;}
+    box.innerHTML=visible.map(x=>`<div class="history-item${x.pinned?' pinned':''}" data-history="${x.id}"><button class="history-title" type="button" data-open-chat="${x.id}">${escapeHTML(x.title||'محادثة')}</button><div class="history-actions"><button class="history-action" type="button" title="${x.pinned?'إلغاء التثبيت':'تثبيت'}" data-pin-chat="${x.id}">📌</button><button class="history-action" type="button" title="أرشفة" data-archive-chat="${x.id}">▣</button><button class="history-action" type="button" title="حذف" data-delete-chat="${x.id}">🗑</button></div></div>`).join('');
+  }
+  function getActiveChat(){return state.history.find(x=>x.id===state.activeChatId)||null;}
+  function ensureActiveChat(firstMessage){
+    let chat=getActiveChat();
+    if(!chat){
+      chat={id:uid(),title:String(firstMessage||'محادثة جديدة').slice(0,60),messages:[],time:Date.now(),updatedAt:Date.now(),pinned:false,archived:false};
+      state.history.push(chat);state.activeChatId=chat.id;
+    }
+    return chat;
+  }
+  function renderChat(chat){
+    document.querySelectorAll('.message').forEach(x=>x.remove());
+    const welcome=$('welcome');if(welcome)welcome.remove();
+    if(!chat||!chat.messages?.length){newChat();return;}
+    for(const m of chat.messages){if(m.role==='user')addUser(m.content);else addAmon(m.content,false,m.id);}
+    scrollBottom();
+  }
+  function openChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;state.activeChatId=id;renderChat(chat);$('sidebar').classList.remove('open');}
+  function deleteChat(id){state.history=state.history.filter(x=>x.id!==id);if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();if(!state.activeChatId)newChat();}
+  function archiveChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.archived=true;chat.updatedAt=Date.now();if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();newChat();toast('تمت أرشفة المحادثة');}
+  function togglePin(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.pinned=!chat.pinned;saveHistory();renderHistory();}
   function addUser(text){ const el=document.createElement('div');el.className='message user';el.innerHTML=`<div class="user-bubble">${escapeHTML(text)}</div>`;chatInner.appendChild(el);scrollBottom(); }
-  function addAmon(text,typing=false){ const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.innerHTML=`<div class="avatar genius-symbol" aria-label="رمز ذكاء AMON" title="ذكاء AMON">🧠</div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeHTML(text)}</div>${typing?'':'<div class="meta"><button class="copy" type="button">نسخ</button></div>'}</div>`;chatInner.appendChild(el);scrollBottom();return el; }
+  function addAmon(text,typing=false,messageId=''){
+    const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.dataset.messageId=messageId||'';
+    const actions=typing?'':`<div class="meta response-actions"><button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up" title="إجابة مفيدة">👍 مفيد</button><button class="response-action" data-feedback="down" title="تحتاج تحسينًا">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span></div>`;
+    el.innerHTML=`<div class="avatar genius-symbol" aria-label="رمز ذكاء AMON" title="ذكاء AMON">🧠</div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeHTML(text)}</div>${actions}</div>`;
+    chatInner.appendChild(el);scrollBottom();return el;
+  }
   function removeWelcome(){ const w=$('welcome'); if(w)w.remove(); }
   function resizeInput(){ input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px'; }
   function setBusy(v){ state.busy=v;$('sendButton').classList.toggle('hidden',v);$('stopButton').classList.toggle('hidden',!v);input.disabled=v; }
   function setMode(mode){ state.mode=mode;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode)); }
   async function health(){ const conn=$('connection'); try{const r=await fetch(API+'/health',{cache:'no-store'});const d=await r.json();if(r.ok&&d.success){conn.classList.remove('offline');$('statusText').textContent=d.ai?'متصل':'الواجهة متصلة';}else throw Error();}catch{conn.classList.add('offline');$('statusText').textContent='غير متصل';} }
-  async function send(){
-    ensureQuota();
-    if(amonQuota.messages>=AMON_QUOTA.messages){
-      openPanel('انتهت الحصة المجانية','<div class="card"><h3>وصلت إلى 50 رسالة</h3><p>تم استخدام الحد المجاني خلال نافذة الـ6 ساعات الحالية.</p><p><b>التجديد الكامل بعد: '+remainingTime()+'</b></p></div>');
-      return;
-    }
+  function feedbackHint(){
+    try{const x=JSON.parse(localStorage.getItem('amon_feedback')||'[]');const bad=x.filter(a=>a.rating==='down').slice(-3);return bad.length?'ملاحظة تحسين من تقييمات المستخدم السابقة: قدّم إجابة أوضح وأكثر مباشرة وتنظيمًا، وتجنب تكرار أسلوب الإجابات التي لم ترض المستخدم.':'';}catch{return ''}
+  }
+  async function send(regenerateText=''){
     if(state.busy)return;
-    const text=input.value.trim();
-    if(!text)return;
-    // Count the message immediately when the user sends it, so the UI never waits for the API response.
-    if(!consumeMessageQuota())return;
+    const text=String(regenerateText||input.value).trim();if(!text)return;
     removeWelcome();
-    addUser(text);
-    input.value='';
-    resizeInput();const oldHistory=state.history.slice(-20).flatMap(x=>x.messages||[]);const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;try{const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,history:oldHistory}),signal:controller.signal});let data=null;try{data=await r.json();}catch{}if(!r.ok||!data?.success){throw Error(data?.message||'تعذر الاتصال بـ AMON');}const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');typing.querySelector('.amon-bubble').textContent=answer;const entry={title:text.slice(0,60),messages:[{role:'user',content:text},{role:'assistant',content:answer}],time:Date.now()};state.history.push(entry);saveHistory();renderHistory();}catch(e){if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}else{typing.querySelector('.amon-bubble').textContent='حدث خطأ: '+e.message;toast('تعذر تنفيذ الطلب');}}finally{state.abort=null;setBusy(false);scrollBottom();}}
-  function newChat(){ document.querySelectorAll('.message').forEach(x=>x.remove()); if(!$('welcome')){chatInner.innerHTML='<div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>عقل مركزي بسيط واحترافي. اكتب ما تريد، واختر وضع AMON المناسب لمهمتك.</p><div class="quick"><button type="button" data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="اشرح لي الفكرة التالية بالتفصيل مع مثال عملي"><strong>💡 شرح</strong><small>فهم الفكرة بوضوح</small></button><button type="button" data-prompt="حلل هذا السؤال بعقلية بحثية واذكر ما تعرفه وما لست متأكدًا منه"><strong>🔎 بحث</strong><small>تحليل منظم</small></button><button type="button" data-prompt="قارن بين الخيارين التاليين واذكر المميزات والعيوب"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focus(); }
+    const active=ensureActiveChat(text);
+    if(!regenerateText){addUser(text);active.messages.push({id:uid(),role:'user',content:text,time:Date.now()});input.value='';resizeInput();}
+    active.updatedAt=Date.now();saveHistory();renderHistory();
+    const oldHistory=active.messages.slice(-30).map(m=>({role:m.role,content:m.content}));
+    const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;
+    try{
+      const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,history:oldHistory,qualityHint:feedbackHint()}),signal:controller.signal});
+      let data=null;try{data=await r.json();}catch{}
+      if(!r.ok||!data?.success)throw Error(data?.message||'تعذر الاتصال بـ AMON');
+      const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');
+      const mid=uid();typing.querySelector('.amon-bubble').textContent=answer;typing.dataset.messageId=mid;
+      const meta=document.createElement('div');meta.className='meta response-actions';meta.innerHTML='<button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up">👍 مفيد</button><button class="response-action" data-feedback="down">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span>';typing.querySelector('.amon-body').appendChild(meta);
+      active.messages.push({id:mid,role:'assistant',content:answer,time:Date.now()});active.updatedAt=Date.now();saveHistory();renderHistory();
+    }catch(e){
+      if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}
+      else{typing.querySelector('.amon-bubble').textContent='حدث خطأ: '+e.message;toast('تعذر تنفيذ الطلب');}
+    }finally{state.abort=null;setBusy(false);scrollBottom();}
+  }
+  function newChat(){ state.activeChatId=null; document.querySelectorAll('.message').forEach(x=>x.remove()); if(!$('welcome')){chatInner.innerHTML='<div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>عقل مركزي بسيط واحترافي. اكتب ما تريد، واختر وضع AMON المناسب لمهمتك.</p><div class="quick"><button type="button" data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="اشرح لي الفكرة التالية بالتفصيل مع مثال عملي"><strong>💡 شرح</strong><small>فهم الفكرة بوضوح</small></button><button type="button" data-prompt="حلل هذا السؤال بعقلية بحثية واذكر ما تعرفه وما لست متأكدًا منه"><strong>🔎 بحث</strong><small>تحليل منظم</small></button><button type="button" data-prompt="قارن بين الخيارين التاليين واذكر المميزات والعيوب"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focus(); }
   function openPanel(title,body){$('panelTitle').textContent=title;$('panelBody').innerHTML=body;$('overlay').classList.remove('hidden');$('panel').classList.remove('hidden');}
   function closePanel(){$('overlay').classList.add('hidden');$('panel').classList.add('hidden');}
-  document.addEventListener('click',e=>{const q=e.target.closest('[data-prompt]');if(q){input.value=q.dataset.prompt;resizeInput();input.focus();}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const h=e.target.closest('[data-history]');if(h)toast('المحادثات محفوظة محليًا في هذا المتصفح.');});
+  document.addEventListener('click',e=>{const q=e.target.closest('[data-prompt]');if(q){input.value=q.dataset.prompt;resizeInput();input.focus();}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const open=e.target.closest('[data-open-chat]');if(open){openChat(open.dataset.openChat);return;}const del=e.target.closest('[data-delete-chat]');if(del){if(confirm('هل تريد حذف هذه المحادثة نهائيًا؟'))deleteChat(del.dataset.deleteChat);return;}const arc=e.target.closest('[data-archive-chat]');if(arc){archiveChat(arc.dataset.archiveChat);return;}const pin=e.target.closest('[data-pin-chat]');if(pin){togglePin(pin.dataset.pinChat);return;}const fb=e.target.closest('[data-feedback]');if(fb){const msg=fb.closest('.message');const action=fb.dataset.feedback;if(action==='regenerate'){const chat=getActiveChat();const idx=chat?.messages.findIndex(m=>m.id===msg.dataset.messageId);const prev=idx>0?chat.messages.slice(0,idx).reverse().find(m=>m.role==='user'):null;if(prev)send(prev.content);return;}const rating=action==='up'?'up':'down';let list=[];try{list=JSON.parse(localStorage.getItem('amon_feedback')||'[]')}catch{}list.push({messageId:msg.dataset.messageId,rating,time:Date.now()});localStorage.setItem('amon_feedback',JSON.stringify(list.slice(-100)));msg.querySelectorAll('[data-feedback="up"],[data-feedback="down"]').forEach(b=>b.classList.remove('active'));fb.classList.add('active');const note=msg.querySelector('.feedback-note');if(note)note.textContent=rating==='up'?'تم تسجيل أن الإجابة مفيدة.':'تم تسجيل التقييم لتحسين الأسلوب في الرسائل القادمة.';fetch(API+'/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating,messageId:msg.dataset.messageId})}).catch(()=>{});}});
   $('sendButton').addEventListener('click',send);$('stopButton').addEventListener('click',()=>state.abort?.abort());$('newChat').addEventListener('click',newChat);$('menuButton').addEventListener('click',()=>$('sidebar').classList.toggle('open'));$('healthButton').addEventListener('click',health);$('closePanel').addEventListener('click',closePanel);$('overlay').addEventListener('click',closePanel);$('openInfo').addEventListener('click',()=>openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>واجهة AMON مصممة ببساطة واحترافية، مع تشغيل عبر نفس Worker والـ API الموجود في المشروع.</p></div><div class="card"><h3>الحالة الحالية</h3><p>المحادثة تعمل عبر Workers AI عندما يكون ربط AI متاحًا في Cloudflare.</p></div>'));$('openSettings').addEventListener('click',()=>openPanel('الإعدادات','<div class="card"><h3>الوضع الحالي</h3><p>يمكنك تغيير وضع AMON من أزرار الوضع أسفل الشاشة.</p></div><div class="card"><h3>الخصوصية</h3><p>سجل المحادثات المحلي محفوظ في هذا المتصفح فقط عبر localStorage.</p></div>'));
   input.addEventListener('input',resizeInput);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
   const attachments=[];
@@ -280,16 +344,16 @@ body{background:#fff;color:var(--text)}
   $('fileInput').addEventListener('change',e=>{for(const f of e.target.files){if(attachments.length>=6){toast('يمكن إرفاق 6 ملفات كحد أقصى');break;}attachments.push(f);}renderAttachments();e.target.value='';});
   document.addEventListener('click',e=>{const r=e.target.closest('[data-remove-file]');if(r){attachments.splice(Number(r.dataset.removeFile),1);renderAttachments();}});
   $('voiceButton').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('التحدث الصوتي غير مدعوم في هذا المتصفح');return;}const rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;rec.onstart=()=>toast('استمع إليك الآن…');rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript;resizeInput();input.focus();};rec.onerror=()=>toast('تعذر تشغيل الميكروفون');rec.start();});
-  // AMON FREE ACCESS: 50 successful chat requests + 5 image actions per rolling 6 hours.
+  // AMON TEST MODE: message timer and quota are temporarily disabled.
   // Persistent server-side enforcement will be added with an account/KV binding.
-  const AMON_QUOTA={messages:50,images:5,windowMs:6*60*60*1000};
+  const AMON_QUOTA={messages:Infinity,images:5,windowMs:0,testMode:true};
   const rawQuota=JSON.parse(localStorage.getItem('amonQuotaV4')||'{}');
   const amonQuota={
     messages:Number(rawQuota.messages)||0,
     images:Number(rawQuota.images)||0,
     windowStartedAt:Number(rawQuota.windowStartedAt)||Date.now()
   };
-  function quotaExpired(){return Date.now()-amonQuota.windowStartedAt>=AMON_QUOTA.windowMs;}
+  function quotaExpired(){return false;}
   function resetQuota(){amonQuota.messages=0;amonQuota.images=0;amonQuota.windowStartedAt=Date.now();}
   function ensureQuota(){
     if(quotaExpired()){
@@ -299,6 +363,7 @@ body{background:#fff;color:var(--text)}
   }
   function consumeMessageQuota(){
     ensureQuota();
+    if(AMON_QUOTA.testMode)return true;
     if(amonQuota.messages>=AMON_QUOTA.messages)return false;
     amonQuota.messages+=1;
     try{localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));}catch{}
@@ -313,12 +378,12 @@ body{background:#fff;color:var(--text)}
   }
   function renderQuota(){
     ensureQuota();
-    $('msgQuota').textContent=amonQuota.messages+' / '+AMON_QUOTA.messages;
+    $('msgQuota').textContent=AMON_QUOTA.testMode?'اختبار بلا حد':amonQuota.messages+' / '+AMON_QUOTA.messages;
     $('imgQuota').textContent=amonQuota.images+' / '+AMON_QUOTA.images;
-    $('msgBar').style.width=Math.min(100,amonQuota.messages/AMON_QUOTA.messages*100)+'%';
+    $('msgBar').style.width=AMON_QUOTA.testMode?'0%':Math.min(100,amonQuota.messages/AMON_QUOTA.messages*100)+'%';
     $('imgBar').style.width=Math.min(100,amonQuota.images/AMON_QUOTA.images*100)+'%';
     const quotaNote=document.getElementById('quotaNote');
-    if(quotaNote)quotaNote.textContent='التجديد الكامل بعد: '+remainingTime();
+    if(quotaNote)quotaNote.textContent=AMON_QUOTA.testMode?'وضع الاختبار: حد الرسائل والمؤقت متوقفان مؤقتًا.':'التجديد الكامل بعد: '+remainingTime();
   }
   function saveQuota(){localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));renderQuota();}
   const serviceNames={image:'الصور',library:'المكتبة',tasks:'المهام',schedule:'المهام المجدولة',projects:'المشروعات',tools:'الأدوات',models:'النماذج',memory:'الذاكرة',sources:'المصادر'};
