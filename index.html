@@ -122,7 +122,17 @@ body{background:#fff;color:var(--text)}
 .amon-safe-links a{height:28px!important;min-height:28px!important;padding:0 9px!important;border-radius:999px!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1px!important;border:1px solid rgba(37,99,235,.18)!important;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(15,23,42,.02))!important;color:#2563eb!important;box-shadow:0 2px 8px rgba(15,23,42,.05)!important}
 .amon-safe-links a::before{content:"↗"!important;font-size:11px!important}.amon-safe-links a:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(37,99,235,.12)!important}
 :root[data-theme="dark"] .amon-safe-links a,:root[data-theme="midnight"] .amon-safe-links a{background:rgba(91,140,255,.12)!important;color:#8db3ff!important;border-color:rgba(141,179,255,.2)!important}
-@media(max-width:760px){.head-right{gap:5px!important}.tools-menu#appearanceButton{display:inline-flex!important;padding:7px 9px!important}.tools-menu#appearanceButton span{display:none}}</style>
+@media(max-width:760px){.head-right{gap:5px!important}.tools-menu#appearanceButton{display:inline-flex!important;padding:7px 9px!important}.tools-menu#appearanceButton span{display:none}}
+/* Premium AMON command center */
+.amon-services{padding:8px 10px 12px}
+.service{position:relative;min-height:42px;margin:2px 0;border:1px solid transparent;border-radius:12px;padding:10px 11px;transition:.18s ease;background:transparent}
+.service i{width:24px;height:24px;display:grid;place-items:center;font-style:normal;font-size:15px;border-radius:8px;background:rgba(37,99,235,.07);color:var(--blue)}
+.service span{font-weight:650;letter-spacing:.05px}
+.service:hover{background:rgba(37,99,235,.055);border-color:rgba(37,99,235,.08);transform:translateX(-2px)}
+.service.active{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.045));border-color:rgba(37,99,235,.12);box-shadow:0 5px 18px rgba(37,99,235,.06)}
+.service.active i{background:var(--blue);color:#fff;box-shadow:0 5px 13px rgba(37,99,235,.22)}
+.side-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding-top:13px}
+</style>
 
 <style>
 /* AMON V4 — organized single workspace */
@@ -234,18 +244,15 @@ body{background:#fff;color:var(--text)}
     <div class="brand"><img class="brand-logo-full" src="data:image/webp;base64,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" alt="AMON AI"><div><b>AMON AI</b><small>العقل المركزي</small></div></div>
     <button class="new-chat" id="newChat" type="button">＋ محادثة جديدة</button>
   </div>
-  <div class="side-title">الخدمات</div>
-  <nav class="amon-services" aria-label="خدمات AMON">
-    <button class="service active" type="button" data-service="chat">💬 <span>المحادثة</span></button>
-    <button class="service" type="button" data-service="image">🖼️ <span>الصور</span><em>FREE</em></button>
-    <button class="service" type="button" data-service="library">📚 <span>المكتبة</span></button>
-    <button class="service" type="button" data-service="tasks">📋 <span>المهام</span></button>
-    <button class="service" type="button" data-service="schedule">⏰ <span>المهام المجدولة</span></button>
-    <button class="service" type="button" data-service="projects">📁 <span>المشروعات</span></button>
-    <button class="service" type="button" data-service="tools">🧩 <span>الأدوات</span></button>
-    <button class="service" type="button" data-service="models">🤖 <span>النماذج</span><em>PRO</em></button>
-    <button class="service" type="button" data-service="memory">🧠 <span>الذاكرة</span></button>
-    <button class="service" type="button" data-service="sources">🌐 <span>المصادر</span></button>
+  <div class="side-title">مركز AMON</div>
+  <nav class="amon-services" aria-label="مركز أدوات AMON">
+    <button class="service active" type="button" data-service="chat"><i>💬</i><span>مساعد AMON</span></button>
+    <button class="service" type="button" data-service="create"><i>✦</i><span>استوديو الإبداع</span></button>
+    <button class="service" type="button" data-service="analyze"><i>◈</i><span>التحليل الذكي</span></button>
+    <button class="service" type="button" data-service="research"><i>⌕</i><span>البحث والتحقق</span></button>
+    <button class="service" type="button" data-service="workspace"><i>▣</i><span>مساحة العمل</span></button>
+    <button class="service" type="button" data-service="focus"><i>◉</i><span>وضع التركيز</span></button>
+    <button class="service" type="button" data-service="personalize"><i>✦</i><span>التخصيص والمظهر</span></button>
   </nav>
   <div class="side-quota">
     <div class="quota-head"><strong>الخطة المجانية</strong><button id="upgradeBtn" type="button">ترقية</button></div>
@@ -486,11 +493,18 @@ body{background:#fff;color:var(--text)}
     if(quotaNote)quotaNote.textContent=AMON_QUOTA.testMode?'وضع الاختبار: حد الرسائل والمؤقت متوقفان مؤقتًا.':'التجديد الكامل بعد: '+remainingTime();
   }
   function saveQuota(){localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));renderQuota();}
-  const serviceNames={image:'الصور',library:'المكتبة',tasks:'المهام',schedule:'المهام المجدولة',projects:'المشروعات',tools:'الأدوات',models:'النماذج',memory:'الذاكرة',sources:'المصادر'};
+  const serviceNames={create:'استوديو الإبداع',analyze:'التحليل الذكي',research:'البحث والتحقق',workspace:'مساحة العمل',focus:'وضع التركيز',personalize:'التخصيص والمظهر'};
   function openService(k){
+    if(k==='personalize'){openAppearance();return;}
+    if(k==='focus'){setResponseStyle('deep');setMode('thinking');toast('تم تفعيل وضع التركيز');return;}
     if(!serviceNames[k])return;
-    let extra=k==='image'?`<p><b>الحصة المجانية:</b> ${amonQuota.images} / ${AMON_QUOTA.images} صورة</p>`:'';
-    openPanel(serviceNames[k],`<div class="card"><h3>${serviceNames[k]}</h3><p>هذه مساحة الخدمة في AMON، جاهزة للربط بالمحرك المركزي والخدمة الفعلية.</p>${extra}</div>`);
+    const content={
+      create:'<div class="card"><h3>✦ استوديو الإبداع</h3><p>مساحة موحدة لصناعة النصوص والأفكار والمحتوى والملفات دون تشتيت.</p><div class="style-row"><button class="style-chip" data-style="creative">💡 إبداعي</button><button class="style-chip" data-style="professional">💼 احترافي</button><button class="style-chip" data-style="step">🪜 خطوة بخطوة</button></div></div>',
+      analyze:'<div class="card"><h3>◈ التحليل الذكي</h3><p>للمقارنة، حل المشكلات، تحليل البيانات، واستخراج الاستنتاجات بوضوح.</p><button class="appearance-choice" style="width:100%" data-style="deep">🧠 تفعيل التحليل العميق</button></div>',
+      research:'<div class="card"><h3>⌕ البحث والتحقق</h3><p>مركز لتنظيم البحث ومقارنة المصادر وتمييز الحقائق عن الاستنتاجات.</p><button class="appearance-choice" style="width:100%" data-style="professional">🔎 أسلوب بحث احترافي</button></div>',
+      workspace:'<div class="card"><h3>▣ مساحة العمل</h3><p>مكان موحد للمشروعات والملفات والمخرجات المهمة بدل ازدحام شريط الأدوات.</p><button class="appearance-choice" style="width:100%" data-open-appearance="1">✨ تخصيص مساحة العمل</button></div>'
+    }[k]||'';
+    openPanel(serviceNames[k],content);
   }
   document.addEventListener('click',e=>{
     const s=e.target.closest('[data-service]');
