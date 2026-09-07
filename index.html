@@ -428,5 +428,23 @@ body{background:#fff;color:var(--text)}
 })();
 </script>
 <script src="/amon-owner.js"></script>
+<script>
+window.AMONFileStudio={
+  formats:["txt","md","html","json","csv","xml"],
+  async generate({format="txt",title="AMON File",name="",content=""}={}){
+    const res=await fetch("/api/files/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({format,title,name,content})});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||"تعذر إنشاء الملف");
+    const file=data.file;
+    const binary=atob(file.base64); const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    const blob=new Blob([bytes],{type:file.mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=file.fileName;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    return file;
+  }
+};
+</script>
 </body>
 </html>
