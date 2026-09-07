@@ -533,6 +533,24 @@ const SAFE_SEARCH_SOURCES = [
   { id:"docs", label:"المصادر الرسمية", host:"www.google.com", query:"https://www.google.com/search?q=" }
 ];
 
+const MEDIA_SOURCES = {
+  music: [
+    { id:"youtube", label:"YouTube — ابحث عن الفيديو/الصوت الرسمي", query:"https://www.youtube.com/results?search_query=" },
+    { id:"spotify", label:"Spotify — البحث الرسمي", query:"https://open.spotify.com/search/" },
+    { id:"soundcloud", label:"SoundCloud — البحث", query:"https://soundcloud.com/search?q=" },
+    { id:"apple-music", label:"Apple Music — البحث", query:"https://music.apple.com/us/search?term=" }
+  ],
+  video: [
+    { id:"youtube", label:"YouTube — مشاهدة", query:"https://www.youtube.com/results?search_query=" },
+    { id:"vimeo", label:"Vimeo — البحث", query:"https://vimeo.com/search?q=" }
+  ],
+  movie: [
+    { id:"google", label:"Google — ابحث عن المشاهدة القانونية", query:"https://www.google.com/search?q=" },
+    { id:"youtube", label:"YouTube — المقطع الدعائي والمواد الرسمية", query:"https://www.youtube.com/results?search_query=" },
+    { id:"wikipedia", label:"Wikipedia — معلومات العمل", query:"https://www.google.com/search?q=site%3Awikipedia.org+" }
+  ]
+};
+
 const BLOCKED_LINK_PROTOCOLS = new Set(["javascript:","data:","file:","vbscript:"]);
 
 function normalizeExternalUrl(value) {
@@ -566,6 +584,33 @@ function buildSafeSearchLinks(query) {
   }));
   return links.filter(x => isSafeExternalUrl(x.url));
 }
+
+function detectMediaIntent(message) {
+  const m = String(message || "").toLowerCase();
+  if (/اغنية|أغنية|موسيقى|استمع|استماع|song|music|listen/.test(m)) return "music";
+  if (/فيلم|افلام|أفلام|مسلسل|مشاهدة فيلم|movie|film|series/.test(m)) return "movie";
+  if (/فيديو|شاهد|مشاهدة|video|watch/.test(m)) return "video";
+  return null;
+}
+
+function buildMediaLinks(query, mediaType) {
+  const q = String(query || "").trim().slice(0, 500);
+  const sources = MEDIA_SOURCES[mediaType] || [];
+  return sources.map(source => ({
+    id: source.id,
+    label: source.label,
+    url: source.query + encodeURIComponent(q),
+    safe: true,
+    type: mediaType,
+    legalIntent: true
+  })).filter(x => isSafeExternalUrl(x.url));
+}
+
+function mediaSafetyNotice(mediaType) {
+  const label = mediaType === "music" ? "الموسيقى" : mediaType === "movie" ? "الأفلام والمسلسلات" : "الفيديو";
+  return "يعرض AMON بوابات بحث إلى خدمات معروفة ومواد رسمية أو خيارات مشاهدة قانونية لـ" + label + ". لا يوفّر روابط قرصنة أو تنزيل غير مرخص، ولا يضمن توافر العمل أو ترخيصه في كل بلد.";
+}
+
 
 function wantsExternalSearch(message, mode) {
   const m = String(message || "").toLowerCase();
@@ -868,9 +913,14 @@ async function handleChat(
     localToolContext = "إحصاءات تحليل النص المحلي: " + JSON.stringify(analysis);
   }
 
-  const safeLinks = selectedTool === "webResearch" ? buildSafeSearchLinks(userMessage) : [];
+  const mediaType = detectMediaIntent(userMessage);
+  const safeLinks = selectedTool === "webResearch"
+    ? (mediaType ? buildMediaLinks(userMessage, mediaType) : buildSafeSearchLinks(userMessage))
+    : [];
   if (selectedTool === "webResearch") {
-    localToolContext = "تم تجهيز روابط بحث خارجية موثوقة كبوابات بحث. لا تدّع أنك فتحت أو قرأت نتائج البحث ما لم تكن نتائج مزود بحث فعلي قد تم تمريرها لك.";
+    localToolContext = mediaType
+      ? "تم تجهيز بوابات خارجية معروفة للبحث عن " + mediaType + ". وجّه المستخدم إلى المصادر الرسمية أو القانونية، ولا تقدّم روابط قرصنة أو تدّعِ التحقق من التوافر في بلده دون بيانات فعلية."
+      : "تم تجهيز روابط بحث خارجية موثوقة كبوابات بحث. لا تدّع أنك فتحت أو قرأت نتائج البحث ما لم تكن نتائج مزود بحث فعلي قد تم تمريرها لك.";
   }
 
   // ----------------------------------------------------------
@@ -975,7 +1025,10 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         safeLinks,
 
       linkSafety:
-        safeLinks.length ? safeLinkNotice() : null,
+        safeLinks.length ? (mediaType ? mediaSafetyNotice(mediaType) : safeLinkNotice()) : null,
+
+      mediaType:
+        mediaType,
 
       message:
         answer,
@@ -1329,6 +1382,13 @@ async function router(
       safeLinks: buildSafeSearchLinks(query),
       safety: safeLinkNotice()
     });
+  }
+
+  if (url.pathname === "/api/media-links" && request.method === "POST") {
+    const body=await readJSON(request); const query=cleanMessage(body?.query);
+    const mediaType = ["music","video","movie"].includes(body?.type) ? body.type : detectMediaIntent(query);
+    if(!query || !mediaType) return errorResponse("INVALID_MEDIA_REQUEST","اكتب اسم العمل وحدد أنه موسيقى أو فيديو أو فيلم/مسلسل.",400);
+    return json({success:true,query,type:mediaType,links:buildMediaLinks(query,mediaType),safety:mediaSafetyNotice(mediaType)});
   }
 
   if (url.pathname === "/api/safe-search" && request.method === "POST") {
