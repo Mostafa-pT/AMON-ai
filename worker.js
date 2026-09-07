@@ -617,6 +617,39 @@ function buildMediaLinks(query, mediaType) {
   })).filter(x => isSafeExternalUrl(x.url));
 }
 
+function detectRequestedFileFormat(message) {
+  const m=String(message||"").toLowerCase();
+  if(/pdf/.test(m)) return "pdf";
+  if(/docx|word|وورد/.test(m)) return "docx";
+  if(/xlsx|excel|اكسل|إكسل/.test(m)) return "xlsx";
+  if(/pptx|powerpoint|بوربوينت|باوربوينت/.test(m)) return "pptx";
+  if(/csv/.test(m)) return "csv";
+  if(/json/.test(m)) return "json";
+  if(/xml/.test(m)) return "xml";
+  if(/markdown|md/.test(m)) return "md";
+  if(/html/.test(m)) return "html";
+  return "txt";
+}
+
+function normalizeSearchResultLink(item, mediaType) {
+  const raw=item?.url||item?.link||item?.href||item?.permalink||"";
+  if(!isSafeExternalUrl(raw)) return null;
+  const title=String(item?.title||item?.name||item?.label||"فتح النتيجة");
+  const u=normalizeExternalUrl(raw);
+  const host=u?.hostname?.toLowerCase()||"";
+  const preferred=mediaType==="music" ? /(youtube.com|youtu.be|spotify.com|music.apple.com|soundcloud.com)$/ : mediaType==="video" ? /(youtube.com|youtu.be|vimeo.com)$/ : /(youtube.com|netflix.com|primevideo.com|disneyplus.com|justwatch.com)$/;
+  return {id:"direct-"+Math.random().toString(36).slice(2,8),label:title,url:u.toString(),safe:true,type:mediaType,direct:true,preferred:preferred.test(host)};
+}
+
+async function buildMediaLinksForRequest(env, query, mediaType) {
+  try {
+    const research=await researchAdapter(env,query);
+    const direct=(research.results||[]).map(x=>normalizeSearchResultLink(x,mediaType)).filter(Boolean).sort((a,b)=>Number(b.preferred)-Number(a.preferred)).slice(0,6);
+    if(direct.length) return {links:direct,direct:true,provider:research.provider||"configured-search"};
+  } catch {}
+  return {links:buildMediaLinks(query,mediaType),direct:false,provider:"fallback-search"};
+}
+
 function mediaSafetyNotice(mediaType) {
   const label = mediaType === "music" ? "الموسيقى" : mediaType === "movie" ? "الأفلام والمسلسلات" : "الفيديو";
   return "يعرض AMON بوابات بحث إلى خدمات معروفة ومواد رسمية أو خيارات مشاهدة قانونية لـ" + label + ". لا يوفّر روابط قرصنة أو تنزيل غير مرخص، ولا يضمن توافر العمل أو ترخيصه في كل بلد.";
@@ -1018,9 +1051,12 @@ async function handleChat(
   }
 
   const mediaType = route.mediaType || detectMediaIntent(userMessage);
-  const safeLinks = selectedTool === "webResearch"
-    ? (mediaType ? buildMediaLinks(userMessage, mediaType) : buildSafeSearchLinks(userMessage))
-    : [];
+  let safeLinks = selectedTool === "webResearch" && !mediaType ? buildSafeSearchLinks(userMessage) : [];
+  let mediaLinkMeta = null;
+  if (selectedTool === "webResearch" && mediaType) {
+    mediaLinkMeta = await buildMediaLinksForRequest(env, userMessage, mediaType);
+    safeLinks = mediaLinkMeta.links;
+  }
   if (selectedTool === "webResearch") {
     localToolContext = mediaType
       ? "تم تجهيز بوابات خارجية معروفة للبحث عن " + mediaType + ". وجّه المستخدم إلى المصادر الرسمية أو القانونية، ولا تقدّم روابط قرصنة أو تدّعِ التحقق من التوافر في بلده دون بيانات فعلية."
@@ -1098,6 +1134,11 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
     }
 
+    let generatedFile = null;
+    if (selectedTool === "files") {
+      const format = detectRequestedFileFormat(userMessage);
+      generatedFile = buildDownloadPayload(format, "AMON_"+format+"_File", "AMON File", normalizeAnswer(answer));
+    }
 
     return json({
 
@@ -1136,6 +1177,15 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
       links:
         safeLinks,
+
+      mediaLinksDirect:
+        !!mediaLinkMeta?.direct,
+
+      mediaProvider:
+        mediaLinkMeta?.provider || null,
+
+      file:
+        generatedFile,
 
       linkSafety:
         safeLinks.length ? (mediaType ? mediaSafetyNotice(mediaType) : safeLinkNotice()) : null,
