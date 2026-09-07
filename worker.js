@@ -622,6 +622,58 @@ function safeLinkNotice() {
 }
 
 // ============================================================
+// AMON FILE STUDIO — PHASE 3 FOUNDATION
+// ============================================================
+
+const AMON_FILE_FORMATS = {
+  txt:  { ext:"txt",  mime:"text/plain;charset=utf-8", label:"TXT" },
+  md:   { ext:"md",   mime:"text/markdown;charset=utf-8", label:"Markdown" },
+  html: { ext:"html", mime:"text/html;charset=utf-8", label:"HTML" },
+  json: { ext:"json", mime:"application/json;charset=utf-8", label:"JSON" },
+  csv:  { ext:"csv",  mime:"text/csv;charset=utf-8", label:"CSV" },
+  xml:  { ext:"xml",  mime:"application/xml;charset=utf-8", label:"XML" }
+};
+
+function safeFileName(value) {
+  return String(value || "AMON_File").replace(/[^a-zA-Z0-9._-]/g,"_").replace(/_+/g,"_").slice(0,80) || "AMON_File";
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function escapeXml(value) { return escapeHtml(value); }
+
+function buildCsv(text) {
+  const lines=String(text || "").split(/\r?\n/).filter(Boolean);
+  return ["row,text", ...lines.map((line,i)=>String(i+1)+",\""+line.replace(/\"/g,'\"\"')+"\"")].join("\n");
+}
+
+function buildFileContent(format, title, content) {
+  const text=String(content || "");
+  if(format==="html") return "<!doctype html><html><head><meta charset=\"utf-8\"><title>"+escapeHtml(title)+"</title></head><body><h1>"+escapeHtml(title)+"</h1><pre>"+escapeHtml(text)+"</pre></body></html>";
+  if(format==="json") return JSON.stringify({title:String(title||"AMON File"),content:text,generatedBy:"AMON AI",generatedAt:new Date().toISOString()},null,2);
+  if(format==="csv") return buildCsv(text);
+  if(format==="xml") return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><amonDocument><title>"+escapeXml(title)+"</title><content>"+escapeXml(text)+"</content></amonDocument>";
+  if(format==="md") return "# "+String(title||"AMON File")+"\n\n"+text+"\n";
+  return text;
+}
+
+function buildDownloadPayload(format, name, title, content) {
+  const spec=AMON_FILE_FORMATS[format];
+  if(!spec) return null;
+  const fileName=safeFileName(name || title || "AMON_File").replace(/\.[a-z0-9]+$/i,"")+"."+spec.ext;
+  const data=buildFileContent(format,title,content);
+  const bytes=new TextEncoder().encode(data);
+  let binary=""; for(const b of bytes) binary+=String.fromCharCode(b);
+  return {fileName,mime:spec.mime,base64:btoa(binary),format:spec.ext,size:bytes.length};
+}
+
+function wantsFileGeneration(message) {
+  return /اصنع.*ملف|انشئ.*ملف|إنشاء.*ملف|حوّل.*(?:txt|pdf|word|docx|excel|xlsx|csv|html|json|xml|markdown)|ملف.*(?:txt|pdf|word|docx|excel|xlsx|csv|html|json|xml|markdown)/i.test(String(message||""));
+}
+
+// ============================================================
 // HEALTH
 // ============================================================
 
@@ -1382,6 +1434,21 @@ async function router(
       safeLinks: buildSafeSearchLinks(query),
       safety: safeLinkNotice()
     });
+  }
+
+  if (url.pathname === "/api/files/formats" && request.method === "GET") {
+    return json({success:true,formats:Object.values(AMON_FILE_FORMATS)});
+  }
+
+  if (url.pathname === "/api/files/generate" && request.method === "POST") {
+    const body=await readJSON(request);
+    const format=String(body?.format||"txt").toLowerCase();
+    const content=String(body?.content||"").slice(0,500000);
+    const title=String(body?.title||"AMON File").slice(0,200);
+    if(!content.trim()) return errorResponse("EMPTY_FILE_CONTENT","اكتب محتوى الملف أولًا.",400);
+    const file=buildDownloadPayload(format,body?.name,title,content);
+    if(!file) return errorResponse("UNSUPPORTED_FORMAT","هذه الصيغة غير مفعلة بعد في الإصدار الحالي.",400);
+    return json({success:true,file});
   }
 
   if (url.pathname === "/api/media-links" && request.method === "POST") {
