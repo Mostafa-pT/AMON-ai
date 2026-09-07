@@ -243,11 +243,20 @@ function detectTool(message, mode="learn") {
   if (/^[0-9+\-*/().,%\s]+$/.test(m) || /احسب|حساب|معادلة|نسبة|قسمة|ضرب|جمع|طرح/.test(m)) return "math";
   if (/حلل النص|تحليل النص|مشاعر النص|استخرج الكلمات|keywords|sentiment|nlp/.test(m)) return "textAnalysis";
   if (/ترجم|translation|translate|لغة أخرى/.test(m)) return "translate";
+  if (wantsFileGeneration(m)) return "files";
   if (/لخص|تلخيص|summarize|summary/.test(m)) return "summarize";
   if (/معلوماتك|قاعدة المعرفة|knowledge/.test(m)) return "knowledge";
   if (/حلل بعمق|فكر بعمق|reason|استدل|منطق/.test(m) || mode==="thinking") return "reasoning";
   if (/اشرح|علمني|explain|teach/.test(m) || mode==="explain") return "explain";
   return "chat";
+}
+
+function routeAMONTask(message, mode="learn") {
+  const mediaType = detectMediaIntent(message);
+  if (mediaType) return {tool:"webResearch",reason:"media-intent",mediaType};
+  if (wantsExternalSearch(message,mode)) return {tool:"webResearch",reason:"external-search",mediaType:null};
+  const tool=detectTool(message,mode);
+  return {tool,reason:tool==="chat"?"general-chat":"intent-detection",mediaType:null};
 }
 
 function toolInstruction(tool) {
@@ -960,8 +969,8 @@ async function handleChat(
   // AMON TOOL SELECTION
   // ----------------------------------------------------------
 
-  let selectedTool = detectTool(userMessage, selectedMode);
-  if (wantsExternalSearch(userMessage, selectedMode)) selectedTool = "webResearch";
+  const route = routeAMONTask(userMessage, selectedMode);
+  let selectedTool = route.tool;
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
 
   // ----------------------------------------------------------
@@ -982,7 +991,7 @@ async function handleChat(
     localToolContext = "إحصاءات تحليل النص المحلي: " + JSON.stringify(analysis);
   }
 
-  const mediaType = detectMediaIntent(userMessage);
+  const mediaType = route.mediaType || detectMediaIntent(userMessage);
   const safeLinks = selectedTool === "webResearch"
     ? (mediaType ? buildMediaLinks(userMessage, mediaType) : buildSafeSearchLinks(userMessage))
     : [];
@@ -1086,6 +1095,9 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
       toolType:
         tool.type,
+
+      routing:
+        { reason:route.reason, selectedTool, mediaType },
 
       provider:
         tool.provider,
@@ -1416,7 +1428,8 @@ async function router(
         textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
         algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
       },
-      tools:publicTools()
+      tools:publicTools(),
+      toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."}
     });
   }
 
