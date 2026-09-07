@@ -107,7 +107,16 @@ body{background:#fff;color:var(--text)}
 .amon-safe-links .safe-links-title{display:none}
 .amon-safe-links a{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:9px;border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;text-decoration:none;font-size:11px;font-weight:700;line-height:1.2;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .amon-safe-links a:hover{background:#f8fafc;border-color:#cbd5e1}.amon-safe-links a::before{content:"↗";font-size:12px;color:#64748b}.amon-safe-links small{display:none}
-.amon-inline-link{color:#2563eb;text-decoration:none;font-weight:700;word-break:break-word}.amon-inline-link:hover{text-decoration:underline}</style>
+.amon-inline-link{color:#2563eb;text-decoration:none;font-weight:700;word-break:break-word}.amon-inline-link:hover{text-decoration:underline}
+/* AMON Appearance & Answer Studio */
+:root[data-theme="dark"]{--bg:#0b0d10;--panel:#11161c;--panel2:#161c23;--line:#26313c;--text:#f4f7fb;--muted:#9aa6b2;--blue:#5b8cff;--blue2:#12233f}
+:root[data-theme="dark"] .header,:root[data-theme="dark"] .sidebar,:root[data-theme="dark"] .panel,:root[data-theme="dark"] .panel-head{background:#0f141a!important}:root[data-theme="dark"] .message .amon-bubble,:root[data-theme="dark"] .card{background:#121820!important}:root[data-theme="dark"] .tools-menu{background:#121820;color:#eef2f7}:root[data-theme="dark"] .user-bubble{background:#162846!important}:root[data-theme="dark"] .input-box{background:#121820}
+:root[data-theme="midnight"]{--bg:#060913;--panel:#0a1020;--panel2:#10192b;--line:#20304d;--text:#eef5ff;--muted:#91a1ba;--blue:#4f8cff;--green:#36d399}
+:root[data-theme="soft"]{--bg:#f7f7fb;--panel:#fff;--panel2:#f0f3f8;--line:#e2e7ef;--text:#1d2430;--muted:#687386;--blue:#5665f2}
+.appearance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.appearance-choice{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;text-align:right;color:var(--text)}.appearance-choice.active{border-color:var(--blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 15%,transparent)}.appearance-choice small{display:block;color:var(--muted);margin-top:4px}
+.style-row{display:flex;flex-wrap:wrap;gap:7px}.style-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px}.style-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.amon-inline-link{position:relative;z-index:5;pointer-events:auto;cursor:pointer}.amon-bubble a{pointer-events:auto!important;cursor:pointer!important}
+</style>
 
 <style>
 /* AMON V4 — organized single workspace */
@@ -243,7 +252,7 @@ body{background:#fff;color:var(--text)}
 <main class="main">
 <header class="header">
   <div class="head-left"><img class="header-brand-logo" src="data:image/webp;base64,UklGRowQAABXRUJQVlA4IIAQAACQYQCdASpoAWgBPnk6mUokoyKpIfCJeSAPCWdu/HyZGucQZ/g+cX5/8B9MCdrqn/fdOvzAP0Y/WXsE+YD9quo/6AH9M/vv//7BX0EfLI/az4OP3F9LvU7vO/937gv81y4/s9nHPuR+z/Lnkb4AX4b/Qv8v+XXA8AA+oPoPzMsgDgPqAH6J9Wf+i/+vlW/Q/8v/8PcJ/Wb/s9eT0Wv3eFRQ9rK2aSQcCoe1lbNJIOBUPaytmkq8pJBwKh7WVs0kg4FQ9rK2aSQcCoe28xmkkGbkVvfsFRZGQGg3kPakg4FQ9rK2aQ2SjHgfbTwGf1qsf5pCPO5pUkg4FQ9rK2VmSO8lXrW9sunU4clm0UQo19aZY0g4FQ9rH67gqSHAWAWWJ64spJzSRUJL5bZcv4r3xEj3jvPT8saP+jC5Zzs5BGFmH22vtL5W3Z3BddnS1KwxqhG8UZyQcCoe1kPEkd1ufe9mm8BODL9A55m0lBEQn0IOIPOkof5GtimdVsDEiqFmpWzSSDfJPU/HKRG5J+NT5125q50R0xbVvX+Iz6Z4Vbw8N8njsSsL0UESD6sIiCfgbPaytmkihT/gkgCaIyP04+TBlW1nzompU1kyOOxFiv+WeKC/wd3dDI4s4B5SBGiLK2aQyAWVwkAS92NLlKZrFMveFkdR7PTOnUTPVH7lbS5xulgUkHAqI5pjjPc+RJrCxppQjdW7ntISN75w4FQ9qe8c7C+fzTBLsoSAbRXh6tdmjvbQKFZPjChWErv/yFDujlORVtl8EXBro3/wbQRZWysp5jQ2vrDTHwhDYxnWDgP8F6kp4bSkg6RYzJwduCed9p4/xokZCQR8jdf2K4cgvRHwH7xtJ5lDiGpQZUHoTipb+0g4D8VZcuOfVNuGBSjzgI+Nz6i0rTv+RRAob7AW7PfhUkg4FKseFckKmoAKLuHQrH/G18IlHLP9p6V+DMcmkLNOep4ykkHAqHsQUzJm9LURn5+QjZBwKh7WVs0khQ9I7z0/LGkHAqHtZWzSSDgVD2srZpJBwKh7WVs0kg4IptZWzSSDe4AA/v9isAPcgAACCsAALMClcul2H5EQzB1UHxE7I265TmjC0KVHcNp2yfTOaqUMTYlRiR6h1V+mMNV16t4u6rkmR4qntfUN4TOzGKHTCv3aFWGMDq4ptAmFI0JNwvNUNUnESIH1A0OBF+62+HtOVscdWwC/eTiauGcHmHNWsdl4nzUjwobsJLw+3QcT6cfX0LXOQRDsYT0ctLjfGUVcZ1cLYiYI7gEF8GQ1RkKvv82oIdW0jzHRN/4VkBFGgJ5Lj0ti7/fR34qrog6a9LZ0l1ifvPhDqV5EcuDS5C4SkYv4vlfWFUPzXnU3gv93thkNRArj7U6z5wTUkXiqR6hSzAOM6juT6mqWh2WDIMNy8J2m3cwVy9/vB3Zsv+8FFSKvaoviq3FUETuMIqyh0bxzfPvFTMx1+h4oJSaqi9FRWvbgNOvCpBib6QgHHSiPmTKk6NW8g4Vy947z4ylI6l5ygIiLFVS7XmRMl/Fs12pnd55kBrzRGNpQURTn0KFWf0b1FhOP/O9706RheN8EtPmw7PhU6LKJXaykjx4kYNh8dUbseSeBzdnpAf2mHYGsTh3OaMpV9pMYfsMwpMiVVNYt9PrV4ZUgRj5BFv4hPmHvP8fNhqXW/xnPhBNjlVQk8JMHwgdsoPTcaODaGv8iasuEOS1fcZKjxzJfbjLxqH5h0nRuZG1W8PrF+O/BmtAdXUXNI1t2J6ve/5FXC162GZdalkhs09JelVmZaGJClLEIjacyaY49a4qH0Ey4J5dKr0uhny7oRPC28wYvk/dIKQCWFzT3Xk/zJun6nxjgKC9T9GrVsQNKMNB4d5NQ1f1/LSif6LJycprfpS+ttD3+sIgmGJFIzcRwZirw6964TkqWxyG4JBP//JVyo6rv+96YJ1Wf+Fzn/wPK/S+IqdY7t9mLrslFaoFWEgUeN4JE7snCm4fT7K7nyyl+nhS4HdmWituGDX6rHtN311Drt/1LZzHf0kASQ0HDC0o2NRVlNQRF2+bHL5xkJNKwIJPvaGF/PoNDrzPcaDgIU1qAL11yg5sGppXl9tpAV5oY8aSpV60n811NHUYuh61tRxOKqsxi1EDsHdEjM2qpB07FA8GMgqRhjRf2SDLw0jUeYXYKaPzgyz5VyLpKRFcZ+VahNDCx4DXO2SZgO1xQyJ/7qbNhJGQ4MzI2pdN/FcdcaJOeVDY6xrIB+BrYiULlI2okKm5pd3fpx0quZnHK1z4fmxQF9tqV1cG7ZN5z3KeNERdwiYTxf7shNB2dGOZTA9diJ+sZKPdutZ09bO8qk2PhjCIvfJb+zYMw+5jSdLFrTY8xp1GKHPh+9fmdKhKZlH9j5lYUs+F3aJbENpZWkmot3Zlg+1vPrnP/jDC+0L89wGdNyrPHe1dZ7OzgxyIwcMmRDfPA0dnm2DeZkZc9WYI8/rQb9rPsJt1b+1I3qDPz/NwtvM2WnoWfPy1eMVirsdXNDDEm6HGP5eE8lHisU7oaMJeXPow5tL+fAtI6lnd90AMPfZoLy/mIn6FcjA30k21RGkRrBsT0lT6rwkHvWskeCyX2nusnkl36O4vO3hsP3RCUN5j97kGus/v4J2krL9iy/bpgQuw2JIFymZTmWiMqNZGVHcuEt/xJmDr4qvIHTO0hgdkIgPhPCqXqdA5gS1zXiMtPG/LfLs8wvCZ+WbwFonGl3ndConOXRipqVNHS3+EzfmehEir1jyC1xzjxCdWYZC7/Jjfoy/G8tuPObHXzy34uBNCK3h4JmKuFBG2Uj/10PULdOZhNj6hbpyFSoszRC6Eu4HoCEXHcWtwahxANRJypzL/VeTAkn5+t3cPMJdRNkd7HpTOGS+z2D9NVHyH8Nv7KDp0e5rbChXtAH8sWkcIdMNZ7Re0PEYowV6cCh/kEhaMy/jCGTs0k4Pi2EriW5M2U6B22YUCXHpbF6dzFQPREra2Qn+kg46rSU+5TJ7ufIr7ec0+GHjz8hoRKJgDclzS8xeKPmzYfpQpQA9tb9agUahN0h6GTqjI+0pZkRrWQ8iSiWKj0day3as2NtULEuAyPDfA2JxnYReDW5Ry1U+7zoS/IJsU36QTnBSCZbKxAGoRgecTewbeMw633GKlRxoaUTq+lGFu/UutX9rB1jvUMuksikthXmeY8xDZGPb2XppLDRN0vfUVi4+P6i7CgvtpknVbrz/CjANP3Mzrz1PyqM2eGULay+N15nK3eYGraIK6VNCp3NR4BWqeLmHUlhJm71YRGjPQEXRO6LQuHWIHAlmfQr4VXdWH4BIhG8JgaHMFG5hExWbce/U9iHr+kLb3J+FbXLTsHeKVzsZZYkoSubWpXwAegXluQjVZ2fcQUBjkjk9gmR7QjeGxvJgJ+pfww/eeP1i83GKWNAIVzv7u1QZ3nfzNCUtM1j+Qhph3hEuhOyxSqtmqPBzHZCJfwyQO+gR+IoorjgXNkGpRuzeSDKe7SE1tPxZtmxuTBVI2T9ABG7quMOaiFRuBHtD4s/jz81S6OHn6GCsOBfPSndtaMwPNbwzMwaABTE7pT/EKipD4y28BHnajfVicvzHHNisHqMFm8FCjxozgw4JkthIFWsK0b7eQqHOrSYbGw65F+zxItQe20/vbn/tix2JLAxEGakpQMhviiPmGJTQCX7whuGU2t5cR4s6S7fDLp00ZkbNkiy5Jb7i6aHfajPSL/h3H5B2km2k/GvznaJaTYl0xrkE24cCxgbmblVleZf2H1tkBSGiIMBxRzEHqW5Sa0PFAOXOcvUkWk+I9Gac4LfQYOPo3ttBDchj3BKeU8PEUNh4MYzKyZs8lFbtV5yrHy//FcoFVhBp3GQN4mhLUsxq1jntlOy6vfE+vKRTMme+Om1O8P3wGC+RxGkfABN6yh/bf2cOs/o0txrXOC0Zni4ENs/PczoVjX4M0Wd3GpO5dad9wj33ZeLVpcdURmXIiqbpI4WWTKUQEXR4lRl34UjYc58LJTlSHyZYT+Ss8qed1e4M0nyf1f21ocesYo6rycnc3RXoXz/4kwcumyk158NRZHi2Z681WqKUlFYLOj1PVvv2ann+blX+gzhSCzPbx04y7miFJL3jxebYqdZWP3On6Rz3hJipu0BQEf1eQPTp/Wx0gLA2kThrqeyraO/z4ycfkB8YYGkQyIxD2vPCl5AOLSKNVdLe65MZFKB8e9cFXk+fe5QZhfndlvLww8Og5cIzCPuk5QcfeBVwBTjAAJkVl5OyL3eNMbJ0iSjFkPhztz4EgI77z3irZhfFzBP3nct7nYgaWmv9R5capUrrQJk3hxw/X9QG0HKPXCNEkAx/XUsZ/tCfX4f+2F2EYbsUj1nOnvtHpiRhJ5Nc0nIbqgswrHS3FRHREozPWFH4LgtDa97pR1bHOBF3pShGNkrIVHGgULhPPjPTAvY+JlMOx4Jk/6RXC8prqYF12Z0Qymrwcqa53sa3hXgDReGkyn9AaOPD3TEZEzHNMjbdynGAeevaHh3PI6JEzgcSiFXk1yxQNkKxdG6YkQ4k7lhzOJiWJYrbwDfb29F382Ml2BXmWHJH0YFyL8EyPTmCfcyInVo/83d//f3cMMX9M3c6KRZZvAs1UNUvPfJbwhQ0TaxkwuDYpuw8dIsafe9v8fhfcU+hPhBYUqJ2vWM2n5psaVdex+cawtPM81OzdcKtAm8H5nWbZ2VHKVFSiSy9/I9XSbrp/VtLZO04ljXjWbdQh1x4A8caO0yEdqx2hWZb2v/aHoZciIRLIGZpOANNLxCj56saJrAV8YMte4/ZoPpoCau352CvxztJbhC0rccLQqJB/peqJDQLXlxSK8SbY+mDKjw0L26uoLGK/x3ROhhJr+Wpf0hHLPjfNK1W6Rx/GlDt3lPDbMuY2dMDtL9++Hhclm44zFyTDN7twxBCKW/OR8IaX5khQ+UusnDOenIzN9t3pFlMi9iFU07C9ZCQNjI+Kuk4HdGK53ttJUHXsecDPuwPdzGr5cDz6V1//ymesB1R+/nV1YQlwACBjvygEN+SU64HPv1NA9BTzQNQmFx0Cf+A6R9B7ZX43xMdLoPorK86r/R3lN5EwSMWWDrllLrYsfnO3xgfbSahUeTOdUL36FbGNVkZ36udNxjfyrPd/mbAPpjmzpd3kwwZOck+XQBjOkazwyegRNoLZB7cTfn5OrkrEQ1ewgI6DSZyPL/JvrvS2QHDPYuFCnatv5LeKKtYwfsmpyI4Wp5SXpo0Ov6baeUAUNUuOLDmUHm/j40uG0Rg0ibXEiMSnrAVw3B5aYSv9I8o+HphHolTCiEkxif2FewFhO/k8GYPpXPk4oTi2KjwpI26Tnl8W3aUkKgWFoLEyxEDhJosSMLcZkXLkrxam+ATcDNSzpRxQK6fZ0SS9T5SLobHxxrOd3Di1F1iP/2R3GdMQyvP4Nv3peHZUP9+fkfmLEVP0O/Ip/RBtXXOXWzoMoEV/C6ce+wH90bY3tBHK0uposSH4PHMJA/pL965sR9xI5zaboAEBNyf6WXdZDyKPMnAq/03X2KrMWG4U1vyQRkS/KEXxfnBWv0oe6LXheD2yFq2ZJJybGb0KgjtAvKz3UK8yRAAAMQAABlQAAAAAAHuQAAAA=" alt="AMON AI"><strong class="head-title">AMON</strong><div class="status" id="connection"><span class="dot"></span><span id="statusText">جارٍ الفحص...</span></div></div>
-  <div class="head-right"><button class="tools-menu" id="menuButton" type="button">☰ <span>الأدوات</span></button><button class="icon" id="healthButton" type="button" aria-label="فحص الاتصال">◉</button></div>
+  <div class="head-right"><button class="tools-menu" id="menuButton" type="button">☰ <span>الأدوات</span></button><button class="tools-menu" id="appearanceButton" type="button">✨ <span>المظهر</span></button><button class="icon" id="healthButton" type="button" aria-label="فحص الاتصال">◉</button></div>
 </header>
 <section class="chat" id="chat"><div class="chat-inner" id="chatInner">
   <div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>اسأل، ابحث، فكّر، أو أرفق ملفًا. AMON هو محركك المركزي.</p>
@@ -269,7 +278,7 @@ body{background:#fff;color:var(--text)}
 (() => {
   'use strict';
   const API = '';
-  const state = { mode:'learn', history:[], activeChatId:null, abort:null, busy:false };
+  const state = { mode:'learn', responseStyle:localStorage.getItem('amon_response_style')||'auto', history:[], activeChatId:null, abort:null, busy:false };
   const $ = id => document.getElementById(id);
   const input = $('messageInput'), chat = $('chat'), chatInner = $('chatInner');
 
@@ -331,15 +340,19 @@ body{background:#fff;color:var(--text)}
   }
 
   function escapeAndLinkify(text){
-    const raw=String(text||"");
+    let raw=String(text||"");
+    const tokens=[];
+    raw=raw.replace(/\[([^\]]{1,120})\]\((https?:\/\/[^\s)]+)\)/gi,(_,label,url)=>{
+      try{const u=new URL(url);if(!["http:","https:"].includes(u.protocol))return _;const token="@@AMONLINK"+tokens.length+"@@";tokens.push('<a class="amon-inline-link" href="'+escapeHTML(u.toString())+'" target="_blank" rel="noopener noreferrer">'+escapeHTML(label)+'</a>');return token;}catch{return _;}
+    });
     const parts=raw.split(/(https?:\/\/[^\s<>]+)/gi);
-    return parts.map((part,i)=>{
+    let html=parts.map((part,i)=>{
       if(i%2===0)return escapeHTML(part).replace(/\n/g,"<br>");
-      const clean=part.replace(/[.,،؛:!?)]$/g,"");
-      const tail=part.slice(clean.length);
-      if(!/^https:\/\//i.test(clean))return escapeHTML(part);
-      try{const u=new URL(clean);if(!["http:","https:"].includes(u.protocol))return escapeHTML(part);return '<a class="amon-inline-link" href="'+escapeHTML(clean)+'" target="_blank" rel="noopener noreferrer">'+escapeHTML(clean)+'</a>'+escapeHTML(tail);}catch{return escapeHTML(part);}
+      const clean=part.replace(/[.,،؛:!?)]$/g,""),tail=part.slice(clean.length);
+      try{const u=new URL(clean);if(!["http:","https:"].includes(u.protocol))return escapeHTML(part);return '<a class="amon-inline-link" href="'+escapeHTML(u.toString())+'" target="_blank" rel="noopener noreferrer">'+escapeHTML(u.toString())+'</a>'+escapeHTML(tail);}catch{return escapeHTML(part);}
     }).join("");
+    tokens.forEach((token,i)=>{html=html.replace("@@AMONLINK"+i+"@@",token);});
+    return html;
   }
   function renderAmonText(el,text){el.innerHTML=escapeAndLinkify(text);}
 
@@ -367,7 +380,7 @@ body{background:#fff;color:var(--text)}
     const oldHistory=(regenerateText?active.messages:active.messages.slice(0,-1)).slice(-30).map(m=>({role:m.role,content:m.content}));
     const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;
     try{
-      const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,history:oldHistory,qualityHint:feedbackHint()}),signal:controller.signal});
+      const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,responseStyle:state.responseStyle,history:oldHistory,qualityHint:feedbackHint()}),signal:controller.signal});
       let data=null;try{data=await r.json();}catch{}
       if(!r.ok||!data?.success)throw Error(data?.message||'تعذر الاتصال بـ AMON');
       const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');
@@ -393,9 +406,29 @@ body{background:#fff;color:var(--text)}
     }finally{state.abort=null;setBusy(false);scrollBottom();}
   }
   function newChat(){ state.activeChatId=null; document.querySelectorAll('.message').forEach(x=>x.remove()); if(!$('welcome')){chatInner.innerHTML='<div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>عقل مركزي بسيط واحترافي. اكتب ما تريد، واختر وضع AMON المناسب لمهمتك.</p><div class="quick"><button type="button" data-prompt="اشرح لي هذا الموضوع بطريقة بسيطة خطوة بخطوة"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="اشرح لي الفكرة التالية بالتفصيل مع مثال عملي"><strong>💡 شرح</strong><small>فهم الفكرة بوضوح</small></button><button type="button" data-prompt="حلل هذا السؤال بعقلية بحثية واذكر ما تعرفه وما لست متأكدًا منه"><strong>🔎 بحث</strong><small>تحليل منظم</small></button><button type="button" data-prompt="قارن بين الخيارين التاليين واذكر المميزات والعيوب"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focus(); }
+  function applyTheme(theme){
+    document.documentElement.dataset.theme=theme==="light"?"":theme;
+    localStorage.setItem("amon_theme",theme);
+  }
+  function setResponseStyle(style){
+    state.responseStyle=style;
+    localStorage.setItem("amon_response_style",style);
+    document.querySelectorAll(".style-chip").forEach(b=>b.classList.toggle("active",b.dataset.style===style));
+    toast("تم اختيار نمط الإجابة");
+  }
+  function openAppearance(){
+    const theme=localStorage.getItem("amon_theme")||"light";
+    openPanel("✨ المظهر ونمط الإجابة",'<div class="card"><h3>مظهر AMON</h3><p>اختر الشكل الذي يناسبك. يتم الحفظ على جهازك.</p><div class="appearance-grid"><button class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button><button class="appearance-choice '+(theme==="midnight"?"active":"")+'" data-theme-choice="midnight">🌌 ليلي<small>احترافي عميق</small></button><button class="appearance-choice '+(theme==="soft"?"active":"")+'" data-theme-choice="soft">✨ ناعم<small>هادئ وتعليمي</small></button></div></div><div class="card"><h3>نمط إجابات AMON</h3><p>يغيّر طريقة تنظيم الإجابة، وليس فقط شكلها.</p><div class="style-row">'+[
+      ["auto","✨ تلقائي"],["professional","💼 احترافي"],["educational","🎓 تعليمي"],["deep","🧠 عميق"],["step","🪜 خطوة بخطوة"],["concise","⚡ مختصر"],["creative","💡 إبداعي"]
+    ].map(([k,n])=>'<button class="style-chip '+(state.responseStyle===k?"active":"")+'" data-style="'+k+'">'+n+'</button>').join("")+'</div></div>');
+  }
   function openPanel(title,body){$('panelTitle').textContent=title;$('panelBody').innerHTML=body;$('overlay').classList.remove('hidden');$('panel').classList.remove('hidden');}
   function closePanel(){$('overlay').classList.add('hidden');$('panel').classList.add('hidden');}
-  document.addEventListener('click',e=>{const q=e.target.closest('[data-prompt]');if(q){input.value=q.dataset.prompt;resizeInput();input.focus();}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const open=e.target.closest('[data-open-chat]');if(open){openChat(open.dataset.openChat);return;}const del=e.target.closest('[data-delete-chat]');if(del){if(confirm('هل تريد حذف هذه المحادثة نهائيًا؟'))deleteChat(del.dataset.deleteChat);return;}const arc=e.target.closest('[data-archive-chat]');if(arc){archiveChat(arc.dataset.archiveChat);return;}const pin=e.target.closest('[data-pin-chat]');if(pin){togglePin(pin.dataset.pinChat);return;}const fb=e.target.closest('[data-feedback]');if(fb){const msg=fb.closest('.message');const action=fb.dataset.feedback;if(action==='regenerate'){const chat=getActiveChat();const idx=chat?.messages.findIndex(m=>m.id===msg.dataset.messageId);const prev=idx>0?chat.messages.slice(0,idx).reverse().find(m=>m.role==='user'):null;if(prev)send(prev.content);return;}const rating=action==='up'?'up':'down';let list=[];try{list=JSON.parse(localStorage.getItem('amon_feedback')||'[]')}catch{}list.push({messageId:msg.dataset.messageId,rating,time:Date.now()});localStorage.setItem('amon_feedback',JSON.stringify(list.slice(-100)));msg.querySelectorAll('[data-feedback="up"],[data-feedback="down"]').forEach(b=>b.classList.remove('active'));fb.classList.add('active');const note=msg.querySelector('.feedback-note');if(note)note.textContent=rating==='up'?'تم تسجيل أن الإجابة مفيدة.':'تم تسجيل التقييم لتحسين الأسلوب في الرسائل القادمة.';fetch(API+'/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating,messageId:msg.dataset.messageId})}).catch(()=>{});}});
+  document.addEventListener('click',e=>{
+    const themeChoice=e.target.closest('[data-theme-choice]');if(themeChoice){applyTheme(themeChoice.dataset.themeChoice);openAppearance();return;}
+    const styleChoice=e.target.closest('[data-style]');if(styleChoice){setResponseStyle(styleChoice.dataset.style);return;}
+    const appearance=e.target.closest('#appearanceButton');if(appearance){openAppearance();return;}
+    const q=e.target.closest('[data-prompt]');if(q){input.value=q.dataset.prompt;resizeInput();input.focus();}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const open=e.target.closest('[data-open-chat]');if(open){openChat(open.dataset.openChat);return;}const del=e.target.closest('[data-delete-chat]');if(del){if(confirm('هل تريد حذف هذه المحادثة نهائيًا؟'))deleteChat(del.dataset.deleteChat);return;}const arc=e.target.closest('[data-archive-chat]');if(arc){archiveChat(arc.dataset.archiveChat);return;}const pin=e.target.closest('[data-pin-chat]');if(pin){togglePin(pin.dataset.pinChat);return;}const fb=e.target.closest('[data-feedback]');if(fb){const msg=fb.closest('.message');const action=fb.dataset.feedback;if(action==='regenerate'){const chat=getActiveChat();const idx=chat?.messages.findIndex(m=>m.id===msg.dataset.messageId);const prev=idx>0?chat.messages.slice(0,idx).reverse().find(m=>m.role==='user'):null;if(prev)send(prev.content);return;}const rating=action==='up'?'up':'down';let list=[];try{list=JSON.parse(localStorage.getItem('amon_feedback')||'[]')}catch{}list.push({messageId:msg.dataset.messageId,rating,time:Date.now()});localStorage.setItem('amon_feedback',JSON.stringify(list.slice(-100)));msg.querySelectorAll('[data-feedback="up"],[data-feedback="down"]').forEach(b=>b.classList.remove('active'));fb.classList.add('active');const note=msg.querySelector('.feedback-note');if(note)note.textContent=rating==='up'?'تم تسجيل أن الإجابة مفيدة.':'تم تسجيل التقييم لتحسين الأسلوب في الرسائل القادمة.';fetch(API+'/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating,messageId:msg.dataset.messageId})}).catch(()=>{});}});
   $('sendButton').addEventListener('click',send);$('stopButton').addEventListener('click',()=>state.abort?.abort());$('newChat').addEventListener('click',newChat);$('menuButton').addEventListener('click',()=>$('sidebar').classList.toggle('open'));$('healthButton').addEventListener('click',health);$('closePanel').addEventListener('click',closePanel);$('overlay').addEventListener('click',closePanel);$('openInfo').addEventListener('click',()=>openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>واجهة AMON مصممة ببساطة واحترافية، مع تشغيل عبر نفس Worker والـ API الموجود في المشروع.</p></div><div class="card"><h3>الحالة الحالية</h3><p>المحادثة تعمل عبر Workers AI عندما يكون ربط AI متاحًا في Cloudflare.</p></div>'));$('openSettings').addEventListener('click',()=>openPanel('الإعدادات','<div class="card"><h3>الوضع الحالي</h3><p>يمكنك تغيير وضع AMON من أزرار الوضع أسفل الشاشة.</p></div><div class="card"><h3>الخصوصية</h3><p>سجل المحادثات المحلي محفوظ في هذا المتصفح فقط عبر localStorage.</p></div>'));
   input.addEventListener('input',resizeInput);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
   const attachments=[];
@@ -468,7 +501,7 @@ body{background:#fff;color:var(--text)}
   setInterval(renderQuota,1000);
   window.addEventListener('storage',e=>{if(e.key==='amonQuotaV4')renderQuota();});
 
-  window.addEventListener('load',()=>{loadHistory();resizeInput();health();input.focus();});
+  window.addEventListener('load',()=>{applyTheme(localStorage.getItem('amon_theme')||'light');loadHistory();resizeInput();health();input.focus();});
 })();
 </script>
 <script src="/amon-owner.js"></script>
