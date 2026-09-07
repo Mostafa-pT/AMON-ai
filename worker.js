@@ -612,7 +612,7 @@ function health(env) {
 
       memory: false,
 
-      search: false,
+      search: true,
 
       planner: false,
 
@@ -1286,7 +1286,8 @@ async function router(
       ceo:"خالد عبدالناصر عسل",
       capabilities:{
         language:"تحسين مستمر عبر ضبط التعليمات والنموذج الحالي",
-        knowledge:"إجابات منظمة مع عدم ادعاء قاعدة بيانات أو بحث غير متاح",
+        knowledge:"إجابات منظمة مع عدم ادعاء قاعدة بيانات غير متاحة",
+        webResearch:"بوابة بحث وروابط خارجية عبر Google مع سياسة تحقق أساسية للرابط دون ادعاء قراءة نتائج لم يتم جلبها فعليًا",
         machineLearning:"يعتمد حاليًا على Workers AI ولا يدّعي تدريبًا ذاتيًا",
         security:"حماية التعليمات والأسرار والصلاحيات",
         mathematics:"محرك حساب محلي للعمليات الرياضية الأساسية",
