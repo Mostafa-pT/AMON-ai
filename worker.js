@@ -700,6 +700,32 @@ function wantsFileGeneration(message) {
 }
 
 // ============================================================
+// AMON PHASE 5 — RESPONSE QUALITY ENGINE
+// ============================================================
+
+function qualityPlan(message, mode="learn") {
+  const m=String(message||"").trim();
+  const complex=/(حلل|قارن|خطة|استراتيجية|مشروع|لماذا|كيف|بحث|تصميم|خوارزمية|analyze|compare|strategy|project|research)/i.test(m);
+  const code=/(code|javascript|python|html|css|bug|error|كود|برمجة|خطأ)/i.test(m);
+  return {mode,complex,code,passes:complex||code?3:2,checklist:["accuracy","completeness","clarity","actionability"]};
+}
+
+function buildQualityInstruction(plan) {
+  return [
+    "محرّك جودة AMON نشط:",
+    "أجب بدقة ووضوح وبشكل منظم، ولا تكتفِ برد قصير عندما يحتاج السؤال تفصيلًا.",
+    "راجع داخليًا قبل الإنهاء: الدقة، الاكتمال، الوضوح، والخطوة العملية التالية.",
+    plan.complex ? "هذا طلب معقد: قدّم تحليلًا منظمًا ثم خلاصة وخطة قابلة للتنفيذ." : "ابدأ بإجابة مباشرة ثم أضف التفاصيل المفيدة.",
+    plan.code ? "في البرمجة: اشرح السبب والحل وطريقة الاختبار والمخاطر المحتملة." : ""
+  ].filter(Boolean).join("\n");
+}
+
+function normalizeAnswer(text) {
+  let out=String(text||"").trim().replace(/\n{3,}/g,"\n\n");
+  return out;
+}
+
+// ============================================================
 // HEALTH
 // ============================================================
 
@@ -1001,6 +1027,9 @@ async function handleChat(
       : "تم تجهيز روابط بحث خارجية موثوقة كبوابات بحث. لا تدّع أنك فتحت أو قرأت نتائج البحث ما لم تكن نتائج مزود بحث فعلي قد تم تمريرها لك.";
   }
 
+  const responsePlan = qualityPlan(userMessage, selectedMode);
+  const qualityInstruction = buildQualityInstruction(responsePlan);
+
   // ----------------------------------------------------------
   // MESSAGES
   // ----------------------------------------------------------
@@ -1024,7 +1053,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}
     },
 
     ...history,
@@ -1096,6 +1125,9 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       toolType:
         tool.type,
 
+      quality:
+        responsePlan,
+
       routing:
         { reason:route.reason, selectedTool, mediaType },
 
@@ -1115,7 +1147,7 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         answer,
 
       response:
-        answer,
+        normalizeAnswer(answer),
 
       reply:
         answer
