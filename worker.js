@@ -227,7 +227,7 @@ const AMON_TOOLS = {
   image:         { type:"image",       enabled:false,provider:"not-bound" },
   speechToText:  { type:"audio",       enabled:false,provider:"not-bound" },
   textToSpeech:  { type:"audio",       enabled:false,provider:"not-bound" },
-  webResearch:   { type:"research",    enabled:false,provider:"not-bound" },
+  webResearch:   { type:"research",    enabled:true, provider:"safe-google-gateway" },
   files:         { type:"files",       enabled:false,provider:"not-bound" }
 };
 
@@ -522,6 +522,61 @@ async function researchAdapter(env,q) {
   return {available:true,provider:"configured-search",results:d.results||d.items||d.web?.results||[]};
 }
 // ============================================================
+// SAFE EXTERNAL LINK GATEWAY — PHASE 1
+// ============================================================
+
+const SAFE_SEARCH_SOURCES = [
+  { id:"google", label:"Google", host:"www.google.com", query:"https://www.google.com/search?q=" },
+  { id:"wikipedia", label:"Wikipedia", host:"www.wikipedia.org", query:"https://www.google.com/search?q=site%3Awikipedia.org+" },
+  { id:"youtube", label:"YouTube", host:"www.youtube.com", query:"https://www.google.com/search?q=site%3Ayoutube.com+" },
+  { id:"github", label:"GitHub", host:"github.com", query:"https://www.google.com/search?q=site%3Agithub.com+" },
+  { id:"docs", label:"المصادر الرسمية", host:"www.google.com", query:"https://www.google.com/search?q=" }
+];
+
+const BLOCKED_LINK_PROTOCOLS = new Set(["javascript:","data:","file:","vbscript:"]);
+
+function normalizeExternalUrl(value) {
+  try {
+    const u = new URL(String(value || ""));
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    if (BLOCKED_LINK_PROTOCOLS.has(u.protocol)) return null;
+    u.username = ""; u.password = "";
+    return u;
+  } catch { return null; }
+}
+
+function isSafeExternalUrl(value) {
+  const u = normalizeExternalUrl(value);
+  if (!u) return false;
+  const host = u.hostname.toLowerCase();
+  if (host === "localhost" || host === "0.0.0.0" || host === "::1") return false;
+  if (/^(127|10|192\.168|169\.254)\./.test(host)) return false;
+  return true;
+}
+
+function buildSafeSearchLinks(query) {
+  const q = String(query || "").trim().slice(0, 500);
+  if (!q) return [];
+  const links = SAFE_SEARCH_SOURCES.map(source => ({
+    id: source.id,
+    label: source.label,
+    url: source.query + encodeURIComponent(q),
+    safe: true,
+    type: "search"
+  }));
+  return links.filter(x => isSafeExternalUrl(x.url));
+}
+
+function wantsExternalSearch(message, mode) {
+  const m = String(message || "").toLowerCase();
+  return mode === "research" || /ابحث|بحث|رابط|روابط|جوجل|google|مصدر|مصادر|موقع رسمي|official|استمع|استماع|شاهد|مشاهدة|فيلم|فيديو|اغنية|أغنية|مستند/.test(m);
+}
+
+function safeLinkNotice() {
+  return "يمكنك استخدام الروابط الخارجية التي يعرضها AMON. يتم تمرير الروابط عبر سياسة تحقق أساسية، ولا يدّعي AMON أن أي موقع على الإنترنت آمن بنسبة 100%.";
+}
+
+// ============================================================
 // HEALTH
 // ============================================================
 
@@ -791,7 +846,8 @@ async function handleChat(
   // AMON TOOL SELECTION
   // ----------------------------------------------------------
 
-  const selectedTool = detectTool(userMessage, selectedMode);
+  let selectedTool = detectTool(userMessage, selectedMode);
+  if (wantsExternalSearch(userMessage, selectedMode)) selectedTool = "webResearch";
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
 
   // ----------------------------------------------------------
@@ -810,6 +866,11 @@ async function handleChat(
   if (selectedTool === "textAnalysis") {
     const analysis = localTextAnalysis(userMessage);
     localToolContext = "إحصاءات تحليل النص المحلي: " + JSON.stringify(analysis);
+  }
+
+  const safeLinks = selectedTool === "webResearch" ? buildSafeSearchLinks(userMessage) : [];
+  if (selectedTool === "webResearch") {
+    localToolContext = "تم تجهيز روابط بحث خارجية موثوقة كبوابات بحث. لا تدّع أنك فتحت أو قرأت نتائج البحث ما لم تكن نتائج مزود بحث فعلي قد تم تمريرها لك.";
   }
 
   // ----------------------------------------------------------
@@ -909,6 +970,12 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
       provider:
         tool.provider,
+
+      links:
+        safeLinks,
+
+      linkSafety:
+        safeLinks.length ? safeLinkNotice() : null,
 
       message:
         answer,
@@ -1253,7 +1320,26 @@ async function router(
   if (url.pathname === "/api/research" && request.method === "POST") {
     const body=await readJSON(request); const query=cleanMessage(body?.query);
     if(!query) return errorResponse("EMPTY_QUERY","اكتب سؤال البحث.",400);
-    return json({success:true,query,...(await researchAdapter(env,query))});
+    const configured = await researchAdapter(env,query);
+    return json({
+      success:true,
+      query,
+      ...configured,
+      safeLinks: buildSafeSearchLinks(query),
+      safety: safeLinkNotice()
+    });
+  }
+
+  if (url.pathname === "/api/safe-search" && request.method === "POST") {
+    const body=await readJSON(request); const query=cleanMessage(body?.query);
+    if(!query) return errorResponse("EMPTY_QUERY","اكتب عبارة البحث أولًا.",400);
+    return json({
+      success:true,
+      query,
+      provider:"safe-google-gateway",
+      links:buildSafeSearchLinks(query),
+      safety:safeLinkNotice()
+    });
   }
   if (url.pathname === "/api/files/analyze" && request.method === "POST") {
     const body=await readJSON(request); const text=String(body?.content||body?.text||"").trim().slice(0,50000);
