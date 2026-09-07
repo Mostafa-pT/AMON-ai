@@ -317,7 +317,7 @@ body{background:#fff;color:var(--text)}
     const active=ensureActiveChat(text);
     if(!regenerateText){addUser(text);active.messages.push({id:uid(),role:'user',content:text,time:Date.now()});input.value='';resizeInput();}
     active.updatedAt=Date.now();saveHistory();renderHistory();
-    const oldHistory=active.messages.slice(-30).map(m=>({role:m.role,content:m.content}));
+    const oldHistory=(regenerateText?active.messages:active.messages.slice(0,-1)).slice(-30).map(m=>({role:m.role,content:m.content}));
     const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;
     try{
       const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,history:oldHistory,qualityHint:feedbackHint()}),signal:controller.signal});
