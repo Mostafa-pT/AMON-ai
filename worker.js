@@ -445,6 +445,66 @@ function classifyAIError(error) {
 
 
 // ============================================================
+// AMON EXPANSION CORE
+// Optional persistent storage and provider adapters.
+// ============================================================
+
+function hasKV(env, name) { return Boolean(env?.[name] && typeof env[name].get === "function"); }
+function userIdOf(v) { const x=String(v||"anonymous").trim().slice(0,80); return /^[a-zA-Z0-9._:-]+$/.test(x)?x:"anonymous"; }
+function kvKey(kind,id) { return kind+":"+String(id); }
+
+async function memoryList(env,userId) {
+  if (!hasKV(env,"AMON_MEMORY")) return [];
+  return (await env.AMON_MEMORY.get(kvKey("memory",userIdOf(userId)),"json")) || [];
+}
+async function memoryAdd(env,userId,fact) {
+  if (!hasKV(env,"AMON_MEMORY")) return {stored:false,reason:"OPTIONAL_BINDING_REQUIRED"};
+  const value=String(fact||"").trim().slice(0,500);
+  if (!value) return {stored:false,reason:"EMPTY"};
+  const items=await memoryList(env,userId);
+  items.push({id:crypto.randomUUID(),fact:value,createdAt:new Date().toISOString()});
+  await env.AMON_MEMORY.put(kvKey("memory",userIdOf(userId)),JSON.stringify(items.slice(-50)));
+  return {stored:true,itemCount:Math.min(items.length,50)};
+}
+async function knowledgeSave(env,body) {
+  if (!hasKV(env,"AMON_KNOWLEDGE")) return {stored:false,reason:"OPTIONAL_BINDING_REQUIRED"};
+  const title=String(body?.title||"").trim().slice(0,150);
+  const content=String(body?.content||"").trim().slice(0,20000);
+  if (!title||!content) return {stored:false,reason:"TITLE_OR_CONTENT_REQUIRED"};
+  const id=String(body?.id||crypto.randomUUID());
+  const item={id,title,content,tags:Array.isArray(body?.tags)?body.tags.slice(0,20):[],createdAt:new Date().toISOString()};
+  await env.AMON_KNOWLEDGE.put(kvKey("knowledge",id),JSON.stringify(item));
+  return {stored:true,item};
+}
+async function knowledgeSearch(env,q) {
+  if (!hasKV(env,"AMON_KNOWLEDGE")) return [];
+  const query=String(q||"").toLowerCase().trim();
+  const list=await env.AMON_KNOWLEDGE.list({prefix:"knowledge:"});
+  const out=[];
+  for(const key of (list.keys||[]).slice(0,100)) {
+    const x=await env.AMON_KNOWLEDGE.get(key.name,"json");
+    if(x&&(!query||(x.title+" "+x.content+" "+(x.tags||[]).join(" ")).toLowerCase().includes(query))) out.push(x);
+  }
+  return out.slice(0,20);
+}
+async function makePlan(env,goal) {
+  const result=await runAI(env,[
+    {role:"system",content:buildSystemPrompt()},
+    {role:"system",content:"أنت مدير أهداف AMON. حوّل الهدف إلى خطة مرقمة: خطوة، نتيجة، طريقة تحقق، أولوية. لا تدّع تنفيذًا تلقائيًا."},
+    {role:"user",content:String(goal||"").slice(0,12000)}
+  ]);
+  return extractAIResponse(result);
+}
+async function researchAdapter(env,q) {
+  if(!env?.AMON_SEARCH_ENDPOINT) return {available:false,reason:"SEARCH_PROVIDER_NOT_CONNECTED",results:[]};
+  const u=env.AMON_SEARCH_ENDPOINT+(env.AMON_SEARCH_ENDPOINT.includes("?")?"&":"?")+"q="+encodeURIComponent(String(q||"").slice(0,500));
+  const headers=env.AMON_SEARCH_KEY?{Authorization:"Bearer "+env.AMON_SEARCH_KEY}:{};
+  const r=await fetch(u,{headers});
+  if(!r.ok) return {available:false,reason:"SEARCH_PROVIDER_FAILED",results:[]};
+  const d=await r.json();
+  return {available:true,provider:"configured-search",results:d.results||d.items||d.web?.results||[]};
+}
+// ============================================================
 // HEALTH
 // ============================================================
 
@@ -1143,6 +1203,44 @@ async function router(
       },
       tools:publicTools()
     });
+  }
+
+  if (url.pathname === "/api/memory" && request.method === "GET") {
+    const id=userIdOf(url.searchParams.get("userId"));
+    return json({success:true,connected:hasKV(env,"AMON_MEMORY"),items:await memoryList(env,id)});
+  }
+  if (url.pathname === "/api/memory" && request.method === "POST") {
+    const body=await readJSON(request);
+    return json({success:true,connected:hasKV(env,"AMON_MEMORY"),...(await memoryAdd(env,body?.userId,body?.fact))});
+  }
+  if (url.pathname === "/api/knowledge" && request.method === "GET") {
+    return json({success:true,connected:hasKV(env,"AMON_KNOWLEDGE"),items:await knowledgeSearch(env,url.searchParams.get("q"))});
+  }
+  if (url.pathname === "/api/knowledge" && request.method === "POST") {
+    const body=await readJSON(request);
+    return json({success:true,connected:hasKV(env,"AMON_KNOWLEDGE"),...(await knowledgeSave(env,body))});
+  }
+  if (url.pathname === "/api/planner" && request.method === "POST") {
+    const body=await readJSON(request); const goal=cleanMessage(body?.goal);
+    if(!goal) return errorResponse("EMPTY_GOAL","اكتب هدفًا أولًا.",400);
+    return json({success:true,goal,plan:await makePlan(env,goal)});
+  }
+  if (url.pathname === "/api/research" && request.method === "POST") {
+    const body=await readJSON(request); const query=cleanMessage(body?.query);
+    if(!query) return errorResponse("EMPTY_QUERY","اكتب سؤال البحث.",400);
+    return json({success:true,query,...(await researchAdapter(env,query))});
+  }
+  if (url.pathname === "/api/files/analyze" && request.method === "POST") {
+    const body=await readJSON(request); const text=String(body?.content||body?.text||"").trim().slice(0,50000);
+    if(!text) return errorResponse("EMPTY_FILE_CONTENT","أرسل محتوى نصيًا للتحليل.",400);
+    const analysis=localTextAnalysis(text);
+    const result=await runAI(env,[{role:"system",content:buildSystemPrompt()},{role:"system",content:"حلل النص ولخص أهم النقاط دون ادعاء قراءة ملف غير متاح."},{role:"user",content:text}]);
+    return json({success:true,analysis,summary:extractAIResponse(result)});
+  }
+  if (url.pathname === "/api/evaluate" && request.method === "POST") {
+    const body=await readJSON(request);
+    const result=await runAI(env,[{role:"system",content:buildSystemPrompt()},{role:"system",content:"قيّم الإجابة من 1 إلى 10 في الدقة والوضوح والسلامة، ثم اقترح تحسينات قصيرة."},{role:"user",content:"السؤال: "+String(body?.question||"").slice(0,6000)+"\nالإجابة: "+String(body?.answer||"").slice(0,12000)}]);
+    return json({success:true,evaluation:extractAIResponse(result)});
   }
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
