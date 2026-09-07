@@ -84,6 +84,10 @@ body{background:#fff;color:var(--text)}
 .history-item.pinned .history-title::before{content:"📌 ";font-size:11px}
 .history-item.archived{opacity:.62}
 .history-section-label{font-size:11px;color:var(--muted);padding:10px 8px 5px;font-weight:800}
+.amon-safe-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding:10px;border:1px solid rgba(0,0,0,.08);border-radius:14px;background:#fff}
+.amon-safe-links .safe-links-title{width:100%;font-weight:700;font-size:13px}
+.amon-safe-links a{display:inline-flex;align-items:center;padding:8px 11px;border-radius:10px;text-decoration:none;border:1px solid rgba(0,0,0,.12);color:inherit;background:rgba(0,0,0,.03)}
+.amon-safe-links small{width:100%;opacity:.7;line-height:1.5;margin-top:2px}
 .response-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .response-action{border:1px solid var(--border);background:transparent;color:var(--muted);padding:5px 8px;border-radius:8px;font:inherit;font-size:11px;cursor:pointer}
 .response-action:hover{color:var(--text);background:rgba(127,127,127,.08)}
@@ -326,6 +330,18 @@ body{background:#fff;color:var(--text)}
       const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');
       const mid=uid();typing.querySelector('.amon-bubble').textContent=answer;typing.dataset.messageId=mid;
       const meta=document.createElement('div');meta.className='meta response-actions';meta.innerHTML='<button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up">👍 مفيد</button><button class="response-action" data-feedback="down">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span>';typing.querySelector('.amon-body').appendChild(meta);
+      if(Array.isArray(data.links)&&data.links.length){
+        const links=document.createElement('div');links.className='amon-safe-links';
+        const title=document.createElement('div');title.className='safe-links-title';title.textContent='روابط خارجية مقترحة وآمنة وفق سياسة AMON الأساسية';
+        links.appendChild(title);
+        data.links.forEach(item=>{
+          if(!item||typeof item.url!=='string'||!/^https:\/\//i.test(item.url))return;
+          const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='↗ '+String(item.label||'فتح الرابط');
+          links.appendChild(a);
+        });
+        if(data.linkSafety){const note=document.createElement('small');note.textContent=data.linkSafety;links.appendChild(note);}
+        typing.querySelector('.amon-body').appendChild(links);
+      }
       active.messages.push({id:mid,role:'assistant',content:answer,time:Date.now()});active.updatedAt=Date.now();saveHistory();renderHistory();
     }catch(e){
       if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}
