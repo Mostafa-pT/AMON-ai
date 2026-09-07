@@ -733,6 +733,56 @@ function wantsFileGeneration(message) {
 }
 
 // ============================================================
+// AMON PHASE 6 — ADAPTIVE QUALITY, ERROR LEARNING & COMMUNICATION
+// ============================================================
+
+const AMON_QUALITY_STATE = {
+  version: "6.0.0",
+  dimensions: ["adaptation","analysis","exceptions","communication","learning"],
+  policy: {
+    noFalseSelfImprovementClaims: true,
+    feedbackDriven: true,
+    defensiveFallbacks: true,
+    clearCommunication: true
+  }
+};
+
+function analyzeRequestProfile(message) {
+  const m=String(message||"").trim();
+  return {
+    ambiguous: m.length < 12 || /^(ساعدني|اشرح|حل|اعمل|افعل)$/i.test(m),
+    dataHeavy: /(بيانات|dataset|csv|excel|إكسل|تحليل|إحصاء|compare|data)/i.test(m),
+    highRiskOfException: /(خطأ|error|bug|استثناء|exception|لا يعمل|فشل)/i.test(m),
+    needsStepByStep: /(كيف|خطوات|خطوة|من الصفر|beginner|مبتدئ)/i.test(m)
+  };
+}
+
+function buildAdaptiveInstruction(profile, feedback) {
+  const lines=[
+    "محرك الاحتراف التكيفي AMON نشط.",
+    "لا تدّعِ أنك تعلمت أو حدثت نفسك تلقائيًا إذا لم يحدث ذلك فعليًا.",
+    "عند نقص المعلومات، وضّح ما تعرفه وما تحتاجه بدل اختراع تفاصيل.",
+    "إذا كان الطلب ملتبسًا، قدّم أفضل تفسير مع سؤال توضيحي قصير عند الضرورة.",
+    "استخدم لغة طبيعية واضحة وتجنب التكرار والعبارات الآلية مثل: سوف أتمنى أو سوف أتtrain."
+  ];
+  if(profile.dataHeavy) lines.push("للبيانات والتحليل: اذكر الافتراضات، فرّق بين الحقائق والاستنتاجات، ونبّه إلى حدود البيانات.");
+  if(profile.highRiskOfException) lines.push("للاستثناءات والأخطاء: حدّد السبب المحتمل، ثم الحل، ثم بديلًا احتياطيًا، ثم طريقة اختبار.");
+  if(profile.needsStepByStep) lines.push("قدّم خطوات مرتبة، قصيرة، وقابلة للتنفيذ.");
+  if(feedback) lines.push("استفد من ملاحظات الجودة المتاحة لتحسين الوضوح دون ذكر بيانات داخلية للمستخدم.");
+  return lines.join("\n");
+}
+
+function buildProfessionalResponseContract() {
+  return {
+    adaptation:"التكيف مع تغير نوع الطلب وحداثة المعلومات عند توفر أدوات البحث.",
+    analysis:"تحليل منظم مع افتراضات وحدود واضحة بدل ادعاء دقة غير مبررة.",
+    exceptions:"معالجة الأخطاء بالسبب والحل والبديل وخطوات الاختبار.",
+    communication:"إجابة مباشرة ومنظمة تناسب مستوى المستخدم.",
+    learning:"التحسين من تقييمات وملاحظات المستخدمين عبر آليات النظام المتاحة، دون ادعاء تعلم ذاتي غير موجود."
+  };
+}
+
+// ============================================================
 // AMON PHASE 5 — RESPONSE QUALITY ENGINE
 // ============================================================
 
@@ -1065,6 +1115,8 @@ async function handleChat(
 
   const responsePlan = qualityPlan(userMessage, selectedMode);
   const qualityInstruction = buildQualityInstruction(responsePlan);
+  const requestProfile = analyzeRequestProfile(userMessage);
+  const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false);
 
   // ----------------------------------------------------------
   // MESSAGES
@@ -1089,7 +1141,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${adaptiveInstruction}
     },
 
     ...history,
@@ -1168,6 +1220,9 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
       quality:
         responsePlan,
+
+      professionalism:
+        { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract() },
 
       routing:
         { reason:route.reason, selectedTool, mediaType },
