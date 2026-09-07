@@ -772,6 +772,21 @@ function buildAdaptiveInstruction(profile, feedback) {
   return lines.join("\n");
 }
 
+const AMON_RESPONSE_STYLES = {
+  auto:"اختر أفضل تنظيم تلقائيًا حسب السؤال.",
+  concise:"أجب باختصار شديد مع النقاط الضرورية فقط.",
+  professional:"أجب بأسلوب احترافي منظم بعناوين ونقاط واضحة.",
+  educational:"اشرح تدريجيًا وكأنك معلّم، مع مثال بسيط عند الحاجة.",
+  deep:"قدّم تحليلًا عميقًا ومنظمًا مع الأسباب والبدائل والقيود.",
+  step:"قدّم خطوات مرقمة قابلة للتنفيذ.",
+  creative:"استخدم عرضًا إبداعيًا واضحًا دون التضحية بالدقة."
+};
+
+function responseStyleInstruction(style) {
+  const key=typeof style==="string"&&AMON_RESPONSE_STYLES[style]?style:"auto";
+  return {key,instruction:"أسلوب الإجابة المطلوب: "+AMON_RESPONSE_STYLES[key]};
+}
+
 function buildProfessionalResponseContract() {
   return {
     adaptation:"التكيف مع تغير نوع الطلب وحداثة المعلومات عند توفر أدوات البحث.",
@@ -1052,6 +1067,9 @@ async function handleChat(
       ? body.qualityHint.slice(0, 600)
       : "";
 
+  const responseStyle =
+    responseStyleInstruction(body.responseStyle);
+
 
   // ----------------------------------------------------------
   // MODE INSTRUCTION
@@ -1116,7 +1134,7 @@ async function handleChat(
   const responsePlan = qualityPlan(userMessage, selectedMode);
   const qualityInstruction = buildQualityInstruction(responsePlan);
   const requestProfile = analyzeRequestProfile(userMessage);
-  const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false);
+  const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false) + "\n" + responseStyle.instruction;
 
   // ----------------------------------------------------------
   // MESSAGES
@@ -1222,7 +1240,7 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         responsePlan,
 
       professionalism:
-        { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract() },
+        { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key },
 
       routing:
         { reason:route.reason, selectedTool, mediaType },
