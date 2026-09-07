@@ -757,6 +757,11 @@ async function handleChat(
       body.history
     );
 
+  const qualityHint =
+    typeof body.qualityHint === "string"
+      ? body.qualityHint.slice(0, 600)
+      : "";
+
 
   // ----------------------------------------------------------
   // MODE INSTRUCTION
@@ -827,7 +832,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}`
     },
 
     ...history,
@@ -1258,6 +1263,13 @@ async function router(
     const body=await readJSON(request);
     const result=await runAI(env,[{role:"system",content:buildSystemPrompt()},{role:"system",content:"قيّم الإجابة من 1 إلى 10 في الدقة والوضوح والسلامة، ثم اقترح تحسينات قصيرة."},{role:"user",content:"السؤال: "+String(body?.question||"").slice(0,6000)+"\nالإجابة: "+String(body?.answer||"").slice(0,12000)}]);
     return json({success:true,evaluation:extractAIResponse(result)});
+  }
+
+  if (url.pathname === "/api/feedback" && request.method === "POST") {
+    const body = await readJSON(request);
+    const rating = body?.rating === "up" || body?.rating === "down" ? body.rating : null;
+    if (!rating) return errorResponse("INVALID_FEEDBACK","تقييم غير صالح.",400);
+    return json({success:true,accepted:true,rating,message:"تم استلام التقييم لتحسين التجربة."});
   }
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
