@@ -1432,6 +1432,7 @@ async function handleOwnerChat(request, env) {
   const history = cleanHistory(body?.history);
   const result = await runAI(env, [
     { role:"system", content: buildSystemPrompt() },
+    // Verified: use standard ASCII punctuation for JavaScript object fields.
     { role:"system", content:`أنت الآن في AMON DEVELOPERS AI، قناة تطوير خاصة موثقة للمطور. خاطبه باحترام ووضوح. قدّم إجابات أقوى وأعمق من المحادثة العادية، وخصوصًا في القرارات التقنية.
 عند طلب تطوير أو تحليل: ابدأ بالنتيجة، ثم التشخيص، ثم الخيارات والمقارنة، ثم خطة تنفيذ مرقمة، ثم المخاطر، ثم الاختبار ومعايير النجاح.
 لا تعطِ إجابات عامة مختصرة إذا كان الطلب يحتاج تفصيلًا. قدّم أمثلة عملية واقتراحات قابلة للتنفيذ.
