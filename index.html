@@ -347,7 +347,17 @@ body{background:#fff;color:var(--text)}
     card.querySelector(".file-card-main").addEventListener("click",()=>card.classList.toggle("open"));
     card.querySelector('[data-file-action="open"]').onclick=()=>window.open(url,"_blank","noopener");
     card.querySelector('[data-file-action="save"]').onclick=()=>{const a=document.createElement("a");a.href=url;a.download=file.fileName||"AMON_File";a.click();};
-    card.querySelector('[data-file-action="share"]').onclick=async()=>{try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],file.fileName||"AMON_File",{type:file.mime})}))){await navigator.share({files:[new File([blob],file.fileName||"AMON_File",{type:file.mime})],title:file.fileName||"AMON File"});}else{await navigator.clipboard.writeText(url);toast("تم نسخ رابط الملف المؤقت");}}catch{}};
+    card.querySelector('[data-file-action="share"]').onclick=async()=>{
+      try{
+        const shareFile=new File([blob],file.fileName||"AMON_File",{type:file.mime});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]})){
+          await navigator.share({files:[shareFile],title:file.fileName||"AMON File"});
+        }else{
+          await navigator.clipboard.writeText(url);
+          toast("تم نسخ رابط الملف المؤقت");
+        }
+      }catch{}
+    };
     card.querySelector('[data-file-action="edit"]').onclick=()=>{const text=prompt("اكتب التعديل المطلوب على الملف:");if(text){input.value="عدّل الملف التالي: "+(file.fileName||"AMON File")+"\n"+text;input.focus();}};
     parent.appendChild(card);
   }
