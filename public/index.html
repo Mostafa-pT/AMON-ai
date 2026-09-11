@@ -331,6 +331,25 @@ body{background:#fff;color:var(--text)}
     scrollBottom();
   }
   function openChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;state.activeChatId=id;renderChat(chat);$('sidebar').classList.remove('open');}
+  window.AMONChat = {
+    getHistory(){ return state.history; },
+    openChat(id){ openChat(id); },
+    async loadPersistedConversation(id, title, messages){
+      if(!id) return;
+      const localId = 'sb_'+id;
+      let chat = state.history.find(x=>x.id===localId);
+      if(!chat){
+        chat={id:localId,title:title||'محادثة',messages:[],time:Date.now(),updatedAt:Date.now(),pinned:false,archived:false,persistedId:id};
+        state.history.push(chat);
+      }
+      chat.title=title||chat.title;
+      chat.messages=Array.isArray(messages)?messages.map(m=>({id:uid(),role:m.role==='assistant'?'assistant':'user',content:String(m.content||''),time:Date.now()})):[];
+      chat.updatedAt=Date.now();
+      state.activeChatId=localId;
+      saveHistory(); renderHistory(); renderChat(chat);
+      $('sidebar').classList.remove('open');
+    }
+  };
   function deleteChat(id){state.history=state.history.filter(x=>x.id!==id);if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();if(!state.activeChatId)newChat();}
   function archiveChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.archived=true;chat.updatedAt=Date.now();if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();newChat();toast('تمت أرشفة المحادثة');}
   function togglePin(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.pinned=!chat.pinned;saveHistory();renderHistory();}
@@ -535,7 +554,6 @@ body{background:#fff;color:var(--text)}
   window.addEventListener('load',()=>{applyTheme(localStorage.getItem('amon_theme')||'light');loadHistory();resizeInput();health();input.focus();});
 })();
 </script>
-<script src="/amon-owner.js"></script>
 <script>
 window.AMONFileStudio={
   formats:["txt","md","html","json","csv","xml","pdf","docx","xlsx","pptx"],
