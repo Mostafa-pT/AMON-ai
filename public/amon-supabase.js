@@ -76,7 +76,19 @@ async function renderChats(){
  try{
   const rows=await api("/rest/v1/conversations?select=id,title,last_message_at,pinned,archived&archived=eq.false&order=last_message_at.desc.nullslast&limit=50");
   box.innerHTML=(rows||[]).map(x=>'<button class="amon-conv" data-cid="'+esc(x.id)+'">'+(x.pinned?"📌 ":"")+esc(x.title||"محادثة جديدة")+'</button>').join("")||"<div class='amon-auth-note'>لا توجد محادثات محفوظة بعد.</div>";
-  box.querySelectorAll("[data-cid]").forEach(btn=>btn.onclick=()=>{currentConversationId=btn.dataset.cid;status("تم اختيار المحادثة. الرسائل الجديدة ستُحفظ فيها.");document.getElementById("amonAuthModal").classList.remove("open")});
+  box.querySelectorAll("[data-cid]").forEach(btn=>btn.onclick=async()=>{
+    currentConversationId=btn.dataset.cid;
+    try{
+      const rows=await api("/rest/v1/messages?select=role,content,created_at&conversation_id=eq."+encodeURIComponent(currentConversationId)+"&order=created_at.asc&limit=500");
+      const conv=(rows||[]);
+      const title=btn.textContent.replace(/^📌\s*/,"").trim()||"محادثة";
+      if(window.AMONChat?.loadPersistedConversation){
+        await window.AMONChat.loadPersistedConversation(currentConversationId,title,conv);
+      }
+      status("تم فتح المحادثة.");
+      document.getElementById("amonAuthModal").classList.remove("open");
+    }catch(e){status("تعذر فتح المحادثة: "+e.message)}
+  });
  }catch(e){box.innerHTML="<div class='amon-auth-note'>تعذر تحميل المحادثات.</div>"}
 }
 function hookChat(){
