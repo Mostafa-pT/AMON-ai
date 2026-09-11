@@ -1734,16 +1734,25 @@ async function router(
   // FRONTEND
   // ----------------------------------------------------------
 
+  // Static assets are normally served directly by Cloudflare.
+  // This fallback handles the root request if the Worker is invoked first.
   if (
     url.pathname === "/" &&
     request.method === "GET"
   ) {
-
     return handleFrontend(
       request,
       env
     );
+  }
 
+  // If the Worker receives a non-API GET request, pass it to static assets.
+  if (
+    request.method === "GET" &&
+    !url.pathname.startsWith("/api/") &&
+    env.ASSETS
+  ) {
+    return env.ASSETS.fetch(request);
   }
 
 
