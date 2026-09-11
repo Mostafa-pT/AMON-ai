@@ -111,8 +111,9 @@ body{background:#fff;color:var(--text)}
 /* AMON Appearance & Answer Studio */
 :root[data-theme="dark"]{--bg:#0b0d10;--panel:#11161c;--panel2:#161c23;--line:#26313c;--text:#f4f7fb;--muted:#9aa6b2;--blue:#5b8cff;--blue2:#12233f}
 :root[data-theme="dark"] .header,:root[data-theme="dark"] .sidebar,:root[data-theme="dark"] .panel,:root[data-theme="dark"] .panel-head{background:#0f141a!important}:root[data-theme="dark"] .message .amon-bubble,:root[data-theme="dark"] .card{background:#121820!important}:root[data-theme="dark"] .tools-menu{background:#121820;color:#eef2f7}:root[data-theme="dark"] .user-bubble{background:#162846!important}:root[data-theme="dark"] .input-box{background:#121820}
-:root[data-theme="midnight"]{--bg:#060913;--panel:#0a1020;--panel2:#10192b;--line:#20304d;--text:#eef5ff;--muted:#91a1ba;--blue:#4f8cff;--green:#36d399;--border:#20304d;--sidebar-bg:#070c16;--header-bg:#09101c;--user-bg:#101f39;--user-line:#23436f}
-:root[data-theme="soft"]{--bg:#f7f7fb;--panel:#fff;--panel2:#f0f3f8;--line:#e2e7ef;--text:#1d2430;--muted:#687386;--blue:#5665f2;--border:#e2e7ef;--sidebar-bg:#151821;--header-bg:rgba(255,255,255,.94);--user-bg:#eef0ff;--user-line:#d7dafd}
+:root[data-theme="dark"]{--bg:#0b0d10;--panel:#11161c;--panel2:#161c23;--line:#26313c;--text:#f4f7fb;--muted:#aab5c1;--blue:#6d95ff;--blue2:#14233d;--border:#26313c;--sidebar-bg:#0f141a;--header-bg:#11161c;--user-bg:#162846;--user-line:#294a75}
+:root[data-theme="dark"] .header,:root[data-theme="dark"] .sidebar,:root[data-theme="dark"] .panel,:root[data-theme="dark"] .panel-head{background:var(--panel)!important;color:var(--text)!important}
+:root[data-theme="dark"] .message .amon-bubble,:root[data-theme="dark"] .card,:root[data-theme="dark"] .input-box,:root[data-theme="dark"] textarea,:root[data-theme="dark"] button{color:var(--text)}
 .appearance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.appearance-choice{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;text-align:right;color:var(--text)}.appearance-choice.active{border-color:var(--blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 15%,transparent)}.appearance-choice small{display:block;color:var(--muted);margin-top:4px}
 .style-row{display:flex;flex-wrap:wrap;gap:7px}.style-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px}.style-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .amon-inline-link{position:relative;z-index:5;pointer-events:auto;cursor:pointer}.amon-bubble a{pointer-events:auto!important;cursor:pointer!important}
@@ -132,6 +133,14 @@ body{background:#fff;color:var(--text)}
 .service.active{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.045));border-color:rgba(37,99,235,.12);box-shadow:0 5px 18px rgba(37,99,235,.06)}
 .service.active i{background:var(--blue);color:#fff;box-shadow:0 5px 13px rgba(37,99,235,.22)}
 .side-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding-top:13px}
+/* AMON response layout hardening */
+.message.amon{max-width:min(920px,100%);margin-inline:auto;width:100%}
+.message.amon .amon-body{max-width:min(760px,88%);flex:none}
+.amon-bubble{display:block;width:fit-content;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 18px 6px;padding:15px 17px;line-height:1.9;box-shadow:0 7px 24px rgba(15,23,42,.045);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);text-align:right}
+:root[data-theme="dark"] .amon-bubble{background:#121820;border-color:#26313c;color:#f4f7fb}
+.message.user .user-bubble{max-width:min(760px,88%)}
+@media(max-width:760px){.message.amon .amon-body,.message.user .user-bubble{max-width:calc(100vw - 76px)}.amon-bubble{padding:13px 14px}}
+.tool-workspace{display:grid;gap:12px}.tool-workspace textarea{min-height:260px;width:100%;resize:vertical;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text);padding:14px;line-height:1.8}.tool-actions{display:flex;flex-wrap:wrap;gap:8px}.tool-actions button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:11px}.tool-actions button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
 </style>
 
 <style>
@@ -521,7 +530,7 @@ body{background:#fff;color:var(--text)}
   }
   function openAppearance(){
     const theme=localStorage.getItem("amon_theme")||"light";
-    openPanel("✨ المظهر ونمط الإجابة",'<div class="card"><h3>مظهر AMON</h3><p>اختر الشكل الذي يناسبك. يتم الحفظ على جهازك.</p><div class="appearance-grid"><button class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button><button class="appearance-choice '+(theme==="midnight"?"active":"")+'" data-theme-choice="midnight">🌌 ليلي<small>احترافي عميق</small></button><button class="appearance-choice '+(theme==="soft"?"active":"")+'" data-theme-choice="soft">✨ ناعم<small>هادئ وتعليمي</small></button></div></div><div class="card"><h3>نمط إجابات AMON</h3><p>يغيّر طريقة تنظيم الإجابة، وليس فقط شكلها.</p><div class="style-row">'+[
+    openPanel("✨ المظهر ونمط الإجابة",'<div class="card"><h3>مظهر AMON</h3><p>اختر الشكل الذي يناسبك. يتم الحفظ على جهازك.</p><div class="appearance-grid"><button class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button></div></div><div class="card"><h3>نمط إجابات AMON</h3><p>يغيّر طريقة تنظيم الإجابة، وليس فقط شكلها.</p><div class="style-row">'+[
       ["auto","✨ تلقائي"],["professional","💼 احترافي"],["educational","🎓 تعليمي"],["deep","🧠 عميق"],["step","🪜 خطوة بخطوة"],["concise","⚡ مختصر"],["creative","💡 إبداعي"]
     ].map(([k,n])=>'<button class="style-chip '+(state.responseStyle===k?"active":"")+'" data-style="'+k+'">'+n+'</button>').join("")+'</div></div>');
   }
@@ -614,18 +623,31 @@ body{background:#fff;color:var(--text)}
   function saveQuota(){localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));renderQuota();}
   const serviceNames={search:'بحث عميق',canvas:'Canvas',files:'الملفات',images:'الصور',explore:'استكشاف'};
   function openService(k){
-    if(k==='search'){setResponseStyle('deep');setMode('research');toast('تم تفعيل البحث العميق');return;}
-    if(k==='canvas'){openPanel('Canvas','<div class="card"><h3>▧ Canvas</h3><p>مساحة عمل واسعة لتطوير الأفكار والكتابة والتحليل في مكان واحد.</p><button class="appearance-choice" style="width:100%" data-style="step">فتح وضع العمل خطوة بخطوة</button></div>');return;}
-    if(k==='files'){openPanel('الملفات','<div class="card"><h3>⌘ الملفات</h3><p>أرسل ملفًا إلى AMON أو اطلب إنشاء ملف بصيغة PDF أو DOCX أو XLSX أو PPTX وغيرها.</p><button class="appearance-choice" style="width:100%" id="amonFilesAction">اختيار ملف</button></div>');setTimeout(()=>{const b=document.getElementById("amonFilesAction");if(b)b.onclick=()=>document.getElementById("fileInput")?.click()},0);return;}
-    if(k==='images'){setMode('creative');toast('وضع الصور جاهز. اكتب ما تريد إنشاءه أو تحليله.');input.focus();return;}
-    if(k==='explore'){openPanel('استكشاف','<div class="card"><h3>◇ استكشاف</h3><p>اكتشف مواضيع وأفكارًا ومصادر جديدة بطريقة منظمة.</p><div class="style-row"><button class="style-chip" data-style="professional">أفكار</button><button class="style-chip" data-style="deep">تعلم</button><button class="style-chip" data-style="creative">إبداع</button></div></div>');return;}
+    if(k==='search'){
+      setResponseStyle('deep');setMode('research');
+      openPanel('بحث عميق','<div class="card tool-workspace"><h3>⌕ بحث عميق</h3><p>اكتب موضوع البحث. سيستخدم AMON وضع التحليل والبحث المتاح داخل النظام.</p><textarea id="toolSearchText" placeholder="مثال: حلّل أحدث اتجاهات الذكاء الاصطناعي"></textarea><div class="tool-actions"><button class="primary" id="runToolSearch">ابدأ البحث</button></div></div>');
+      setTimeout(()=>document.getElementById('runToolSearch')?.addEventListener('click',()=>{const v=document.getElementById('toolSearchText')?.value.trim();if(v){closePanel();input.value=v;resizeInput();send();}}),0);return;
+    }
+    if(k==='canvas'){
+      openPanel('Canvas','<div class="card tool-workspace"><h3>▧ مساحة عمل AMON</h3><textarea id="amonCanvasText" placeholder="اكتب أفكارك أو مسودة العمل هنا..."></textarea><div class="tool-actions"><button class="primary" id="canvasUse">أرسل إلى AMON</button><button id="canvasCopy">نسخ</button><button id="canvasClear">مسح</button></div></div>');
+      setTimeout(()=>{const t=document.getElementById('amonCanvasText');document.getElementById('canvasUse')?.addEventListener('click',()=>{if(t?.value.trim()){closePanel();input.value=t.value;resizeInput();keepComposerReady();}});document.getElementById('canvasCopy')?.addEventListener('click',()=>navigator.clipboard?.writeText(t?.value||'').then(()=>toast('تم النسخ')));document.getElementById('canvasClear')?.addEventListener('click',()=>{if(t)t.value='';});},0);return;
+    }
+    if(k==='files'){openPanel('الملفات','<div class="card tool-workspace"><h3>⌘ الملفات</h3><p>أرفق ملفًا ليقوم AMON بتحليله، أو اطلب إنشاء ملف بصيغة محددة.</p><div class="tool-actions"><button class="primary" id="amonFilesAction">اختيار ملف</button></div></div>');setTimeout(()=>document.getElementById("amonFilesAction")?.addEventListener('click',()=>document.getElementById("fileInput")?.click()),0);return;}
+    if(k==='images'){
+      openPanel('الصور','<div class="card tool-workspace"><h3>◉ الصور</h3><p>صف الصورة التي تريد إنشاءها أو تحليلها. سيُرسل الطلب إلى وضع الصور المتاح في AMON.</p><textarea id="toolImageText" placeholder="صف الصورة بالتفصيل..."></textarea><div class="tool-actions"><button class="primary" id="runToolImage">متابعة</button></div></div>');
+      setTimeout(()=>document.getElementById('runToolImage')?.addEventListener('click',()=>{const v=document.getElementById('toolImageText')?.value.trim();if(v){closePanel();setMode('creative');input.value='أنشئ أو حلّل الصورة التالية: '+v;resizeInput();send();}}),0);return;
+    }
+    if(k==='explore'){
+      openPanel('استكشاف','<div class="card"><h3>◇ استكشاف</h3><p>اختر نقطة بداية ثم سيجهز AMON مساحة المحادثة للمهمة.</p><div class="style-row"><button class="style-chip" data-explore="اقترح 10 أفكار جديدة ومفيدة">أفكار</button><button class="style-chip" data-explore="اشرح موضوعًا جديدًا بطريقة تعليمية">تعلّم</button><button class="style-chip" data-explore="ساعدني في ابتكار مشروع جديد">إبداع</button></div></div>');
+      setTimeout(()=>document.querySelectorAll('[data-explore]').forEach(b=>b.addEventListener('click',()=>{closePanel();input.value=b.dataset.explore;resizeInput();keepComposerReady();})),0);return;
+    }
   }
   document.addEventListener('click',e=>{
     const s=e.target.closest('[data-service]');
     if(s){
       document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));
       s.classList.add('active');
-      if(s.dataset.service!=='chat')openService(s.dataset.service); $('sidebar').classList.remove('open');
+      if(s.dataset.service==='chat'){newChat();keepComposerReady();}else openService(s.dataset.service); $('sidebar').classList.remove('open');
     }
     if(e.target.closest('#upgradeBtn')){
       openPanel('الاشتراك','<div class="card"><h3>👑 خطط AMON</h3><p><b>FREE</b> — محادثة وتوليد صور ضمن حصص مجانية.</p><p><b>PLUS / PRO</b> — حدود أعلى وأدوات ونماذج متقدمة حسب الخطة.</p><p>الأسعار ووسائل الدفع ستُربط لاحقًا بنظام الاشتراكات الحقيقي.</p></div>');
@@ -636,7 +658,7 @@ body{background:#fff;color:var(--text)}
   setInterval(renderQuota,1000);
   window.addEventListener('storage',e=>{if(e.key==='amonQuotaV4')renderQuota();});
 
-  window.addEventListener('load',()=>{applyTheme(localStorage.getItem('amon_theme')||'light');loadHistory();resizeInput();health();input.focus();});
+  window.addEventListener('load',()=>{applyTheme(localStorage.getItem('amon_theme')==='dark'?'dark':'light');loadHistory();resizeInput();health();input.focus();});
 })();
 </script>
 <script>
