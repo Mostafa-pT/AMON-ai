@@ -396,6 +396,31 @@ body{background:#fff;color:var(--text)}
     return html;
   }
   function renderAmonText(el,text){el.innerHTML=escapeAndLinkify(text);}
+  // Professional response reveal: AMON writes progressively while the viewport follows the newest line.
+  function renderAmonTextAnimated(el,text){
+    return new Promise(resolve=>{
+      const full=String(text||'');
+      const chunks=full.match(/\S+\s*|\n/g)||[];
+      let i=0;
+      el.textContent='';
+      const write=()=>{
+        const batch=full.length>2200?18:full.length>900?10:5;
+        let part='';
+        for(let n=0;n<batch&&i<chunks.length;n++,i++) part+=chunks[i];
+        el.textContent+=part;
+        scrollBottom();
+        if(i<chunks.length){
+          const delay=full.length>2200?8:full.length>900?12:18;
+          setTimeout(write,delay);
+        }else{
+          renderAmonText(el,full);
+          scrollBottom();
+          resolve();
+        }
+      };
+      write();
+    });
+  }
 
   function addAmon(text,typing=false,messageId=''){
     const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.dataset.messageId=messageId||'';
@@ -425,7 +450,8 @@ body{background:#fff;color:var(--text)}
       let data=null;try{data=await r.json();}catch{}
       if(!r.ok||!data?.success)throw Error(data?.message||'تعذر الاتصال بـ AMON');
       const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');
-      const mid=uid();renderAmonText(typing.querySelector('.amon-bubble'),answer);typing.dataset.messageId=mid;
+      const mid=uid();typing.dataset.messageId=mid;
+      await renderAmonTextAnimated(typing.querySelector('.amon-bubble'),answer);
       const meta=document.createElement('div');meta.className='meta response-actions';meta.innerHTML='<button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up">👍 مفيد</button><button class="response-action" data-feedback="down">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span>';typing.querySelector('.amon-body').appendChild(meta);
       if(data.file){
         typing.querySelector('.amon-bubble').textContent='تم إنشاء الملف بنجاح. افتح بطاقة الملف أدناه للوصول إليه.';
