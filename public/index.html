@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>AMON AI</title>
+<style>
+:root{
+--bg:#ffffff;--panel:#ffffff;--panel2:#f7f8fa;--line:#e5e7eb;
+--text:#17181a;--muted:#6b7280;--blue:#2563eb;--blue2:#eff6ff;
+--green:#16a34a;--danger:#dc2626;--shadow:0 8px 30px rgba(15,23,42,.08)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}button,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.app{height:100dvh;display:flex;overflow:hidden}.sidebar{width:var(--sidebar);flex:none;height:100%;display:flex;flex-direction:column;background:#101419;border-left:1px solid var(--border);z-index:100}.side-top{padding:14px;border-bottom:1px solid var(--border)}.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-weight:900;font-size:20px}.brand b{font-size:15px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.new-chat,.side-btn{width:100%;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:11px;padding:11px 12px;text-align:right}.side-btn{background:transparent;color:var(--muted);margin-top:5px}.new-chat:hover,.side-btn:hover{background:#1c2229;color:var(--text)}.side-title{padding:13px 14px 6px;color:var(--muted);font-size:11px}.history{flex:1;overflow:auto;padding:7px}.history-empty{padding:10px;color:#707985;font-size:11px}.history-item{width:100%;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}.history-item:hover{background:var(--panel2);color:var(--text)}.side-bottom{padding:9px;border-top:1px solid var(--border)}.main{min-width:0;flex:1;height:100%;display:flex;flex-direction:column;position:relative}.header{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border);background:rgba(11,13,16,.96);z-index:20}.head-left,.head-right{display:flex;align-items:center;gap:8px}.head-title{font-weight:750;font-size:15px}.icon{width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;font-size:17px}.icon:hover{background:var(--panel2);color:var(--text)}.mobile-menu{display:none}.status{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green)}.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}.status.offline{color:var(--danger)}.chat{flex:1;min-height:0;overflow:auto;padding:24px 14px 180px}.chat-inner{width:min(850px,100%);margin:0 auto}.welcome{text-align:center;padding:7vh 8px 25px}.welcome-logo{width:68px;height:68px;margin:0 auto 17px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-size:30px;font-weight:900}.welcome h1{font-size:clamp(27px,5vw,42px);margin:0 0 8px}.welcome p{max-width:620px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.9}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:650px;margin:25px auto}.quick button{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:13px;padding:14px;text-align:right}.quick button:hover{border-color:#3b7fc8;background:#151d27}.quick strong{display:block;font-size:13px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.message{display:flex;margin:18px 0;gap:9px}.user{justify-content:flex-start}.user-bubble{max-width:90%;background:#162235;border:1px solid #23466d;border-radius:17px 17px 4px 17px;padding:12px 14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}.amon{align-items:flex-start}.avatar{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--green));color:#07120d;font-weight:900}.amon-body{min-width:0;flex:1}.amon-bubble{background:var(--panel);border:1px solid var(--border);border-radius:17px 17px 17px 4px;padding:13px 14px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}.meta{margin:5px 7px;color:#737d88;font-size:9px}.copy{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;padding:5px 8px;font-size:10px}.copy:hover{color:var(--text);background:var(--panel2)}.typing{display:flex;gap:4px;padding:4px}.typing i{width:6px;height:6px;border-radius:50%;background:#9aa3ad;animation:pulse 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes pulse{0%,70%,100%{opacity:.2}35%{opacity:1}}.composer{position:absolute;right:0;bottom:0;left:0;padding:8px 14px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(11,13,16,.99) 30%);z-index:30}.composer-inner{width:min(850px,100%);margin:auto}.modes{display:flex;gap:7px;overflow:auto;padding-bottom:7px;scrollbar-width:none}.modes::-webkit-scrollbar{display:none}.mode{flex:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:10px;padding:7px 11px;font-size:11px}.mode.active{border-color:var(--blue);background:#132640;color:var(--text)}.input-box{display:flex;align-items:flex-end;gap:7px;border:1px solid var(--border);background:var(--panel2);border-radius:17px;padding:7px;min-height:58px;box-shadow:0 10px 35px rgba(0,0,0,.35)}.input-box:focus-within{border-color:var(--blue)}#messageInput{flex:1;min-width:0;min-height:42px;max-height:140px;resize:none;border:0;outline:0;background:transparent;color:var(--text);padding:10px 7px;line-height:1.5;font-size:16px}#messageInput::placeholder{color:#68727e}.send,.stop{width:43px;height:43px;flex:none;border:0;border-radius:12px;display:grid;place-items:center;font-size:17px}.send{background:var(--blue);color:#fff}.stop{background:#382027;color:#ff9aa2}.note{text-align:center;color:#626c77;font-size:9px;margin-top:5px}.overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:150}.panel{position:fixed;top:0;bottom:0;right:0;width:min(390px,94vw);background:#11161c;border-left:1px solid var(--border);z-index:160;display:flex;flex-direction:column}.panel-head{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border)}.panel-body{padding:15px;overflow:auto}.card{border:1px solid var(--border);background:var(--panel2);border-radius:12px;padding:13px;margin-bottom:9px}.card h3{margin:0 0 7px;font-size:13px}.card p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}.toast{position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#1b232c;border:1px solid var(--border);padding:9px 13px;border-radius:10px;font-size:11px;z-index:300}.hidden{display:none!important}@media(max-width:760px){.sidebar{position:fixed;right:0;top:0;bottom:0;transform:translateX(105%);transition:transform .2s}.sidebar.open{transform:translateX(0)}.mobile-menu{display:grid}.chat{padding:19px 9px 175px}.composer{padding-left:7px;padding-right:7px}.quick{grid-template-columns:1fr}.user-bubble{max-width:94%}}@media(max-width:430px){.head-title{display:none}.welcome{padding-top:5vh}.welcome p{font-size:13px}.note{display:none}}
+
+.owner-chat-panel{width:min(980px,96vw);box-shadow:-30px 0 80px rgba(0,0,0,.45)}.owner-chat-panel .panel-body{padding:0;display:flex;flex-direction:column;min-height:0;overflow:hidden}.owner-chat-shell{height:calc(100vh - 58px);display:flex;flex-direction:column;background:linear-gradient(180deg,#0f151c 0%,#11161c 100%)}.owner-chat-top{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(255,255,255,.015)}.owner-chat-title{font-size:18px;font-weight:800}.owner-chat-sub{font-size:12px;color:var(--muted);margin-top:5px}.owner-status{font-size:11px;padding:7px 10px;border:1px solid #1f7a4a;border-radius:999px;color:#79d69a;background:rgba(31,122,74,.12);white-space:nowrap}.owner-chat-messages{flex:1;overflow:auto;padding:28px clamp(16px,4vw,58px);display:flex;flex-direction:column;gap:16px}.owner-msg{max-width:min(82%,760px);padding:13px 16px;border-radius:16px;line-height:1.8;font-size:14px;white-space:pre-wrap;word-break:break-word}.owner-msg.user{align-self:flex-end;background:#1976d2;color:#fff;border-bottom-right-radius:5px}.owner-msg.amon{align-self:flex-start;background:#1b232c;border:1px solid var(--border);color:var(--text);border-bottom-left-radius:5px;box-shadow:0 8px 25px rgba(0,0,0,.12)}.owner-msg-label{display:block;font-size:10px;font-weight:800;opacity:.72;margin-bottom:5px}.owner-chat-empty{margin:auto;text-align:center;color:var(--muted);max-width:540px;line-height:1.9}.owner-chat-empty b{display:block;color:var(--text);font-size:20px;margin-bottom:7px}.owner-chat-composer{padding:16px clamp(16px,4vw,58px) 22px;border-top:1px solid var(--border);background:#10151b}.owner-input-wrap{display:flex;align-items:flex-end;gap:10px;border:1px solid var(--border);border-radius:18px;padding:9px;background:#171e26;box-shadow:0 10px 35px rgba(0,0,0,.22)}#oi{flex:1;min-height:64px;max-height:180px;resize:vertical;border:0!important;outline:0;background:transparent!important;color:var(--text);padding:8px!important;line-height:1.7;font:inherit}#os{width:110px;min-height:50px;margin:0!important;border-radius:13px!important;background:#1976d2!important;font-weight:800;font:inherit}@media(max-width:700px){.owner-chat-panel{width:100vw}.owner-chat-top{padding:14px}.owner-chat-messages{padding:18px 12px}.owner-chat-composer{padding:12px}.owner-msg{max-width:94%;font-size:13px}.owner-input-wrap{flex-direction:column;align-items:stretch}#os{width:100%}}
+.amon-services{padding:8px 10px;border-bottom:1px solid var(--line)}
+.service-title{font-size:11px;font-weight:700;color:var(--muted);padding:6px 10px}
+.service{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--text);padding:9px 10px;border-radius:9px;cursor:pointer;text-align:right;font:inherit;font-size:13px}
+.service:hover{background:#f3f4f6}
+.service.active{background:var(--blue2);color:var(--blue);font-weight:700}
+.service span{flex:1}
+.service em{font-style:normal;font-size:9px;border:1px solid #bfdbfe;color:var(--blue);border-radius:5px;padding:2px 5px}
+.side-quota{margin:10px;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fafafa}
+.quota-head,.quota-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.quota-head{font-size:12px;margin-bottom:10px}
+.quota-head button{border:0;background:var(--blue);color:#fff;border-radius:7px;padding:5px 9px;font-weight:700;cursor:pointer}
+.quota-row{font-size:10px;color:var(--muted);margin-top:7px}
+.quota-row b{color:var(--text)}
+.quota-bar{height:4px;background:#e5e7eb;border-radius:9px;overflow:hidden;margin-top:4px}
+.quota-bar i{display:block;height:100%;width:0;background:var(--blue);border-radius:9px}
+.side-quota small{display:block;color:var(--muted);font-size:9px;line-height:1.5;margin-top:8px}
+body{background:#fff;color:var(--text)}
+.sidebar{background:#fff;border-color:var(--line)}
+.header{background:rgba(255,255,255,.96);border-color:var(--line)}
+.input-box{background:#fff;border-color:#d9dde4;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+.input-box:focus-within{border-color:#93c5fd;box-shadow:0 4px 22px rgba(37,99,235,.10)}
+.composer{background:linear-gradient(to top,#fff,rgba(255,255,255,.94))}
+.message .bubble{background:#f5f6f8;border-color:var(--line);color:var(--text)}
+.user-bubble{background:#eff6ff!important;border-color:#dbeafe!important;color:#172554!important}
+.quick button{background:#fff;border-color:var(--line);box-shadow:0 2px 8px rgba(15,23,42,.04)}
+.quick button:hover{border-color:#bfdbfe;background:#f8fbff}
+.mode{background:#fff;border-color:var(--line);color:#4b5563}
+.mode.active{background:#eff6ff;border-color:#bfdbfe;color:var(--blue)}
+.icon,.side-btn{color:#4b5563}
+.icon:hover,.side-btn:hover{background:#f3f4f6}
+
+/* ===== AMON DEVELOPERS AI — OWNER CHAT PROFESSIONAL OVERRIDE ===== */
+.owner-chat-panel{width:min(1120px,97vw)!important;background:#f7f9fc!important;color:#172033!important;border-left:1px solid #dbe3ee!important;box-shadow:-28px 0 80px rgba(15,23,42,.22)!important}
+.owner-chat-panel .panel-head{height:70px!important;background:#ffffff!important;color:#172033!important;border-bottom:1px solid #e2e8f0!important;padding:0 22px!important}
+.owner-chat-panel .panel-body{background:#f7f9fc!important;color:#172033!important}
+.owner-chat-shell{height:calc(100vh - 70px)!important;background:#f7f9fc!important}
+.owner-chat-top{background:#fff!important;border-bottom:1px solid #e2e8f0!important;padding:18px 26px!important}
+.owner-chat-title{color:#111827!important;font-size:20px!important;letter-spacing:.1px}
+.owner-chat-sub{color:#64748b!important;font-size:12px!important}
+.owner-status{color:#166534!important;background:#ecfdf3!important;border-color:#bbf7d0!important;font-weight:800}
+.owner-chat-messages{background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)!important;padding:30px clamp(18px,4vw,70px)!important}
+.owner-chat-empty{color:#64748b!important}
+.owner-chat-empty b{color:#111827!important}
+.owner-msg{max-width:min(84%,820px)!important;font-size:15px!important;line-height:1.9!important;padding:15px 18px!important}
+.owner-msg.user{background:#2563eb!important;color:#fff!important;box-shadow:0 10px 28px rgba(37,99,235,.18)!important}
+.owner-msg.amon{background:#fff!important;color:#172033!important;border:1px solid #dbe3ee!important;box-shadow:0 10px 30px rgba(15,23,42,.07)!important}
+.owner-msg-label{font-size:11px!important;opacity:.78!important}
+.owner-msg-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px solid rgba(148,163,184,.22)}
+.owner-msg-action{border:1px solid #dbe3ee;background:#f8fafc;color:#334155;border-radius:9px;padding:6px 9px;font:inherit;font-size:11px;cursor:pointer;transition:.15s}
+.owner-msg-action:hover{background:#eef2f7;border-color:#cbd5e1}
+.owner-msg.user .owner-msg-actions{border-top-color:rgba(255,255,255,.22)}
+.owner-msg.user .owner-msg-action{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.26);color:#fff}
+.owner-chat-composer{background:#fff!important;border-top:1px solid #e2e8f0!important;padding:18px clamp(18px,4vw,70px) 24px!important}
+.owner-input-wrap{background:#fff!important;border:1px solid #cbd5e1!important;box-shadow:0 12px 35px rgba(15,23,42,.08)!important}
+.owner-input-wrap:focus-within{border-color:#2563eb!important;box-shadow:0 0 0 4px rgba(37,99,235,.10)!important}
+#oi{color:#172033!important;background:#fff!important}
+#oi::placeholder{color:#94a3b8!important}
+#os{background:#2563eb!important;color:#fff!important;box-shadow:0 8px 18px rgba(37,99,235,.20)!important}
+@media(max-width:700px){.owner-chat-panel .panel-head{height:62px!important}.owner-chat-shell{height:calc(100vh - 62px)!important}.owner-chat-messages{padding:18px 12px!important}.owner-msg{max-width:96%!important;font-size:14px!important}}
+
+
+/* ===== PERSISTENT CHAT HISTORY + RESPONSE FEEDBACK ===== */
+.history-item{position:relative;width:100%;display:flex!important;align-items:center;gap:7px;text-align:right}
+.history-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.history-actions{display:flex;gap:3px}
+.history-action{border:0;background:transparent;color:inherit;opacity:.65;cursor:pointer;padding:3px 5px;border-radius:7px}
+.history-action:hover{background:rgba(127,127,127,.12);opacity:1}
+.history-item.pinned .history-title::before{content:"📌 ";font-size:11px}
+.history-item.archived{opacity:.62}
+.history-section-label{font-size:11px;color:var(--muted);padding:10px 8px 5px;font-weight:800}
+.amon-safe-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding:10px;border:1px solid rgba(0,0,0,.08);border-radius:14px;background:#fff}
+.amon-safe-links .safe-links-title{width:100%;font-weight:700;font-size:13px}
+.amon-safe-links a{display:inline-flex;align-items:center;padding:8px 11px;border-radius:10px;text-decoration:none;border:1px solid rgba(0,0,0,.12);color:inherit;background:rgba(0,0,0,.03)}
+.amon-safe-links small{width:100%;opacity:.7;line-height:1.5;margin-top:2px}
+.response-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.response-action{border:1px solid var(--border);background:transparent;color:var(--muted);padding:5px 8px;border-radius:8px;font:inherit;font-size:11px;cursor:pointer}
+.response-action:hover{color:var(--text);background:rgba(127,127,127,.08)}
+.response-action.active{border-color:#2563eb;color:#2563eb;background:rgba(37,99,235,.08)}
+.feedback-note{font-size:11px;color:var(--muted)}
+
+
+
+/* AMON — Professional file cards and compact external links */
+.amon-file-card{margin-top:12px;border:1px solid var(--line,#e5e7eb);border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.06);overflow:hidden}
+.file-card-main{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer}
+.file-card-icon{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#f1f5f9;font-size:20px;font-weight:900;color:#0f172a}
+.file-card-info{min-width:0;flex:1}.file-card-name{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-card-meta{font-size:11px;color:#64748b;margin-top:4px}
+.file-card-menu{display:none;padding:0 14px 14px;gap:8px;flex-wrap:wrap}.amon-file-card.open .file-card-menu{display:flex}
+.file-card-action{border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;border-radius:10px;padding:8px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.file-card-action:hover{background:#f8fafc;border-color:#cbd5e1}
+.amon-safe-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:0;background:transparent}
+.amon-safe-links .safe-links-title{display:none}
+.amon-safe-links a{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:9px;border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;text-decoration:none;font-size:11px;font-weight:700;line-height:1.2;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amon-safe-links a:hover{background:#f8fafc;border-color:#cbd5e1}.amon-safe-links a::before{content:"↗";font-size:12px;color:#64748b}.amon-safe-links small{display:none}
+.amon-inline-link{color:#2563eb;text-decoration:none;font-weight:700;word-break:break-word}.amon-inline-link:hover{text-decoration:underline}
+/* AMON Appearance & Answer Studio */
+:root[data-theme="dark"]{--bg:#0b0d10;--panel:#11161c;--panel2:#161c23;--line:#26313c;--text:#f4f7fb;--muted:#9aa6b2;--blue:#5b8cff;--blue2:#12233f}
+:root[data-theme="dark"] .header,:root[data-theme="dark"] .sidebar,:root[data-theme="dark"] .panel,:root[data-theme="dark"] .panel-head{background:#0f141a!important}:root[data-theme="dark"] .message .amon-bubble,:root[data-theme="dark"] .card{background:#121820!important}:root[data-theme="dark"] .tools-menu{background:#121820;color:#eef2f7}:root[data-theme="dark"] .user-bubble{background:#162846!important}:root[data-theme="dark"] .input-box{background:#121820}
+:root[data-theme="midnight"]{--bg:#060913;--panel:#0a1020;--panel2:#10192b;--line:#20304d;--text:#eef5ff;--muted:#91a1ba;--blue:#4f8cff;--green:#36d399}
+:root[data-theme="soft"]{--bg:#f7f7fb;--panel:#fff;--panel2:#f0f3f8;--line:#e2e7ef;--text:#1d2430;--muted:#687386;--blue:#5665f2}
+.appearance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.appearance-choice{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;text-align:right;color:var(--text)}.appearance-choice.active{border-color:var(--blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 15%,transparent)}.appearance-choice small{display:block;color:var(--muted);margin-top:4px}
+.style-row{display:flex;flex-wrap:wrap;gap:7px}.style-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px}.style-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.amon-inline-link{position:relative;z-index:5;pointer-events:auto;cursor:pointer}.amon-bubble a{pointer-events:auto!important;cursor:pointer!important}
+
+/* Final compact premium link cards */
+.amon-safe-links{display:flex!important;align-items:center!important;gap:5px!important;margin:7px 0 0!important;padding:0!important;border:0!important;background:transparent!important}
+.amon-safe-links a{height:28px!important;min-height:28px!important;padding:0 9px!important;border-radius:999px!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1px!important;border:1px solid rgba(37,99,235,.18)!important;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(15,23,42,.02))!important;color:#2563eb!important;box-shadow:0 2px 8px rgba(15,23,42,.05)!important}
+.amon-safe-links a::before{content:"↗"!important;font-size:11px!important}.amon-safe-links a:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(37,99,235,.12)!important}
+:root[data-theme="dark"] .amon-safe-links a,:root[data-theme="midnight"] .amon-safe-links a{background:rgba(91,140,255,.12)!important;color:#8db3ff!important;border-color:rgba(141,179,255,.2)!important}
+@media(max-width:760px){.head-right{gap:5px!important}.tools-menu#appearanceButton{display:inline-flex!important;padding:7px 9px!important}.tools-menu#appearanceButton span{display:none}}
+/* Premium AMON command center */
+.amon-services{padding:8px 10px 12px}
+.service{position:relative;min-height:42px;margin:2px 0;border:1px solid transparent;border-radius:12px;padding:10px 11px;transition:.18s ease;background:transparent}
+.service i{width:24px;height:24px;display:grid;place-items:center;font-style:normal;font-size:15px;border-radius:8px;background:rgba(37,99,235,.07);color:var(--blue)}
+.service span{font-weight:650;letter-spacing:.05px}
+.service:hover{background:rgba(37,99,235,.055);border-color:rgba(37,99,235,.08);transform:translateX(-2px)}
+.service.active{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.045));border-color:rgba(37,99,235,.12);box-shadow:0 5px 18px rgba(37,99,235,.06)}
+.service.active i{background:var(--blue);color:#fff;box-shadow:0 5px 13px rgba(37,99,235,.22)}
+.side-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding-top:13px}
+</style>
+
+<style>
+/* AMON V4 — organized single workspace */
+.sidebar{position:fixed;right:0;top:0;bottom:0;width:min(340px,92vw);z-index:180;background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 35px rgba(15,23,42,.10);transform:translateX(105%);transition:transform .2s ease;overflow:auto}.sidebar.open{transform:translateX(0)}
+.main{width:100%;flex:1}.header{height:64px;background:#fff}.tools-menu{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;padding:9px 13px;font-size:12px;font-weight:700}.tools-menu:hover{background:#f7f8fa;border-color:#cbd5e1}.head-right{gap:8px}.chat{padding-bottom:175px}.chat-inner{width:min(900px,100%)}
+.welcome{padding-top:11vh}.welcome-logo{background:linear-gradient(135deg,var(--blue),var(--green));color:#fff}.quick{max-width:720px}.mode-line{display:flex;gap:7px;padding-bottom:7px}.mode{padding:7px 12px}.mode.active{background:#eff6ff;color:var(--blue);border-color:#bfdbfe}.input-box{min-height:60px;border-radius:18px;padding:7px 8px}.input-tool{width:42px;height:42px;flex:none;border:0;border-radius:12px;background:transparent;color:#4b5563;font-size:21px;display:grid;place-items:center}.input-tool:hover{background:#f3f4f6;color:var(--blue)}.send{order:5}.stop{order:5}.attachments{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.attachment{display:flex;align-items:center;gap:6px;background:#f3f6fa;border:1px solid var(--line);border-radius:9px;padding:5px 8px;font-size:10px;color:#475569}.attachment button{border:0;background:transparent;color:#94a3b8;cursor:pointer}.panel{background:#fff;border-left:1px solid var(--line)}.panel-head{background:#fff}.panel-body{background:#fff}.overlay{background:rgba(15,23,42,.28);z-index:170}.card{background:#fff}.side-quota{background:#fafafa}.side-title{color:#64748b}.service.active{background:#eff6ff}.message .amon-bubble{background:#fff}.user-bubble{background:#eff6ff!important}.note{color:#7c8795}
+@media(max-width:760px){.tools-menu span{display:none}.tools-menu{width:40px;height:38px;padding:0;display:grid;place-items:center}.welcome{padding-top:7vh}.sidebar{width:min(330px,92vw)}}
+</style>
+<style>
+:root{--amon-logo:url("data:image/jpeg;base64,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")}
+.logo,.welcome-logo,.avatar{background-image:var(--amon-logo)!important;background-color:#fff!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;color:transparent!important;overflow:hidden;border:1px solid #e5e7eb!important}
+.logo{border-radius:12px!important}
+.welcome-logo{width:220px!important;height:220px!important;border-radius:24px!important;margin-bottom:18px!important;box-shadow:0 12px 35px rgba(15,23,42,.08)}
+.avatar{background-size:165% !important;background-position:center 32% !important}
+.brand-logo-full{width:58px;height:58px;border-radius:16px;object-fit:cover;object-position:center 38%;border:1px solid #e5e7eb;background:#fff}
+.header-brand-logo{width:42px;height:42px;border-radius:12px;object-fit:cover;object-position:center 38%;border:1px solid #e5e7eb}
+@media(max-width:760px){.welcome-logo{width:170px!important;height:170px!important}}
+</style>
+<style id="amon-interface-art">
+/* AMON identity artwork — make the approved geometric logo the main visual interface */
+.welcome{
+  position:relative;
+  isolation:isolate;
+  min-height:calc(100vh - 230px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:8vh 18px 42px!important;
+}
+.welcome::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background-image:var(--amon-logo);
+  background-repeat:no-repeat;
+  background-position:center 42%;
+  background-size:min(620px,72vw);
+  opacity:.035;
+  filter:grayscale(1) contrast(1.08);
+  pointer-events:none;
+}
+.welcome-logo{
+  width:260px!important;
+  height:260px!important;
+  flex:none;
+  background-image:var(--amon-logo)!important;
+  background-color:#fff!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  border-radius:30px!important;
+  border:1px solid #e6e9ee!important;
+  box-shadow:0 18px 55px rgba(15,23,42,.10)!important;
+  margin:0 auto 24px!important;
+}
+.welcome h1{letter-spacing:-.02em}
+@media(max-width:760px){
+  .welcome{min-height:calc(100vh - 190px);padding:5vh 12px 28px!important}
+  .welcome::before{background-size:90vw;opacity:.028}
+  .welcome-logo{width:190px!important;height:190px!important;border-radius:25px!important;margin-bottom:19px!important}
+}
+</style><style id="amon-approved-logo">
+:root{--amon-approved-logo:url("data:image/webp;base64,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")}
+.logo,.avatar,.welcome-logo{background-image:var(--amon-approved-logo)!important;background-color:#fff!important;background-repeat:no-repeat!important;background-position:center!important;background-size:cover!important;color:transparent!important}
+.welcome{position:relative;overflow:hidden}.welcome::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--amon-approved-logo) center/520px no-repeat;opacity:.028;filter:contrast(1.05);pointer-events:none}
+.welcome-logo{width:250px!important;height:250px!important;border-radius:28px!important;border:1px solid #e6e9ee!important;box-shadow:0 16px 46px rgba(15,23,42,.09)!important;margin:0 auto 22px!important}
+.avatar{background-size:150%!important;background-position:center 35%!important}
+.header-brand-logo,.brand-logo-full{object-fit:cover!important;object-position:center!important;background:#fff!important;border:1px solid #e6e9ee!important}
+@media(max-width:760px){.welcome-logo{width:185px!important;height:185px!important;border-radius:24px!important}.welcome::before{background-size:85vw}}
+</style><style id="amon-genius-symbol">
+.avatar.genius-symbol{
+  background:#fff!important;
+  background-image:none!important;
+  color:#111827!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  border-radius:50%!important;
+  border:1px solid #e5e7eb!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-family:system-ui,"Segoe UI Emoji","Apple Color Emoji",sans-serif!important;
+  font-size:20px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  box-shadow:0 4px 14px rgba(15,23,42,.08)!important;
+  position:relative;
+}
+.avatar.genius-symbol::after{
+  content:"";
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#2f80ed;
+  box-shadow:0 0 0 3px rgba(47,128,237,.10);
+  right:1px;
+  bottom:1px;
+}
+</style></head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="side-top">
+    <div class="brand"><img class="brand-logo-full" src="data:image/webp;base64,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" alt="AMON AI"><div><b>AMON AI</b><small>العقل المركزي</small></div></div>
+    <button class="new-chat" id="newChat" type="button">＋ محادثة جديدة</button>
+  </div>
+  <div class="side-title">مركز AMON</div>
+  <nav class="amon-services" aria-label="مركز أدوات AMON">
+    <button class="service active" type="button" data-service="chat"><i>💬</i><span>مساعد AMON</span></button>
+    <button class="service" type="button" data-service="create"><i>✦</i><span>استوديو الإبداع</span></button>
+    <button class="service" type="button" data-service="analyze"><i>◈</i><span>التحليل الذكي</span></button>
+    <button class="service" type="button" data-service="research"><i>⌕</i><span>البحث والتحقق</span></button>
+    <button class="service" type="button" data-service="workspace"><i>▣</i><span>مساحة العمل</span></button>
+    <button class="service" type="button" data-service="focus"><i>◉</i><span>وضع التركيز</span></button>
+    <button class="service" type="button" data-service="personalize"><i>✦</i><span>التخصيص والمظهر</span></button>
+  </nav>
+  <div class="side-quota">
+    <div class="quota-head"><strong>الخطة المجانية</strong><button id="upgradeBtn" type="button">ترقية</button></div>
+    <div class="quota-row"><span>الرسائل</span><b id="msgQuota">0 / 50</b></div><div class="quota-bar"><i id="msgBar"></i></div>
+    <div class="quota-row"><span>الصور</span><b id="imgQuota">0 / 5</b></div><div class="quota-bar"><i id="imgBar"></i></div><small id="quotaNote"></small>
+  </div>
+  <div class="side-title">المحادثات</div><div class="history" id="history"></div>
+  <div class="side-bottom"><button class="side-btn" id="openSettings" type="button">⚙️ الإعدادات</button><button class="side-btn" id="openInfo" type="button">ℹ️ عن AMON</button></div>
+</aside>
+<main class="main">
+<header class="header">
+  <div class="head-left"><img class="header-brand-logo" src="data:image/webp;base64,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" alt="AMON AI"><strong class="head-title">AMON</strong><div class="status" id="connection"><span class="dot"></span><span id="statusText">جارٍ الفحص...</span></div></div>
+  <div class="head-right"><button class="tools-menu" id="menuButton" type="button">☰ <span>الأدوات</span></button><button class="tools-menu" id="appearanceButton" type="button">✨ <span>المظهر</span></button><button class="icon" id="healthButton" type="button" aria-label="فحص الاتصال">◉</button></div>
+</header>
+<section class="chat" id="chat"><div class="chat-inner" id="chatInner">
+  <div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>اسأل، ابحث، فكّر، أو أرفق ملفًا. AMON هو محركك المركزي.</p>
+    <div class="quick"><button type="button" data-preset="learn"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-preset="research"><strong>🔎 بحث</strong><small>بحث وتحليل</small></button><button type="button" data-preset="thinking"><strong>💭 تفكير</strong><small>تحليل أعمق</small></button><button type="button" data-preset="compare"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div>
+  </div>
+</div></section>
+<div class="composer"><div class="composer-inner">
+  <div class="mode-line"><button class="mode active" type="button" data-mode="learn">💬 محادثة</button><button class="mode" type="button" data-mode="research">🔎 بحث</button><button class="mode" type="button" data-mode="thinking">💭 تفكير</button></div>
+  <div id="attachments" class="attachments"></div>
+  <div class="input-box">
+    <button class="input-tool" id="attachButton" type="button" aria-label="إضافة ملفات">＋</button>
+    <input id="fileInput" type="file" hidden multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx">
+    <textarea id="messageInput" rows="1" maxlength="12000" placeholder="اسأل AMON... "></textarea>
+    <button class="input-tool" id="voiceButton" type="button" aria-label="الصوت">🎤</button>
+    <button class="send" id="sendButton" type="button" aria-label="إرسال">➤</button>
+    <button class="stop hidden" id="stopButton" type="button" aria-label="إيقاف">■</button>
+  </div>
+  <div class="note">AMON قد يخطئ. تحقق من المعلومات المهمة.</div>
+</div></div>
+</main></div>
+<div class="hidden" id="overlay"></div><aside class="panel hidden" id="panel"><div class="panel-head"><strong id="panelTitle">الأدوات</strong><button class="icon" id="closePanel" type="button">✕</button></div><div class="panel-body" id="panelBody"></div></aside><div class="toast hidden" id="toast"></div>
+<script>
+(() => {
+  'use strict';
+  const API = '';
+  const state = { mode:'learn', responseStyle:localStorage.getItem('amon_response_style')||'auto', history:[], activeChatId:null, abort:null, busy:false };
+  const $ = id => document.getElementById(id);
+  const input = $('messageInput'), chat = $('chat'), chatInner = $('chatInner');
+
+  function toast(text){ const el=$('toast'); el.textContent=text; el.classList.remove('hidden'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.add('hidden'),2600); }
+  function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function scrollBottom(){ requestAnimationFrame(()=>{ chat.scrollTop=chat.scrollHeight; }); }
+  function uid(){return 'chat_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);}
+  function normalizeHistory(list){
+    if(!Array.isArray(list))return [];
+    return list.map(x=>{
+      if(x&&Array.isArray(x.messages)) return {id:x.id||uid(),title:x.title||'محادثة',messages:x.messages,time:Number(x.time)||Date.now(),updatedAt:Number(x.updatedAt||x.time)||Date.now(),pinned:!!x.pinned,archived:!!x.archived};
+      return null;
+    }).filter(Boolean);
+  }
+  function saveHistory(){try{localStorage.setItem('amon_history',JSON.stringify(state.history));}catch{}}
+  function loadHistory(){try{state.history=normalizeHistory(JSON.parse(localStorage.getItem('amon_history')||'[]'));}catch{state.history=[]}renderHistory();}
+  function renderHistory(){
+    const box=$('history');
+    const visible=state.history.filter(x=>!x.archived).sort((a,b)=>(b.pinned-a.pinned)||(b.updatedAt-a.updatedAt));
+    if(!visible.length){box.innerHTML='<div class="history-empty">لا توجد محادثات محفوظة بعد.</div>';return;}
+    box.innerHTML=visible.map(x=>`<div class="history-item${x.pinned?' pinned':''}" data-history="${x.id}"><button class="history-title" type="button" data-open-chat="${x.id}">${escapeHTML(x.title||'محادثة')}</button><div class="history-actions"><button class="history-action" type="button" title="${x.pinned?'إلغاء التثبيت':'تثبيت'}" data-pin-chat="${x.id}">📌</button><button class="history-action" type="button" title="أرشفة" data-archive-chat="${x.id}">▣</button><button class="history-action" type="button" title="حذف" data-delete-chat="${x.id}">🗑</button></div></div>`).join('');
+  }
+  function getActiveChat(){return state.history.find(x=>x.id===state.activeChatId)||null;}
+  function ensureActiveChat(firstMessage){
+    let chat=getActiveChat();
+    if(!chat){
+      chat={id:uid(),title:String(firstMessage||'محادثة جديدة').slice(0,60),messages:[],time:Date.now(),updatedAt:Date.now(),pinned:false,archived:false};
+      state.history.push(chat);state.activeChatId=chat.id;
+    }
+    return chat;
+  }
+  function renderChat(chat){
+    document.querySelectorAll('.message').forEach(x=>x.remove());
+    const welcome=$('welcome');if(welcome)welcome.remove();
+    if(!chat||!chat.messages?.length){newChat();return;}
+    for(const m of chat.messages){if(m.role==='user')addUser(m.content);else addAmon(m.content,false,m.id);}
+    scrollBottom();
+  }
+  function openChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;state.activeChatId=id;renderChat(chat);$('sidebar').classList.remove('open');}
+  function deleteChat(id){state.history=state.history.filter(x=>x.id!==id);if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();if(!state.activeChatId)newChat();}
+  function archiveChat(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.archived=true;chat.updatedAt=Date.now();if(state.activeChatId===id)state.activeChatId=null;saveHistory();renderHistory();newChat();toast('تمت أرشفة المحادثة');}
+  function togglePin(id){const chat=state.history.find(x=>x.id===id);if(!chat)return;chat.pinned=!chat.pinned;saveHistory();renderHistory();}
+  function addUser(text){ const el=document.createElement('div');el.className='message user';el.innerHTML=`<div class="user-bubble">${escapeHTML(text)}</div>`;chatInner.appendChild(el);scrollBottom(); }
+  function fileIcon(format){return ({pdf:"PDF",docx:"W",xlsx:"X",pptx:"P",csv:"CSV",json:"{}",html:"</>",xml:"XML",md:"MD",txt:"TXT"})[String(format||"").toLowerCase()]||"FILE";}
+  function base64ToBlob(base64,mime){const binary=atob(base64);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:mime||"application/octet-stream"});}
+  function addFileCard(parent,file){
+    if(!file||!file.base64)return;
+    const blob=base64ToBlob(file.base64,file.mime),url=URL.createObjectURL(blob);
+    const card=document.createElement("div");card.className="amon-file-card";
+    const fmt=String(file.format||"file").toUpperCase(),size=file.size?Math.max(1,Math.round(file.size/1024))+" KB":"ملف جاهز";
+    card.innerHTML='<div class="file-card-main"><div class="file-card-icon">'+fileIcon(file.format)+'</div><div class="file-card-info"><div class="file-card-name"></div><div class="file-card-meta">'+fmt+' • '+size+'</div></div></div><div class="file-card-menu"><button class="file-card-action" data-file-action="open">فتح</button><button class="file-card-action" data-file-action="share">مشاركة</button><button class="file-card-action" data-file-action="edit">تعديل</button><button class="file-card-action" data-file-action="save">حفظ</button></div>';
+    card.querySelector(".file-card-name").textContent=file.fileName||"AMON File";
+    card.querySelector(".file-card-main").addEventListener("click",()=>card.classList.toggle("open"));
+    card.querySelector('[data-file-action="open"]').onclick=()=>window.open(url,"_blank","noopener");
+    card.querySelector('[data-file-action="save"]').onclick=()=>{const a=document.createElement("a");a.href=url;a.download=file.fileName||"AMON_File";a.click();};
+    card.querySelector('[data-file-action="share"]').onclick=async()=>{
+      try{
+        const shareFile=new File([blob],file.fileName||"AMON_File",{type:file.mime});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]})){
+          await navigator.share({files:[shareFile],title:file.fileName||"AMON File"});
+        }else{
+          await navigator.clipboard.writeText(url);
+          toast("تم نسخ رابط الملف المؤقت");
+        }
+      }catch{}
+    };
+    card.querySelector('[data-file-action="edit"]').onclick=()=>{const text=prompt("اكتب التعديل المطلوب على الملف:");if(text){input.value="عدّل الملف التالي: "+(file.fileName||"AMON File")+"\n"+text;input.focus();}};
+    parent.appendChild(card);
+  }
+
+  function escapeAndLinkify(text){
+    let raw=String(text||"");
+    const tokens=[];
+    raw=raw.replace(/\[([^\]]{1,120})\]\((https?:\/\/[^\s)]+)\)/gi,(_,label,url)=>{
+      try{const u=new URL(url);if(!["http:","https:"].includes(u.protocol))return _;const token="@@AMONLINK"+tokens.length+"@@";tokens.push('<a class="amon-inline-link" href="'+escapeHTML(u.toString())+'" target="_blank" rel="noopener noreferrer">'+escapeHTML(label)+'</a>');return token;}catch{return _;}
+    });
+    const parts=raw.split(/(https?:\/\/[^\s<>]+)/gi);
+    let html=parts.map((part,i)=>{
+      if(i%2===0)return escapeHTML(part).replace(/\n/g,"<br>");
+      const clean=part.replace(/[.,،؛:!?)]$/g,""),tail=part.slice(clean.length);
+      try{const u=new URL(clean);if(!["http:","https:"].includes(u.protocol))return escapeHTML(part);return '<a class="amon-inline-link" href="'+escapeHTML(u.toString())+'" target="_blank" rel="noopener noreferrer">'+escapeHTML(u.toString())+'</a>'+escapeHTML(tail);}catch{return escapeHTML(part);}
+    }).join("");
+    tokens.forEach((token,i)=>{html=html.replace("@@AMONLINK"+i+"@@",token);});
+    return html;
+  }
+  function renderAmonText(el,text){el.innerHTML=escapeAndLinkify(text);}
+
+  function addAmon(text,typing=false,messageId=''){
+    const el=document.createElement('div');el.className='message amon';el.dataset.response='1';el.dataset.messageId=messageId||'';
+    const actions=typing?'':`<div class="meta response-actions"><button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up" title="إجابة مفيدة">👍 مفيد</button><button class="response-action" data-feedback="down" title="تحتاج تحسينًا">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span></div>`;
+    el.innerHTML=`<div class="avatar genius-symbol" aria-label="رمز ذكاء AMON" title="ذكاء AMON">🧠</div><div class="amon-body"><div class="amon-bubble">${typing?'<div class="typing"><i></i><i></i><i></i></div>':escapeAndLinkify(text)}</div>${actions}</div>`;
+    chatInner.appendChild(el);scrollBottom();return el;
+  }
+  function removeWelcome(){ const w=$('welcome'); if(w)w.remove(); }
+  function resizeInput(){ input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px'; }
+  function setBusy(v){ state.busy=v;$('sendButton').classList.toggle('hidden',v);$('stopButton').classList.toggle('hidden',!v);input.disabled=v; }
+  function setMode(mode){ state.mode=mode;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode)); }
+  async function health(){ const conn=$('connection'); try{const r=await fetch(API+'/health',{cache:'no-store'});const d=await r.json();if(r.ok&&d.success){conn.classList.remove('offline');$('statusText').textContent=d.ai?'متصل':'الواجهة متصلة';}else throw Error();}catch{conn.classList.add('offline');$('statusText').textContent='غير متصل';} }
+  function feedbackHint(){
+    try{const x=JSON.parse(localStorage.getItem('amon_feedback')||'[]');const bad=x.filter(a=>a.rating==='down').slice(-3);return bad.length?'ملاحظة تحسين من تقييمات المستخدم السابقة: قدّم إجابة أوضح وأكثر مباشرة وتنظيمًا، وتجنب تكرار أسلوب الإجابات التي لم ترض المستخدم.':'';}catch{return ''}
+  }
+  async function send(regenerateText=''){
+    if(state.busy)return;
+    const text=String(regenerateText||input.value).trim();if(!text)return;
+    removeWelcome();
+    const active=ensureActiveChat(text);
+    if(!regenerateText){addUser(text);active.messages.push({id:uid(),role:'user',content:text,time:Date.now()});input.value='';resizeInput();}
+    active.updatedAt=Date.now();saveHistory();renderHistory();
+    const oldHistory=(regenerateText?active.messages:active.messages.slice(0,-1)).slice(-30).map(m=>({role:m.role,content:m.content}));
+    const typing=addAmon('',true);setBusy(true);const controller=new AbortController();state.abort=controller;
+    try{
+      const r=await fetch(API+'/api/amon',{method:'POST',headers:{'Content-Type':'application/json','X-AMON-Client':'web'},body:JSON.stringify({message:text,mode:state.mode,responseStyle:state.responseStyle,history:oldHistory,qualityHint:feedbackHint()}),signal:controller.signal});
+      let data=null;try{data=await r.json();}catch{}
+      if(!r.ok||!data?.success)throw Error(data?.message||'تعذر الاتصال بـ AMON');
+      const answer=String(data.answer||data.response||data.text||'').trim();if(!answer)throw Error('لم تصل إجابة من المحرك');
+      const mid=uid();renderAmonText(typing.querySelector('.amon-bubble'),answer);typing.dataset.messageId=mid;
+      const meta=document.createElement('div');meta.className='meta response-actions';meta.innerHTML='<button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up">👍 مفيد</button><button class="response-action" data-feedback="down">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span>';typing.querySelector('.amon-body').appendChild(meta);
+      if(data.file){
+        typing.querySelector('.amon-bubble').textContent='تم إنشاء الملف بنجاح. افتح بطاقة الملف أدناه للوصول إليه.';
+        addFileCard(typing.querySelector('.amon-body'),data.file);
+      }
+      if(Array.isArray(data.links)&&data.links.length){
+        const links=document.createElement('div');links.className='amon-safe-links';
+        data.links.slice(0,4).forEach(item=>{
+          if(!item||typeof item.url!=='string'||!/^https:\/\//i.test(item.url))return;
+          const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=String(item.label||'فتح الرابط');
+          links.appendChild(a);
+        });
+        if(links.children.length)typing.querySelector('.amon-body').appendChild(links);
+      }
+      active.messages.push({id:mid,role:'assistant',content:answer,time:Date.now()});active.updatedAt=Date.now();saveHistory();renderHistory();
+    }catch(e){
+      if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}
+      else{typing.querySelector('.amon-bubble').textContent='حدث خطأ: '+e.message;toast('تعذر تنفيذ الطلب');}
+    }finally{state.abort=null;setBusy(false);scrollBottom();}
+  }
+  function newChat(){ state.activeChatId=null; document.querySelectorAll('.message').forEach(x=>x.remove()); if(!$('welcome')){chatInner.innerHTML='<div class="welcome" id="welcome"><div class="welcome-logo" aria-label="AMON AI"></div><h1>مرحبًا بك في AMON</h1><p>عقل مركزي بسيط واحترافي. اكتب ما تريد، واختر وضع AMON المناسب لمهمتك.</p><div class="quick"><button type="button" data-preset="learn"><strong>🧠 تعلّم</strong><small>شرح واضح ومتدرج</small></button><button type="button" data-prompt="اشرح لي الفكرة التالية بالتفصيل مع مثال عملي"><strong>💡 شرح</strong><small>فهم الفكرة بوضوح</small></button><button type="button" data-prompt="حلل هذا السؤال بعقلية بحثية واذكر ما تعرفه وما لست متأكدًا منه"><strong>🔎 بحث</strong><small>تحليل منظم</small></button><button type="button" data-preset="compare"><strong>⚖️ مقارنة</strong><small>مفاضلة واضحة</small></button></div></div>'; } input.focus(); }
+  function applyTheme(theme){
+    document.documentElement.dataset.theme=theme==="light"?"":theme;
+    localStorage.setItem("amon_theme",theme);
+  }
+  function setResponseStyle(style){
+    state.responseStyle=style;
+    localStorage.setItem("amon_response_style",style);
+    document.querySelectorAll(".style-chip").forEach(b=>b.classList.toggle("active",b.dataset.style===style));
+    toast("تم اختيار نمط الإجابة");
+  }
+  function openAppearance(){
+    const theme=localStorage.getItem("amon_theme")||"light";
+    openPanel("✨ المظهر ونمط الإجابة",'<div class="card"><h3>مظهر AMON</h3><p>اختر الشكل الذي يناسبك. يتم الحفظ على جهازك.</p><div class="appearance-grid"><button class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button><button class="appearance-choice '+(theme==="midnight"?"active":"")+'" data-theme-choice="midnight">🌌 ليلي<small>احترافي عميق</small></button><button class="appearance-choice '+(theme==="soft"?"active":"")+'" data-theme-choice="soft">✨ ناعم<small>هادئ وتعليمي</small></button></div></div><div class="card"><h3>نمط إجابات AMON</h3><p>يغيّر طريقة تنظيم الإجابة، وليس فقط شكلها.</p><div class="style-row">'+[
+      ["auto","✨ تلقائي"],["professional","💼 احترافي"],["educational","🎓 تعليمي"],["deep","🧠 عميق"],["step","🪜 خطوة بخطوة"],["concise","⚡ مختصر"],["creative","💡 إبداعي"]
+    ].map(([k,n])=>'<button class="style-chip '+(state.responseStyle===k?"active":"")+'" data-style="'+k+'">'+n+'</button>').join("")+'</div></div>');
+  }
+  function openPanel(title,body){$('panelTitle').textContent=title;$('panelBody').innerHTML=body;$('overlay').classList.remove('hidden');$('panel').classList.remove('hidden');}
+  function closePanel(){$('overlay').classList.add('hidden');$('panel').classList.add('hidden');}
+  document.addEventListener('click',e=>{
+    const themeChoice=e.target.closest('[data-theme-choice]');if(themeChoice){applyTheme(themeChoice.dataset.themeChoice);openAppearance();return;}
+    const styleChoice=e.target.closest('[data-style]');if(styleChoice){setResponseStyle(styleChoice.dataset.style);return;}
+    const appearance=e.target.closest('#appearanceButton');if(appearance){openAppearance();return;}
+    const openAppearanceBtn=e.target.closest('[data-open-appearance]');if(openAppearanceBtn){openAppearance();return;}
+    const q=e.target.closest('[data-prompt]');if(q){const preset=q.dataset.preset||'';if(preset==='learn'){setMode('learn');setResponseStyle('educational');toast('تم تفعيل أسلوب تعليمي');}else if(preset==='research'){setMode('research');setResponseStyle('deep');toast('تم تفعيل البحث والتحليل');}else if(preset==='thinking'){setMode('thinking');setResponseStyle('deep');toast('تم تفعيل التفكير العميق');}else if(preset==='compare'){setResponseStyle('professional');toast('تم تفعيل أسلوب المقارنة الاحترافي');}input.focus();return;}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ')).catch(()=>toast('تعذر النسخ'));}const open=e.target.closest('[data-open-chat]');if(open){openChat(open.dataset.openChat);return;}const del=e.target.closest('[data-delete-chat]');if(del){if(confirm('هل تريد حذف هذه المحادثة نهائيًا؟'))deleteChat(del.dataset.deleteChat);return;}const arc=e.target.closest('[data-archive-chat]');if(arc){archiveChat(arc.dataset.archiveChat);return;}const pin=e.target.closest('[data-pin-chat]');if(pin){togglePin(pin.dataset.pinChat);return;}const fb=e.target.closest('[data-feedback]');if(fb){const msg=fb.closest('.message');const action=fb.dataset.feedback;if(action==='regenerate'){const chat=getActiveChat();const idx=chat?.messages.findIndex(m=>m.id===msg.dataset.messageId);const prev=idx>0?chat.messages.slice(0,idx).reverse().find(m=>m.role==='user'):null;if(prev)send(prev.content);return;}const rating=action==='up'?'up':'down';let list=[];try{list=JSON.parse(localStorage.getItem('amon_feedback')||'[]')}catch{}list.push({messageId:msg.dataset.messageId,rating,time:Date.now()});localStorage.setItem('amon_feedback',JSON.stringify(list.slice(-100)));msg.querySelectorAll('[data-feedback="up"],[data-feedback="down"]').forEach(b=>b.classList.remove('active'));fb.classList.add('active');const note=msg.querySelector('.feedback-note');if(note)note.textContent=rating==='up'?'تم تسجيل أن الإجابة مفيدة.':'تم تسجيل التقييم لتحسين الأسلوب في الرسائل القادمة.';fetch(API+'/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating,messageId:msg.dataset.messageId})}).catch(()=>{});}});
+  $('sendButton').addEventListener('click',send);$('stopButton').addEventListener('click',()=>state.abort?.abort());$('newChat').addEventListener('click',newChat);$('menuButton').addEventListener('click',()=>$('sidebar').classList.toggle('open'));$('healthButton').addEventListener('click',health);$('closePanel').addEventListener('click',closePanel);$('overlay').addEventListener('click',closePanel);$('openInfo').addEventListener('click',()=>openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>واجهة AMON مصممة ببساطة واحترافية، مع تشغيل عبر نفس Worker والـ API الموجود في المشروع.</p></div><div class="card"><h3>الحالة الحالية</h3><p>المحادثة تعمل عبر Workers AI عندما يكون ربط AI متاحًا في Cloudflare.</p></div>'));$('openSettings').addEventListener('click',()=>openPanel('الإعدادات','<div class="card"><h3>الوضع الحالي</h3><p>يمكنك تغيير وضع AMON من أزرار الوضع أسفل الشاشة.</p></div><div class="card"><h3>الخصوصية</h3><p>سجل المحادثات المحلي محفوظ في هذا المتصفح فقط عبر localStorage.</p></div>'));
+  input.addEventListener('input',resizeInput);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+  const attachments=[];
+  function renderAttachments(){const box=$('attachments');box.innerHTML=attachments.map((f,i)=>`<span class="attachment">📎 ${escapeHTML(f.name)} <button type="button" data-remove-file="${i}" aria-label="حذف">×</button></span>`).join('');}
+  $('attachButton').addEventListener('click',()=>$('fileInput').click());
+  $('fileInput').addEventListener('change',e=>{for(const f of e.target.files){if(attachments.length>=6){toast('يمكن إرفاق 6 ملفات كحد أقصى');break;}attachments.push(f);}renderAttachments();e.target.value='';});
+  document.addEventListener('click',e=>{const r=e.target.closest('[data-remove-file]');if(r){attachments.splice(Number(r.dataset.removeFile),1);renderAttachments();}});
+  $('voiceButton').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('التحدث الصوتي غير مدعوم في هذا المتصفح');return;}const rec=new SR();rec.lang='ar-EG';rec.interimResults=false;rec.maxAlternatives=1;rec.onstart=()=>toast('استمع إليك الآن…');rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript;resizeInput();input.focus();};rec.onerror=()=>toast('تعذر تشغيل الميكروفون');rec.start();});
+  // AMON TEST MODE: message timer and quota are temporarily disabled.
+  // Persistent server-side enforcement will be added with an account/KV binding.
+  const AMON_QUOTA={messages:Infinity,images:5,windowMs:0,testMode:true};
+  const rawQuota=JSON.parse(localStorage.getItem('amonQuotaV4')||'{}');
+  const amonQuota={
+    messages:Number(rawQuota.messages)||0,
+    images:Number(rawQuota.images)||0,
+    windowStartedAt:Number(rawQuota.windowStartedAt)||Date.now()
+  };
+  function quotaExpired(){return false;}
+  function resetQuota(){amonQuota.messages=0;amonQuota.images=0;amonQuota.windowStartedAt=Date.now();}
+  function ensureQuota(){
+    if(quotaExpired()){
+      resetQuota();
+      try{localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));}catch{}
+    }
+  }
+  function consumeMessageQuota(){
+    ensureQuota();
+    if(AMON_QUOTA.testMode)return true;
+    if(amonQuota.messages>=AMON_QUOTA.messages)return false;
+    amonQuota.messages+=1;
+    try{localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));}catch{}
+    renderQuota();
+    return true;
+  }
+  function remainingTime(){
+    ensureQuota();
+    const ms=Math.max(0,AMON_QUOTA.windowMs-(Date.now()-amonQuota.windowStartedAt));
+    const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
+    return h+' ساعة و '+m+' دقيقة';
+  }
+  function renderQuota(){
+    ensureQuota();
+    $('msgQuota').textContent=AMON_QUOTA.testMode?'اختبار بلا حد':amonQuota.messages+' / '+AMON_QUOTA.messages;
+    $('imgQuota').textContent=amonQuota.images+' / '+AMON_QUOTA.images;
+    $('msgBar').style.width=AMON_QUOTA.testMode?'0%':Math.min(100,amonQuota.messages/AMON_QUOTA.messages*100)+'%';
+    $('imgBar').style.width=Math.min(100,amonQuota.images/AMON_QUOTA.images*100)+'%';
+    const quotaNote=document.getElementById('quotaNote');
+    if(quotaNote)quotaNote.textContent=AMON_QUOTA.testMode?'وضع الاختبار: حد الرسائل والمؤقت متوقفان مؤقتًا.':'التجديد الكامل بعد: '+remainingTime();
+  }
+  function saveQuota(){localStorage.setItem('amonQuotaV4',JSON.stringify(amonQuota));renderQuota();}
+  const serviceNames={create:'استوديو الإبداع',analyze:'التحليل الذكي',research:'البحث والتحقق',workspace:'مساحة العمل',focus:'وضع التركيز',personalize:'التخصيص والمظهر'};
+  function openService(k){
+    if(k==='personalize'){openAppearance();return;}
+    if(k==='focus'){setResponseStyle('deep');setMode('thinking');toast('تم تفعيل وضع التركيز');return;}
+    if(!serviceNames[k])return;
+    const content={
+      create:'<div class="card"><h3>✦ استوديو الإبداع</h3><p>مساحة موحدة لصناعة النصوص والأفكار والمحتوى والملفات دون تشتيت.</p><div class="style-row"><button class="style-chip" data-style="creative">💡 إبداعي</button><button class="style-chip" data-style="professional">💼 احترافي</button><button class="style-chip" data-style="step">🪜 خطوة بخطوة</button></div></div>',
+      analyze:'<div class="card"><h3>◈ التحليل الذكي</h3><p>للمقارنة، حل المشكلات، تحليل البيانات، واستخراج الاستنتاجات بوضوح.</p><button class="appearance-choice" style="width:100%" data-style="deep">🧠 تفعيل التحليل العميق</button></div>',
+      research:'<div class="card"><h3>⌕ البحث والتحقق</h3><p>مركز لتنظيم البحث ومقارنة المصادر وتمييز الحقائق عن الاستنتاجات.</p><button class="appearance-choice" style="width:100%" data-style="professional">🔎 أسلوب بحث احترافي</button></div>',
+      workspace:'<div class="card"><h3>▣ مساحة العمل</h3><p>مكان موحد للمشروعات والملفات والمخرجات المهمة بدل ازدحام شريط الأدوات.</p><button class="appearance-choice" style="width:100%" data-open-appearance="1">✨ تخصيص مساحة العمل</button></div>'
+    }[k]||'';
+    openPanel(serviceNames[k],content);
+  }
+  document.addEventListener('click',e=>{
+    const s=e.target.closest('[data-service]');
+    if(s){
+      document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      if(s.dataset.service!=='chat')openService(s.dataset.service); $('sidebar').classList.remove('open');
+    }
+    if(e.target.closest('#upgradeBtn')){
+      openPanel('الاشتراك','<div class="card"><h3>👑 خطط AMON</h3><p><b>FREE</b> — محادثة وتوليد صور ضمن حصص مجانية.</p><p><b>PLUS / PRO</b> — حدود أعلى وأدوات ونماذج متقدمة حسب الخطة.</p><p>الأسعار ووسائل الدفع ستُربط لاحقًا بنظام الاشتراكات الحقيقي.</p></div>');
+    }
+  });
+
+  renderQuota();
+  setInterval(renderQuota,1000);
+  window.addEventListener('storage',e=>{if(e.key==='amonQuotaV4')renderQuota();});
+
+  window.addEventListener('load',()=>{applyTheme(localStorage.getItem('amon_theme')||'light');loadHistory();resizeInput();health();input.focus();});
+})();
+</script>
+<script src="/amon-owner.js"></script>
+<script>
+window.AMONFileStudio={
+  formats:["txt","md","html","json","csv","xml","pdf","docx","xlsx","pptx"],
+  async generate({format="txt",title="AMON File",name="",content=""}={}){
+    const res=await fetch("/api/files/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({format,title,name,content})});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||"تعذر إنشاء الملف");
+    const file=data.file;
+    const binary=atob(file.base64); const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    const blob=new Blob([bytes],{type:file.mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=file.fileName;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    return file;
+  }
+};
+</script>
+<script src="/amon-supabase.js"></script>
+</body>
+</html>
