@@ -811,16 +811,22 @@ function qualityPlan(message, mode="learn") {
 function buildQualityInstruction(plan) {
   return [
     "محرّك جودة AMON نشط:",
-    "أجب بدقة ووضوح وبشكل منظم، ولا تكتفِ برد قصير عندما يحتاج السؤال تفصيلًا.",
+    "أجب بدقة ووضوح وبشكل منظم. لا تكرر الجمل أو الأفكار أو العناوين، ولا تعيد صياغة نفس النقطة عدة مرات.",
     "راجع داخليًا قبل الإنهاء: الدقة، الاكتمال، الوضوح، والخطوة العملية التالية.",
-    plan.complex ? "هذا طلب معقد: قدّم تحليلًا منظمًا ثم خلاصة وخطة قابلة للتنفيذ." : "ابدأ بإجابة مباشرة ثم أضف التفاصيل المفيدة.",
+    plan.complex ? "هذا طلب معقد: قدّم تحليلًا منظمًا ثم خلاصة وخطة قابلة للتنفيذ." : "ابدأ بإجابة مباشرة ثم أضف التفاصيل المفيدة فقط. لا تملأ الإجابة بمقدمات أو توصيات مكررة.",
     plan.code ? "في البرمجة: اشرح السبب والحل وطريقة الاختبار والمخاطر المحتملة." : ""
   ].filter(Boolean).join("\n");
 }
 
 function normalizeAnswer(text) {
   let out=String(text||"").trim().replace(/\n{3,}/g,"\n\n");
-  return out;
+  const seen=new Set();
+  const blocks=out.split(/\n\s*\n/).filter(Boolean).filter(block=>{
+    const key=block.replace(/[\s\W_]+/g,"").toLowerCase().slice(0,500);
+    if(!key || seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+  return blocks.join("\n\n").replace(/(\b.{4,80}\b)(?:\s+\1){2,}/g,"$1");
 }
 
 // ============================================================
