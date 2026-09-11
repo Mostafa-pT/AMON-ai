@@ -1,10 +1,11 @@
 name = "amon-ai"
 main = "worker.js"
-compatibility_date = "2026-08-08"
+compatibility_date = "2026-09-11"
 
 [ai]
 binding = "AI"
 
 [assets]
-directory = "."
+directory = "./public"
 binding = "ASSETS"
+run_worker_first = [ "/api/*", "/health" ]
