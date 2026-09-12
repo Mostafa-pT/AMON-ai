@@ -118,6 +118,7 @@ body{background:#fff;color:var(--text)}
 .style-row{display:flex;flex-wrap:wrap;gap:7px}.style-chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px}.style-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .amon-inline-link{position:relative;z-index:5;pointer-events:auto;cursor:pointer}.amon-bubble a{pointer-events:auto!important;cursor:pointer!important}
 
+.amon-map-card{margin-top:12px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel);box-shadow:0 8px 24px rgba(15,23,42,.08)}.amon-map-title{padding:11px 14px;font-weight:800;color:var(--text);border-bottom:1px solid var(--line)}.amon-map-card iframe{display:block;width:100%;height:260px;border:0;background:#eef2f7}.amon-map-actions{padding:10px 12px;display:flex}.amon-map-actions a{padding:8px 12px;border:1px solid var(--line);border-radius:10px;color:var(--text);text-decoration:none;font-size:12px;font-weight:800}.amon-map-actions a:hover{border-color:var(--blue);color:var(--blue)}
 /* Final compact premium link cards */
 .amon-safe-links{display:flex!important;align-items:center!important;gap:5px!important;margin:7px 0 0!important;padding:0!important;border:0!important;background:transparent!important}
 .amon-safe-links a{height:28px!important;min-height:28px!important;padding:0 9px!important;border-radius:999px!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1px!important;border:1px solid rgba(37,99,235,.18)!important;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(15,23,42,.02))!important;color:#2563eb!important;box-shadow:0 2px 8px rgba(15,23,42,.05)!important}
@@ -511,6 +512,8 @@ html[data-theme="dark"] .amon-style-main small{color:#b7bec8!important}
     parent.appendChild(card);
   }
 
+  function addMapCard(parent,map){if(!map||!map.found||!Number.isFinite(Number(map.lat))||!Number.isFinite(Number(map.lon)))return;const lat=Number(map.lat),lon=Number(map.lon),d=.08,bbox=[lon-d,lat-d,lon+d,lat+d].join(","),card=document.createElement("div");card.className="amon-map-card";const title=document.createElement("div");title.className="amon-map-title";title.textContent=map.name||map.query||"الموقع";const frame=document.createElement("iframe");frame.loading="lazy";frame.referrerPolicy="no-referrer";frame.title="خريطة";frame.src="https://www.openstreetmap.org/export/embed.html?bbox="+encodeURIComponent(bbox)+"&layer=mapnik&marker="+encodeURIComponent(lat+","+lon);const actions=document.createElement("div");actions.className="amon-map-actions";const open=document.createElement("a");open.target="_blank";open.rel="noopener noreferrer";open.textContent="فتح الخريطة";open.href="https://www.openstreetmap.org/?mlat="+encodeURIComponent(lat)+"&mlon="+encodeURIComponent(lon)+"#map=13/"+encodeURIComponent(lat)+"/"+encodeURIComponent(lon);actions.appendChild(open);card.append(title,frame,actions);parent.appendChild(card);}
+  async function maybeAddMap(parent,requestText){if(!/خريطة|map|أين يقع|اين يقع|الموقع على الخريطة|موقع .* على الخريطة/i.test(String(requestText||"")))return;try{const res=await fetch("/api/map",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:requestText})}),data=await res.json();if(data?.success&&data?.found)addMapCard(parent,data);}catch(err){console.warn("AMON map failed",err);}}
   function escapeAndLinkify(text){
     let raw=String(text||"");
     const tokens=[];
@@ -623,6 +626,7 @@ html[data-theme="dark"] .amon-style-main small{color:#b7bec8!important}
         });
         if(links.children.length)typing.querySelector('.amon-body').appendChild(links);
       }
+      await maybeAddMap(typing.querySelector('.amon-body'),text);
       active.messages.push({id:mid,role:'assistant',content:answer,time:Date.now()});active.updatedAt=Date.now();saveHistory();renderHistory();
     }catch(e){
       if(e.name==='AbortError'){typing.remove();toast('تم إيقاف الإجابة');}
