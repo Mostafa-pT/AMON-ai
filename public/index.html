@@ -276,6 +276,61 @@ html[data-theme="light"] .input-box{background:#fff!important;border:1px solid #
 html[data-theme="light"] textarea#messageInput{display:block!important;background:#fff!important;color:#111!important;caret-color:#111!important;-webkit-text-fill-color:#111!important;filter:none!important;opacity:1!important;text-shadow:none!important}
 html[data-theme="light"] textarea#messageInput::placeholder{color:#68707a!important;-webkit-text-fill-color:#68707a!important;opacity:1!important}
 </style>
+<style>
+/* AMON contrast repair: chat replies and tool windows always follow the selected theme */
+html[data-theme="dark"] .message .amon-bubble,
+html[data-theme="dark"] .amon-bubble,
+html[data-theme="dark"] .user-bubble{
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+html[data-theme="dark"] .message .amon-bubble *,
+html[data-theme="dark"] .amon-bubble *,
+html[data-theme="dark"] .user-bubble *{
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+}
+html[data-theme="dark"] .message .amon-bubble a{color:#8fb2ff!important}
+html[data-theme="light"] .message .amon-bubble,
+html[data-theme="light"] .amon-bubble,
+html[data-theme="light"] .user-bubble{
+  color:#111111!important;
+  -webkit-text-fill-color:#111111!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+html[data-theme="light"] .message .amon-bubble *,
+html[data-theme="light"] .amon-bubble *,
+html[data-theme="light"] .user-bubble *{
+  color:#111111!important;
+  -webkit-text-fill-color:#111111!important;
+}
+html[data-theme="light"] .message .amon-bubble a{color:#1458c0!important}
+
+/* Tool windows must never remain black in light mode */
+.panel{background:var(--panel)!important;color:var(--text)!important}
+.panel-head,.panel-body{background:var(--panel)!important;color:var(--text)!important}
+html[data-theme="light"] .panel,
+html[data-theme="light"] .panel-head,
+html[data-theme="light"] .panel-body{background:#ffffff!important;color:#111111!important}
+html[data-theme="light"] .panel button,
+html[data-theme="light"] .panel input,
+html[data-theme="light"] .panel textarea,
+html[data-theme="light"] .panel select{color:#111111!important;background-color:#ffffff!important;border-color:#dfe3e8!important}
+html[data-theme="light"] .panel .card{background:#f7f8fa!important;color:#111111!important}
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .panel-head,
+html[data-theme="dark"] .panel-body{background:#11161c!important;color:#ffffff!important}
+html[data-theme="dark"] .panel .card{background:#161c23!important;color:#ffffff!important}
+html[data-theme="dark"] .panel button,
+html[data-theme="dark"] .panel input,
+html[data-theme="dark"] .panel textarea,
+html[data-theme="dark"] .panel select{color:#ffffff!important;background-color:#161c23!important;border-color:#303944!important}
+</style>
 </head>
 <body>
 <div class="app">
