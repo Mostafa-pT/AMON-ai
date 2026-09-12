@@ -797,6 +797,34 @@ function buildProfessionalResponseContract() {
   };
 }
 
+
+// ============================================================
+// AMON STRUCTURED LIST ENGINE
+// ============================================================
+
+function detectLargeListRequest(message) {
+  const text=String(message||"");
+  const match=text.match(/(?:أعطني|اعطني|اريد|أريد|هات|اكتب|قدم|قدّم)\s+(\d{1,5})\s+(?:معلومة|معلومات|حقيقة|حقائق|نقطة|نقاط)/i)
+    || text.match(/(\d{1,5})\s+(?:معلومة|معلومات|حقيقة|حقائق|نقطة|نقاط)/i);
+  const count=match?Number(match[1]):0;
+  return { requested:count, isLarge:count>=20 && count<=10000 };
+}
+
+function buildStructuredListInstruction(listRequest) {
+  if(!listRequest.isLarge) return "";
+  return [
+    "طلب المستخدم قائمة معلومات مرقمة كبيرة.",
+    "العدد المطلوب: "+listRequest.requested+".",
+    "لا تكتب مقدمة طويلة؛ ابدأ بالمعلومة رقم 1 مباشرة.",
+    "استخدم تنسيقًا ثابتًا: رقم متسلسل ثم معلومة مستقلة قصيرة ودقيقة.",
+    "لا تكرر نفس الحقيقة بصياغات مختلفة ولا تستخدم معلومات وهمية لملء العدد.",
+    "إذا كان الموضوع واسعًا، وزّع المعلومات على جوانب حقيقية مرتبطة به.",
+    "حافظ على ترقيم متسلسل 1، 2، 3... ولا تستخدم قوائم فرعية بدل الأرقام.",
+    "إذا لم تكفِ سعة الإجابة، قدّم أكبر عدد ممكن بجودة حقيقية ثم اكتب فقط: تابع من رقم X. لا تدّعِ إكمال العدد.",
+    "استخدم العربية الواضحة وتجنب المصطلحات المخترعة والأخطاء والتكرار."
+  ].join("\n");
+}
+
 // ============================================================
 // AMON PHASE 5 — RESPONSE QUALITY ENGINE
 // ============================================================
@@ -1141,6 +1169,8 @@ async function handleChat(
   const qualityInstruction = buildQualityInstruction(responsePlan);
   const requestProfile = analyzeRequestProfile(userMessage);
   const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false) + "\n" + responseStyle.instruction;
+  const largeListRequest = detectLargeListRequest(userMessage);
+  const structuredListInstruction = buildStructuredListInstruction(largeListRequest);
 
   // ----------------------------------------------------------
   // MESSAGES
@@ -1165,7 +1195,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${adaptiveInstruction}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${adaptiveInstruction}${structuredListInstruction ? "\n" + structuredListInstruction : ""}`
     },
 
     ...history,
