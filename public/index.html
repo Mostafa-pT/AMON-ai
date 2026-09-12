@@ -331,6 +331,21 @@ html[data-theme="dark"] .panel input,
 html[data-theme="dark"] .panel textarea,
 html[data-theme="dark"] .panel select{color:#ffffff!important;background-color:#161c23!important;border-color:#303944!important}
 </style>
+<style>
+/* AMON response-style selector: large clickable options, never a black tooltip */
+.amon-style-list{display:grid;gap:9px;margin-top:10px}
+.amon-style-option{width:100%;display:flex!important;align-items:center!important;justify-content:space-between!important;text-align:right!important;padding:13px 14px!important;border:1px solid var(--line)!important;border-radius:14px!important;background:var(--panel2)!important;color:var(--text)!important;cursor:pointer!important;pointer-events:auto!important;min-height:66px!important}
+.amon-style-option:hover{border-color:var(--blue)!important;transform:translateY(-1px)}
+.amon-style-option.active{border-color:var(--blue)!important;background:color-mix(in srgb,var(--blue) 12%,var(--panel2))!important;box-shadow:0 0 0 1px var(--blue)!important}
+.amon-style-main{display:grid;gap:4px;pointer-events:none}.amon-style-main b{font-size:13px;color:inherit!important}.amon-style-main small{font-size:11px;color:var(--muted)!important;line-height:1.5}.amon-style-check{font-size:19px;font-weight:900;color:var(--blue)!important;min-width:24px;text-align:center;pointer-events:none}
+html[data-theme="light"] .response-style-card,html[data-theme="light"] .appearance-card{background:#f7f8fa!important;color:#111!important}
+html[data-theme="light"] .amon-style-option{background:#fff!important;color:#111!important;border-color:#dfe3e8!important}
+html[data-theme="light"] .amon-style-main b{color:#111!important}
+html[data-theme="light"] .amon-style-main small{color:#5f6873!important}
+html[data-theme="dark"] .amon-style-option{background:#161c23!important;color:#fff!important;border-color:#303944!important}
+html[data-theme="dark"] .amon-style-main b{color:#fff!important}
+html[data-theme="dark"] .amon-style-main small{color:#b7bec8!important}
+</style>
 </head>
 <body>
 <div class="app">
@@ -615,15 +630,23 @@ html[data-theme="dark"] .panel select{color:#ffffff!important;background-color:#
   }
   function openAppearance(){
     const theme=localStorage.getItem("amon_theme")||"light";
-    openPanel("✨ المظهر ونمط الإجابة",'<div class="card"><h3>مظهر AMON</h3><p>اختر الشكل الذي يناسبك. يتم الحفظ على جهازك.</p><div class="appearance-grid"><button class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button></div></div><div class="card"><h3>نمط إجابات AMON</h3><p>يغيّر طريقة تنظيم الإجابة، وليس فقط شكلها.</p><div class="style-row">'+[
-      ["auto","✨ تلقائي"],["professional","💼 احترافي"],["educational","🎓 تعليمي"],["deep","🧠 عميق"],["step","🪜 خطوة بخطوة"],["concise","⚡ مختصر"],["creative","💡 إبداعي"]
-    ].map(([k,n])=>'<button class="style-chip '+(state.responseStyle===k?"active":"")+'" data-style="'+k+'">'+n+'</button>').join("")+'</div></div>');
+    const styles=[
+      ["auto","✨ تلقائي","AMON يختار الشكل المناسب للسؤال"],
+      ["professional","💼 احترافي","منظم ودقيق بأسلوب عملي"],
+      ["educational","🎓 تعليمي","شرح واضح مع أمثلة"],
+      ["deep","🧠 تحليل عميق","تفكير وتحليل أكثر تفصيلاً"],
+      ["step","🪜 خطوة بخطوة","خطوات مرتبة وسهلة المتابعة"],
+      ["concise","⚡ مختصر","الجواب المهم بدون إطالة"],
+      ["creative","💡 إبداعي","أفكار وصياغة مبتكرة"]
+    ];
+    const body='<div class="card appearance-card"><h3>مظهر AMON</h3><p>اختر الأبيض أو الأسود.</p><div class="appearance-grid"><button type="button" class="appearance-choice '+(theme==="light"?"active":"")+'" data-theme-choice="light">☀️ أبيض<small>واضح وبسيط</small></button><button type="button" class="appearance-choice '+(theme==="dark"?"active":"")+'" data-theme-choice="dark">🌙 أسود<small>مريح للعين</small></button></div></div><div class="card response-style-card"><h3>أنماط AMON</h3><p>اضغط على أي نمط لاختياره. سيظهر النمط المحدد بعلامة ✓.</p><div class="amon-style-list">'+styles.map(([k,n,d])=>'<button type="button" class="amon-style-option '+(state.responseStyle===k?"active":"")+'" data-style="'+k+'"><span class="amon-style-main"><b>'+n+'</b><small>'+d+'</small></span><span class="amon-style-check">'+(state.responseStyle===k?"✓":"")+'</span></button>').join("")+'</div></div>';
+    openPanel("⚙️ المظهر وأنماط AMON",body);
   }
   function openPanel(title,body){$('panelTitle').textContent=title;$('panelBody').innerHTML=body;$('overlay').classList.remove('hidden');$('panel').classList.remove('hidden');}
   function closePanel(){$('overlay').classList.add('hidden');$('panel').classList.add('hidden');keepComposerReady();}
   document.addEventListener('click',e=>{
     const themeChoice=e.target.closest('[data-theme-choice]');if(themeChoice){applyTheme(themeChoice.dataset.themeChoice);openAppearance();return;}
-    const styleChoice=e.target.closest('[data-style]');if(styleChoice){setResponseStyle(styleChoice.dataset.style);return;}
+    const styleChoice=e.target.closest('[data-style]');if(styleChoice){e.preventDefault();e.stopPropagation();setResponseStyle(styleChoice.dataset.style);openAppearance();return;}
     const settingsBtn=e.target.closest('#openSettings');if(settingsBtn){openAppearance();return;}
     const infoBtn=e.target.closest('#openInfo');if(infoBtn){openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>منصة ذكاء اصطناعي قيد التطوير، تجمع المحادثة والأدوات والملفات والبحث في واجهة واحدة.</p><div class="tool-actions"><button id="infoNewChat" class="primary">بدء محادثة جديدة</button></div></div>');setTimeout(()=>document.getElementById('infoNewChat')?.addEventListener('click',()=>{closePanel();newChat();}),0);return;}
     const upgrade=e.target.closest('#upgradeBtn');if(upgrade){openPanel('الخطة','<div class="card"><h3>خطة AMON</h3><p>سيتم عرض خيارات الترقية الرسمية هنا عند تفعيل نظام الاشتراكات. لا توجد عملية دفع مفعلة حاليًا.</p></div>');return;}
