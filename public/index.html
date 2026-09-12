@@ -102,7 +102,7 @@ body{background:#fff;color:var(--text)}
 .file-card-icon{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#f1f5f9;font-size:20px;font-weight:900;color:#0f172a}
 .file-card-info{min-width:0;flex:1}.file-card-name{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-card-meta{font-size:11px;color:#64748b;margin-top:4px}
 .file-card-menu{display:none;padding:0 14px 14px;gap:8px;flex-wrap:wrap}.amon-file-card.open .file-card-menu{display:flex}
-.file-card-action{border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;border-radius:10px;padding:8px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.file-card-action:hover{background:#f8fafc;border-color:#cbd5e1}
+.file-card-action{border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;border-radius:10px;padding:8px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.file-card-action:hover{background:#f8fafc;border-color:#cbd5e1}.file-card-action.danger{color:#b42318}.file-card-action.danger:hover{background:#fff1f0;border-color:#f0b7b1}
 .amon-safe-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:0;background:transparent}
 .amon-safe-links .safe-links-title{display:none}
 .amon-safe-links a{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:9px;border:1px solid var(--line,#e5e7eb);background:#fff;color:#334155;text-decoration:none;font-size:11px;font-weight:700;line-height:1.2;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -474,28 +474,40 @@ html[data-theme="dark"] .amon-style-main small{color:#b7bec8!important}
   function addUser(text){ const el=document.createElement('div');el.className='message user';el.innerHTML=`<div class="user-bubble">${escapeHTML(text)}</div>`;chatInner.appendChild(el);scrollBottom(); }
   function fileIcon(format){return ({pdf:"PDF",docx:"W",xlsx:"X",pptx:"P",csv:"CSV",json:"{}",html:"</>",xml:"XML",md:"MD",txt:"TXT"})[String(format||"").toLowerCase()]||"FILE";}
   function base64ToBlob(base64,mime){const binary=atob(base64);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:mime||"application/octet-stream"});}
+  function shouldCreateAnswerFile(requestText,answer){
+    const q=String(requestText||"");
+    const explicit=/ملف|احفظ|تحميل|نزّل|نزل|pdf|docx|word|txt|csv|xlsx|excel/i.test(q);
+    const numbered=/(?:^|\s)(?:[2-9]\d|[1-9]\d{2,}|\d{1,5})\s*(?:معلومة|معلومات|حقيقة|حقائق|نقطة|نقاط)/i.test(q);
+    return explicit||numbered||String(answer||"").length>=1800;
+  }
+  async function createAnswerFile(requestText,answer){
+    const title=(String(requestText||"AMON Answer").replace(/\s+/g," ").slice(0,72)||"AMON Answer");
+    const res=await fetch("/api/files/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({format:"txt",title,name:"AMON_"+Date.now(),content:answer})});
+    const data=await res.json();
+    if(!data?.success||!data.file) throw new Error(data?.message||"تعذر إنشاء ملف الإجابة");
+    data.file.content=String(answer||"");
+    return data.file;
+  }
   function addFileCard(parent,file){
     if(!file||!file.base64)return;
     const blob=base64ToBlob(file.base64,file.mime),url=URL.createObjectURL(blob);
     const card=document.createElement("div");card.className="amon-file-card";
     const fmt=String(file.format||"file").toUpperCase(),size=file.size?Math.max(1,Math.round(file.size/1024))+" KB":"ملف جاهز";
-    card.innerHTML='<div class="file-card-main"><div class="file-card-icon">'+fileIcon(file.format)+'</div><div class="file-card-info"><div class="file-card-name"></div><div class="file-card-meta">'+fmt+' • '+size+'</div></div></div><div class="file-card-menu"><button class="file-card-action" data-file-action="open">فتح</button><button class="file-card-action" data-file-action="share">مشاركة</button><button class="file-card-action" data-file-action="edit">تعديل</button><button class="file-card-action" data-file-action="save">حفظ</button></div>';
+    card.innerHTML='<div class="file-card-main"><div class="file-card-icon">'+fileIcon(file.format)+'</div><div class="file-card-info"><div class="file-card-name"></div><div class="file-card-meta">'+fmt+' • '+size+'</div></div></div><div class="file-card-menu"><button class="file-card-action" data-file-action="open">فتح الملف</button><button class="file-card-action" data-file-action="copy">نسخ المحتوى</button><button class="file-card-action" data-file-action="save">تنزيل</button><button class="file-card-action danger" data-file-action="delete">حذف</button></div>';
     card.querySelector(".file-card-name").textContent=file.fileName||"AMON File";
     card.querySelector(".file-card-main").addEventListener("click",()=>card.classList.toggle("open"));
     card.querySelector('[data-file-action="open"]').onclick=()=>window.open(url,"_blank","noopener");
     card.querySelector('[data-file-action="save"]').onclick=()=>{const a=document.createElement("a");a.href=url;a.download=file.fileName||"AMON_File";a.click();};
-    card.querySelector('[data-file-action="share"]').onclick=async()=>{
+    card.querySelector('[data-file-action="copy"]').onclick=async()=>{
       try{
-        const shareFile=new File([blob],file.fileName||"AMON_File",{type:file.mime});
-        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]})){
-          await navigator.share({files:[shareFile],title:file.fileName||"AMON File"});
-        }else{
-          await navigator.clipboard.writeText(url);
-          toast("تم نسخ رابط الملف المؤقت");
-        }
-      }catch{}
+        if(typeof file.content==="string") await navigator.clipboard.writeText(file.content);
+        else await navigator.clipboard.writeText(file.fileName||"AMON File");
+        toast("تم نسخ محتوى الملف");
+      }catch{toast("تعذر نسخ محتوى الملف");}
     };
-    card.querySelector('[data-file-action="edit"]').onclick=()=>{const text=prompt("اكتب التعديل المطلوب على الملف:");if(text){input.value="عدّل الملف التالي: "+(file.fileName||"AMON File")+"\n"+text;input.focus();}};
+    card.querySelector('[data-file-action="delete"]').onclick=()=>{
+      URL.revokeObjectURL(url); card.remove(); toast("تم حذف الملف من هذه المحادثة");
+    };
     parent.appendChild(card);
   }
 
@@ -592,8 +604,15 @@ html[data-theme="dark"] .amon-style-main small{color:#b7bec8!important}
       await renderAmonTextAnimated(typing.querySelector('.amon-bubble'),answer);
       const meta=document.createElement('div');meta.className='meta response-actions';meta.innerHTML='<button class="copy" type="button">نسخ</button><button class="response-action" data-feedback="up">👍 مفيد</button><button class="response-action" data-feedback="down">👎 يحتاج تحسينًا</button><button class="response-action" data-feedback="regenerate">↻ إعادة التوليد</button><span class="feedback-note"></span>';typing.querySelector('.amon-body').appendChild(meta);
       if(data.file){
-        typing.querySelector('.amon-bubble').textContent='تم إنشاء الملف بنجاح. افتح بطاقة الملف أدناه للوصول إليه.';
+        data.file.content=answer;
         addFileCard(typing.querySelector('.amon-body'),data.file);
+      } else if(shouldCreateAnswerFile(text,answer)){
+        try{
+          const generatedAnswerFile=await createAnswerFile(text,answer);
+          addFileCard(typing.querySelector('.amon-body'),generatedAnswerFile);
+        }catch(err){
+          console.warn("AMON automatic answer file failed",err);
+        }
       }
       if(Array.isArray(data.links)&&data.links.length){
         const links=document.createElement('div');links.className='amon-safe-links';
