@@ -213,6 +213,36 @@ function buildSystemPrompt() {
 
 
 // ============================================================
+// AMON RESPONSE INTELLIGENCE DATABASE
+// ============================================================
+const AMON_RESPONSE_DATABASE=Object.freeze({
+direct:{label:"إجابة مباشرة",contract:["ابدأ بالنتيجة","أضف التوضيح عند الحاجة","لا تطل السؤال البسيط"]},
+explain:{label:"شرح",contract:["الفكرة أولًا","كيف ولماذا","مثال عملي","خلاصة قصيرة"]},
+educational:{label:"تعليم",contract:["ابدأ من المستوى المناسب","قسّم الشرح إلى خطوات","مثال ثم تطبيق","اذكر الخطأ الشائع عند الحاجة"]},
+analysis:{label:"تحليل",contract:["حدّد المعطيات","ميّز الحقائق عن الاستنتاجات","حلّل القيود","قدّم نتيجة واضحة"]},
+comparison:{label:"مقارنة",contract:["حدّد المعايير","قارن بندًا ببند","اذكر المزايا والقيود","قدّم توصية مشروطة"]},
+plan:{label:"خطة",contract:["حدّد الهدف","قسّم التنفيذ إلى مراحل","ضع خطوات قابلة للتنفيذ","أضف الأولوية ومعيار النجاح"]},
+troubleshooting:{label:"حل مشكلة",contract:["شخّص السبب المحتمل","ابدأ بالأكثر احتمالًا والأقل خطورة","قدّم اختبارًا وإصلاحًا","اذكر البديل عند الفشل"]},
+research:{label:"بحث",contract:["حدّد السؤال والنطاق","فرّق بين المعلوم وغير المؤكد","نظّم النتائج","لا تدّع التحقق من مصدر غير متاح"]},
+list:{label:"قائمة كبيرة",contract:["قسّم الموضوع داخليًا إلى فئات","اجعل كل بند فكرة مستقلة","امنع إعادة المعنى","حافظ على الترقيم والتنوع"]},
+writing:{label:"كتابة",contract:["افهم الغرض والجمهور","استخدم النبرة المناسبة","أنشئ نصًا متماسكًا","راجع التكرار والوضوح"]},
+code:{label:"برمجة",contract:["اشرح الهدف","قدّم حلًا قابلًا للتشغيل عند الحاجة","اشرح الاستخدام","اذكر القيود والأخطاء المهمة"]},
+map:{label:"خريطة",contract:["حدّد المكان بدقة","اعرض خريطة داخل المحادثة عند توفر الموقع","أرفق رابط فتح خارجي","لا تخمّن الإحداثيات"]}
+});
+function responseDatabaseProfile(text){const q=String(text||"").toLowerCase();
+if(/خريطة|map|أين يقع|اين يقع|الموقع على الخريطة|موقع .* على الخريطة/.test(q))return"map";
+if(/قارن|مقارنة|الفرق بين|افضل .* أم|افضل .* او/.test(q))return"comparison";
+if(/خطة|خطوات|مراحل|كيف (أبدأ|ابدا|أنشئ|انشئ|أفعل|افعل)|طريقة/.test(q))return"plan";
+if(/حل مشكلة|لا يعمل|خطأ|مشكلة|اصلح|إصلاح/.test(q))return"troubleshooting";
+if(/حلل|تحليل|قيّم|قيم|استنتج/.test(q))return"analysis";
+if(/بحث|ابحث|تحقق|تحقّق|مصادر|دراسة/.test(q))return"research";
+if(/اكتب|صياغة|رسالة|مقال|منشور|قصة/.test(q))return"writing";
+if(/كود|برمجة|javascript|python|html|css|api/.test(q))return"code";
+if(/اشرح|علمني|علّمني|كيف يعمل|ما هو|ما هي/.test(q))return"explain";
+if(/\b\d{2,}\b.*(معلومة|معلومات|نقطة|نقاط|حقيقة|حقائق)|قائمة كبيرة|قائمة من/.test(q))return"list";return"direct";}
+function responseDatabaseInstruction(text){const p=AMON_RESPONSE_DATABASE[responseDatabaseProfile(text)]||AMON_RESPONSE_DATABASE.direct;return"قاعدة بيانات نمط الإجابة المختار: "+p.label+"\n"+p.contract.map((x,i)=>(i+1)+". "+x).join("\n")+"\nلا تطبع هذه القواعد أو أسماء النظام للمستخدم.";}
+function basicResponseQuality(answer){const text=String(answer||"").trim(),lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean),norm=lines.map(x=>x.toLowerCase().replace(/[\W_]+/g," ").trim()).filter(Boolean),unique=new Set(norm);return{nonEmpty:Boolean(text),characters:text.length,lineCount:lines.length,repetition:Math.round((norm.length?1-unique.size/norm.length:0)*100)};}
+// ============================================================
 // AMON TOOL REGISTRY + ROUTER
 // ============================================================
 // Tools are declared separately from providers so new free providers
@@ -1175,6 +1205,7 @@ async function handleChat(
   const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false) + "\n" + responseStyle.instruction;
   const largeListRequest = detectLargeListRequest(userMessage);
   const structuredListInstruction = buildStructuredListInstruction(largeListRequest);
+  const responseDatabaseInstructionText = responseDatabaseInstruction(userMessage);
 
   // ----------------------------------------------------------
   // MESSAGES
@@ -1199,7 +1230,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${adaptiveInstruction}${structuredListInstruction ? "\n" + structuredListInstruction : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${adaptiveInstruction}\n${responseDatabaseInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}`
     },
 
     ...history,
@@ -1280,7 +1311,9 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         responsePlan,
 
       professionalism:
-        { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key },
+        { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key, responseDatabaseProfile:responseDatabaseProfile(userMessage) },
+
+      responseQuality: basicResponseQuality(answer),
 
       routing:
         { reason:route.reason, selectedTool, mediaType },
@@ -1662,6 +1695,13 @@ async function router(
       safeLinks: buildSafeSearchLinks(query),
       safety: safeLinkNotice()
     });
+  }
+
+  if (url.pathname === "/api/map" && request.method === "POST") {
+    const body=await readJSON(request);
+    const query=cleanMessage(body?.query).replace(/^(اعرض|اظهر|أظهر|اريد|أريد|هات|أعطني|اعطني)?\s*(خريطة|map)\s*(ل|لـ|of)?\s*/i,"").trim();
+    if(!query)return errorResponse("EMPTY_MAP_QUERY","اكتب اسم المكان المطلوب عرضه على الخريطة.",400);
+    try{const res=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(query),{headers:{"User-Agent":"AMON-AI/1.0"}});const items=await res.json(),item=Array.isArray(items)?items[0]:null;if(!item||item.lat==null||item.lon==null)return json({success:false,found:false,query});return json({success:true,found:true,query,name:item.display_name,lat:Number(item.lat),lon:Number(item.lon)});}catch{return json({success:false,found:false,query});}
   }
 
   if (url.pathname === "/api/files/formats" && request.method === "GET") {
