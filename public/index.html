@@ -262,6 +262,20 @@ body{background:#fff;color:var(--text)}
 :root[data-theme="dark"] .note,:root[data-theme="dark"] .meta{color:#b7bec8!important}
 :root[data-theme="dark"] .panel-body,:root[data-theme="dark"] .chat,:root[data-theme="dark"] .main{color:#fff!important}
 </style>
+<style>
+/* Final input visibility lock: explicit colors override every legacy theme rule */
+html[data-theme="dark"] body,html[data-theme="dark"] .app,html[data-theme="dark"] .main{background:#08090b!important;color:#fff!important}
+html[data-theme="dark"] .composer,html[data-theme="dark"] .composer-inner{background:#08090b!important}
+html[data-theme="dark"] .input-box{background:#16181d!important;border:1px solid #343a43!important}
+html[data-theme="dark"] textarea#messageInput{display:block!important;background:#16181d!important;color:#fff!important;caret-color:#fff!important;-webkit-text-fill-color:#fff!important;filter:none!important;opacity:1!important;text-shadow:none!important}
+html[data-theme="dark"] textarea#messageInput::placeholder{color:#aeb7c2!important;-webkit-text-fill-color:#aeb7c2!important;opacity:1!important}
+html[data-theme="dark"] .mode,html[data-theme="dark"] .input-tool{background:#111317!important;color:#fff!important;border-color:#343a43!important}
+html[data-theme="light"] body,html[data-theme="light"] .app,html[data-theme="light"] .main{background:#fff!important;color:#111!important}
+html[data-theme="light"] .composer,html[data-theme="light"] .composer-inner{background:#fff!important}
+html[data-theme="light"] .input-box{background:#fff!important;border:1px solid #dfe3e8!important}
+html[data-theme="light"] textarea#messageInput{display:block!important;background:#fff!important;color:#111!important;caret-color:#111!important;-webkit-text-fill-color:#111!important;filter:none!important;opacity:1!important;text-shadow:none!important}
+html[data-theme="light"] textarea#messageInput::placeholder{color:#68707a!important;-webkit-text-fill-color:#68707a!important;opacity:1!important}
+</style>
 </head>
 <body>
 <div class="app">
@@ -532,10 +546,9 @@ body{background:#fff;color:var(--text)}
     requestAnimationFrame(()=>input.focus({preventScroll:true}));
   }
   function applyTheme(theme){
-    const safeThemes=new Set(["light","dark","midnight","soft"]);
-    const next=safeThemes.has(theme)?theme:"light";
-    document.documentElement.dataset.theme=next==="light"?"":next;
-    document.documentElement.style.colorScheme=(next==="dark"||next==="midnight")?"dark":"light";
+    const next=theme==="dark"?"dark":"light";
+    document.documentElement.dataset.theme=next;
+    document.documentElement.style.colorScheme=next;
     localStorage.setItem("amon_theme",next);
     keepComposerReady();
   }
@@ -556,6 +569,9 @@ body{background:#fff;color:var(--text)}
   document.addEventListener('click',e=>{
     const themeChoice=e.target.closest('[data-theme-choice]');if(themeChoice){applyTheme(themeChoice.dataset.themeChoice);openAppearance();return;}
     const styleChoice=e.target.closest('[data-style]');if(styleChoice){setResponseStyle(styleChoice.dataset.style);return;}
+    const settingsBtn=e.target.closest('#openSettings');if(settingsBtn){openAppearance();return;}
+    const infoBtn=e.target.closest('#openInfo');if(infoBtn){openPanel('عن AMON','<div class="card"><h3>AMON AI</h3><p>منصة ذكاء اصطناعي قيد التطوير، تجمع المحادثة والأدوات والملفات والبحث في واجهة واحدة.</p><div class="tool-actions"><button id="infoNewChat" class="primary">بدء محادثة جديدة</button></div></div>');setTimeout(()=>document.getElementById('infoNewChat')?.addEventListener('click',()=>{closePanel();newChat();}),0);return;}
+    const upgrade=e.target.closest('#upgradeBtn');if(upgrade){openPanel('الخطة','<div class="card"><h3>خطة AMON</h3><p>سيتم عرض خيارات الترقية الرسمية هنا عند تفعيل نظام الاشتراكات. لا توجد عملية دفع مفعلة حاليًا.</p></div>');return;}
     const appearance=e.target.closest('#appearanceButton');if(appearance){openAppearance();return;}
     const openAppearanceBtn=e.target.closest('[data-open-appearance]');if(openAppearanceBtn){openAppearance();return;}
     const q=e.target.closest('[data-prompt]');if(q){const preset=q.dataset.preset||'';if(preset==='learn'){setMode('learn');setResponseStyle('educational');toast('تم تفعيل أسلوب تعليمي');}else if(preset==='research'){setMode('research');setResponseStyle('deep');toast('تم تفعيل البحث والتحليل');}else if(preset==='thinking'){setMode('thinking');setResponseStyle('deep');toast('تم تفعيل التفكير العميق');}else if(preset==='compare'){setResponseStyle('professional');toast('تم تفعيل أسلوب المقارنة الاحترافي');}input.focus();return;}const m=e.target.closest('.mode');if(m)setMode(m.dataset.mode);const c=e.target.closest('.copy');if(c){const t=c.closest('.amon-body').querySelector('.amon-bubble').textContent;navigator.clipboard?.writeText(t).then(()=>{c.textContent='✓ تم النسخ';setTimeout(()=>c.textContent='نسخ',1300);toast('تم نسخ إجابة AMON');}).catch(()=>toast('تعذر النسخ'));}const open=e.target.closest('[data-open-chat]');if(open){openChat(open.dataset.openChat);return;}const del=e.target.closest('[data-delete-chat]');if(del){if(confirm('هل تريد حذف هذه المحادثة نهائيًا؟'))deleteChat(del.dataset.deleteChat);return;}const arc=e.target.closest('[data-archive-chat]');if(arc){archiveChat(arc.dataset.archiveChat);return;}const pin=e.target.closest('[data-pin-chat]');if(pin){togglePin(pin.dataset.pinChat);return;}const fb=e.target.closest('[data-feedback]');if(fb){const msg=fb.closest('.message');const action=fb.dataset.feedback;if(action==='regenerate'){const chat=getActiveChat();const idx=chat?.messages.findIndex(m=>m.id===msg.dataset.messageId);const prev=idx>0?chat.messages.slice(0,idx).reverse().find(m=>m.role==='user'):null;if(prev)send(prev.content);return;}const rating=action==='up'?'up':'down';let list=[];try{list=JSON.parse(localStorage.getItem('amon_feedback')||'[]')}catch{}list.push({messageId:msg.dataset.messageId,rating,time:Date.now()});localStorage.setItem('amon_feedback',JSON.stringify(list.slice(-100)));msg.querySelectorAll('[data-feedback="up"],[data-feedback="down"]').forEach(b=>b.classList.remove('active'));fb.classList.add('active');const note=msg.querySelector('.feedback-note');if(note)note.textContent=rating==='up'?'تم تسجيل أن الإجابة مفيدة.':'تم تسجيل التقييم لتحسين الأسلوب في الرسائل القادمة.';fetch(API+'/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating,messageId:msg.dataset.messageId})}).catch(()=>{});}});
