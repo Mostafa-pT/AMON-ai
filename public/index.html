@@ -245,7 +245,24 @@ body{background:#fff;color:var(--text)}
   right:1px;
   bottom:1px;
 }
-</style></head>
+</style><style>
+/* AMON final theme contrast lock — only white and black */
+:root{color-scheme:light}
+:root[data-theme="light"],:root:not([data-theme]){color-scheme:light;--bg:#ffffff;--panel:#ffffff;--panel2:#f6f7f9;--text:#111111;--muted:#5f6670;--line:#e1e4e8;--border:#e1e4e8;--sidebar-bg:#ffffff;--header-bg:#ffffff;--user-bg:#eef4ff;--user-line:#c8daf8}
+:root[data-theme="light"] .composer,:root:not([data-theme]) .composer{background:linear-gradient(transparent,rgba(255,255,255,.98) 30%)!important}
+:root[data-theme="light"] .sidebar,:root:not([data-theme]) .sidebar{background:#ffffff!important;color:#111!important}
+:root[data-theme="light"] #messageInput,:root:not([data-theme]) #messageInput,:root[data-theme="light"] textarea,:root:not([data-theme]) textarea{color:#111!important;caret-color:#111!important}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#08090b;--panel:#111317;--panel2:#181b20;--text:#ffffff;--muted:#b7bec8;--line:#2a3038;--border:#2a3038;--sidebar-bg:#0d0f12;--header-bg:#0d0f12;--user-bg:#162a48;--user-line:#31537f}
+:root[data-theme="dark"] .composer{background:linear-gradient(transparent,rgba(8,9,11,.98) 30%)!important}
+:root[data-theme="dark"] .sidebar{background:#0d0f12!important;color:#fff!important}
+:root[data-theme="dark"] #messageInput,:root[data-theme="dark"] textarea{background:#181b20!important;color:#fff!important;caret-color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+:root[data-theme="dark"] #messageInput::placeholder,:root[data-theme="dark"] textarea::placeholder{color:#9da7b3!important;-webkit-text-fill-color:#9da7b3!important;opacity:1!important}
+:root[data-theme="dark"] .input-box{background:#181b20!important;border-color:#303741!important}
+:root[data-theme="dark"] .mode,:root[data-theme="dark"] .side-btn,:root[data-theme="dark"] .new-chat,:root[data-theme="dark"] .history-item,:root[data-theme="dark"] .icon{color:#fff!important}
+:root[data-theme="dark"] .note,:root[data-theme="dark"] .meta{color:#b7bec8!important}
+:root[data-theme="dark"] .panel-body,:root[data-theme="dark"] .chat,:root[data-theme="dark"] .main{color:#fff!important}
+</style>
+</head>
 <body>
 <div class="app">
 <aside class="sidebar" id="sidebar">
