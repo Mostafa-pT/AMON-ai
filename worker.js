@@ -981,15 +981,105 @@ async function makePlan(env,goal) {
   ]);
   return extractAIResponse(result);
 }
-async function researchAdapter(env,q) {
-  if(!env?.AMON_SEARCH_ENDPOINT) return {available:false,reason:"SEARCH_PROVIDER_NOT_CONNECTED",results:[]};
-  const u=env.AMON_SEARCH_ENDPOINT+(env.AMON_SEARCH_ENDPOINT.includes("?")?"&":"?")+"q="+encodeURIComponent(String(q||"").slice(0,500));
-  const headers=env.AMON_SEARCH_KEY?{Authorization:"Bearer "+env.AMON_SEARCH_KEY}:{};
-  const r=await fetch(u,{headers});
-  if(!r.ok) return {available:false,reason:"SEARCH_PROVIDER_FAILED",results:[]};
-  const d=await r.json();
-  return {available:true,provider:"configured-search",results:d.results||d.items||d.web?.results||[]};
+const AMON_SEARCH_POLICY = Object.freeze({
+  maxQueryLength: 500,
+  maxSources: 8,
+  maxResultsPerSource: 8,
+  maxTotalResults: 40,
+  timeoutMs: 5000,
+  deduplicate: true
+});
+
+function configuredSearchSources(env) {
+  const raw = String(env?.AMON_SEARCH_ENDPOINTS || env?.AMON_SEARCH_ENDPOINT || "").trim();
+  if (!raw) return [];
+  return [...new Set(raw.split(/[\n,]+/).map(x => x.trim()).filter(Boolean))]
+    .slice(0, AMON_SEARCH_POLICY.maxSources)
+    .map((endpoint, index) => ({ id:"source-"+(index+1), endpoint }));
 }
+
+function normalizeResearchItem(item, sourceId) {
+  const url = item?.url || item?.link || item?.href || item?.permalink || "";
+  const title = String(item?.title || item?.name || "").trim().slice(0, 500);
+  const snippet = String(item?.snippet || item?.description || item?.content || item?.text || "").trim().slice(0, 2000);
+  const safeUrl = isSafeExternalUrl(url) ? normalizeExternalUrl(url)?.toString() : "";
+  if (!title && !snippet && !safeUrl) return null;
+  return {
+    title: title || "نتيجة بدون عنوان",
+    snippet,
+    url: safeUrl || null,
+    source: sourceId
+  };
+}
+
+function researchResultKey(item) {
+  return String(item?.url || item?.title || "").toLowerCase().trim();
+}
+
+async function fetchSearchSource(source, query, env) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AMON_SEARCH_POLICY.timeoutMs);
+  try {
+    const endpoint = source.endpoint;
+    const url = endpoint + (endpoint.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(query);
+    const headers = env?.AMON_SEARCH_KEY ? { Authorization:"Bearer " + env.AMON_SEARCH_KEY } : {};
+    const response = await fetch(url, { headers, signal:controller.signal });
+    if (!response.ok) return { id:source.id, status:"FAILED", results:[], reason:"HTTP_" + response.status };
+    const data = await response.json();
+    const raw = Array.isArray(data) ? data : (data?.results || data?.items || data?.web?.results || []);
+    const results = Array.isArray(raw)
+      ? raw.slice(0, AMON_SEARCH_POLICY.maxResultsPerSource).map(item => normalizeResearchItem(item, source.id)).filter(Boolean)
+      : [];
+    return { id:source.id, status:"AVAILABLE", results };
+  } catch (error) {
+    return { id:source.id, status:"FAILED", results:[], reason:error?.name === "AbortError" ? "TIMEOUT" : "REQUEST_FAILED" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function researchAdapter(env,q) {
+  const query = String(q || "").trim().slice(0, AMON_SEARCH_POLICY.maxQueryLength);
+  if (!query) return { available:false, provider:"multi-source", reason:"EMPTY_QUERY", results:[], sources:[] };
+
+  const sources = configuredSearchSources(env);
+  if (!sources.length) {
+    return {
+      available:false,
+      provider:"multi-source",
+      reason:"SEARCH_PROVIDER_NOT_CONNECTED",
+      results:[],
+      sources:[],
+      sourceCount:0
+    };
+  }
+
+  const sourceResults = await Promise.all(sources.map(source => fetchSearchSource(source, query, env)));
+  const merged = [];
+  const seen = new Set();
+
+  for (const source of sourceResults) {
+    for (const item of source.results) {
+      const key = researchResultKey(item);
+      if (AMON_SEARCH_POLICY.deduplicate && key && seen.has(key)) continue;
+      if (key) seen.add(key);
+      merged.push(item);
+      if (merged.length >= AMON_SEARCH_POLICY.maxTotalResults) break;
+    }
+    if (merged.length >= AMON_SEARCH_POLICY.maxTotalResults) break;
+  }
+
+  return {
+    available: sourceResults.some(x => x.status === "AVAILABLE"),
+    provider:"multi-source",
+    reason: sourceResults.some(x => x.status === "AVAILABLE") ? null : "ALL_SEARCH_SOURCES_FAILED",
+    results:merged,
+    sources:sourceResults.map(x => ({ id:x.id, status:x.status, resultCount:x.results.length, reason:x.reason || null })),
+    sourceCount:sources.length,
+    successfulSources:sourceResults.filter(x => x.status === "AVAILABLE").length
+  };
+}
+
 // ============================================================
 // SAFE EXTERNAL LINK GATEWAY — PHASE 1
 // ============================================================
