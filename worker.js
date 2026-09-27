@@ -359,7 +359,7 @@ const AMON_MODEL_TASK_PROFILES = Object.freeze({
 function configuredModelIds(env){
   const raw=String(env?.AMON_MODEL_CANDIDATES||"").trim();
   if(!raw) return [];
-  return [...new Set(raw.split(/[\\n,]+/).map(x=>x.trim()).filter(Boolean))].slice(0,8);
+  return [...new Set(raw.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean))].slice(0,8);
 }
 
 function modelCatalogEntry(id){
