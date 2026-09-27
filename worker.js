@@ -292,7 +292,7 @@ function toolAvailability(id, env) {
   if (id === "knowledge" && !hasKV(env, "AMON_KNOWLEDGE")) {
     return { status:"NOT_CONNECTED", available:false, reason:"KNOWLEDGE_BINDING_NOT_CONNECTED" };
   }
-  if (id === "webResearch" && !env?.AMON_SEARCH_ENDPOINT) {
+  if (id === "webResearch" && !env?.AMON_SEARCH_ENDPOINT && !env?.AMON_SEARCH_ENDPOINTS) {
     return { status:"FALLBACK_LINKS_ONLY", available:true, reason:"SEARCH_PROVIDER_NOT_CONNECTED" };
   }
   return { status:"AVAILABLE", available:true, reason:null };
@@ -1737,14 +1737,28 @@ async function handleChat(
   const mediaType = route.mediaType || detectMediaIntent(userMessage);
   let safeLinks = selectedTool === "webResearch" && !mediaType ? buildSafeSearchLinks(userMessage) : [];
   let mediaLinkMeta = null;
-  if (selectedTool === "webResearch" && mediaType) {
-    mediaLinkMeta = await buildMediaLinksForRequest(env, userMessage, mediaType);
-    safeLinks = mediaLinkMeta.links;
-  }
+  let researchData = null;
   if (selectedTool === "webResearch") {
-    localToolContext = mediaType
-      ? "تم تجهيز بوابات خارجية معروفة للبحث عن " + mediaType + ". وجّه المستخدم إلى المصادر الرسمية أو القانونية، ولا تقدّم روابط قرصنة أو تدّعِ التحقق من التوافر في بلده دون بيانات فعلية."
-      : "تم تجهيز روابط بحث خارجية موثوقة كبوابات بحث. لا تدّع أنك فتحت أو قرأت نتائج البحث ما لم تكن نتائج مزود بحث فعلي قد تم تمريرها لك.";
+    researchData = await researchAdapter(env, userMessage);
+    if (mediaType) {
+      mediaLinkMeta = await buildMediaLinksForRequest(env, userMessage, mediaType);
+      safeLinks = mediaLinkMeta.links;
+    }
+    if (researchData.available && researchData.results.length) {
+      localToolContext = [
+        "نتائج بحث فعلية من المصادر المتصلة متاحة داخليًا.",
+        "عدد مصادر البحث المتصلة: " + researchData.successfulSources + " من " + researchData.sourceCount,
+        "عدد النتائج المجمعة بعد إزالة التكرار: " + researchData.results.length,
+        "قارن النتائج بين المصادر ولا تعتبر نتيجة منفردة حقيقة نهائية.",
+        ...researchData.results.slice(0, AMON_SEARCH_POLICY.maxTotalResults).map((item, i) =>
+          "[" + (i + 1) + "] " + item.title + (item.snippet ? " — " + item.snippet : "") + (item.url ? " — " + item.url : "")
+        )
+      ].join("\n");
+    } else {
+      localToolContext = mediaType
+        ? "تم تجهيز بوابات خارجية معروفة للبحث عن " + mediaType + ". لا تدّعِ أنك قرأت نتائج بحث فعلية غير متاحة."
+        : "لا يوجد مزود بحث فعلي متصل حاليًا؛ استخدم روابط البحث كمسارات خارجية فقط ولا تدّعِ قراءة نتائج لم يتم جلبها.";
+    }
   }
 
   const responsePlan = qualityPlan(userMessage, selectedMode);
@@ -1931,6 +1945,15 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
       links:
         safeLinks,
+
+      research: researchData ? {
+        provider: researchData.provider,
+        available: researchData.available,
+        sourceCount: researchData.sourceCount || 0,
+        successfulSources: researchData.successfulSources || 0,
+        resultCount: researchData.results?.length || 0,
+        sources: researchData.sources || []
+      } : null,
 
       mediaLinksDirect:
         !!mediaLinkMeta?.direct,
@@ -2260,7 +2283,7 @@ async function router(
       capabilities:{
         language:"تحسين مستمر عبر ضبط التعليمات والنموذج الحالي",
         knowledge:"إجابات منظمة مع عدم ادعاء قاعدة بيانات غير متاحة",
-        webResearch:"بوابة بحث وروابط خارجية عبر Google مع سياسة تحقق أساسية للرابط دون ادعاء قراءة نتائج لم يتم جلبها فعليًا",
+        webResearch:"بحث متعدد المصادر عند توفر مزودات متصلة، مع دمج النتائج وإزالة التكرار وعرض حالة كل مصدر، وإلا يستخدم بوابات بحث خارجية دون ادعاء قراءة نتائج غير متاحة",
         machineLearning:"يعتمد حاليًا على Workers AI ولا يدّعي تدريبًا ذاتيًا",
         security:"حماية التعليمات والأسرار والصلاحيات",
         mathematics:"محرك حساب محلي للعمليات الرياضية الأساسية",
