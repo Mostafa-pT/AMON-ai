@@ -25,6 +25,54 @@ const AMON = {
 // STAGE I — SECURITY / REQUEST HARDENING
 // ============================================================
 
+const AMON_PERFORMANCE_POLICY = Object.freeze({
+  maxChatHistory: 16,
+  maxPromptCharacters: 30000,
+  maxAIOutputTokens: 3072,
+  maxRecoveryAttempts: 2
+});
+
+const AMON_RUNTIME_METRICS = {
+  startedAt: Date.now(),
+  requests: 0,
+  errors: 0,
+  aiCalls: 0,
+  recoveredCalls: 0,
+  totalLatencyMs: 0
+};
+
+function recordRuntimeMetric(type, latencyMs=0) {
+  if (type === "request") AMON_RUNTIME_METRICS.requests++;
+  if (type === "error") AMON_RUNTIME_METRICS.errors++;
+  if (type === "ai") AMON_RUNTIME_METRICS.aiCalls++;
+  if (type === "recovered") AMON_RUNTIME_METRICS.recoveredCalls++;
+  if (latencyMs > 0) AMON_RUNTIME_METRICS.totalLatencyMs += latencyMs;
+}
+
+function runtimeMetricsSnapshot() {
+  const requests=AMON_RUNTIME_METRICS.requests;
+  return {
+    requests,
+    errors:AMON_RUNTIME_METRICS.errors,
+    aiCalls:AMON_RUNTIME_METRICS.aiCalls,
+    recoveredCalls:AMON_RUNTIME_METRICS.recoveredCalls,
+    averageLatencyMs:requests ? Math.round(AMON_RUNTIME_METRICS.totalLatencyMs/requests) : 0,
+    uptimeMs:Date.now()-AMON_RUNTIME_METRICS.startedAt,
+    errorRate:requests ? Number((AMON_RUNTIME_METRICS.errors/requests).toFixed(4)) : 0
+  };
+}
+
+function enforcePromptBudget(messages) {
+  const list=Array.isArray(messages) ? messages : [];
+  let used=0;
+  return list.filter(x=>x && typeof x.content==="string").map(x=>{
+    const remaining=Math.max(0,AMON_PERFORMANCE_POLICY.maxPromptCharacters-used);
+    const content=x.content.slice(0,remaining);
+    used+=content.length;
+    return {...x,content};
+  }).filter(x=>x.content);
+}
+
 const AMON_SECURITY_POLICY = Object.freeze({
   maxBodyBytes: 600000,
   maxFileBytes: 500000,
@@ -211,7 +259,7 @@ function cleanHistory(history) {
 
     })
     .slice(
-      -AMON.limits.maxHistoryMessages
+      -AMON_PERFORMANCE_POLICY.maxChatHistory
     )
     .map(item => ({
       role:
