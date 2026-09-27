@@ -2883,17 +2883,23 @@ async function router(
   // ----------------------------------------------------------
 
   if (url.pathname === "/api/test-ai" && request.method === "GET") {
+    const owner = await requireOwner(request, env);
+    if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك لاختبار محرك AI.", 401);
     try {
-      if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
-      const result = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
-        messages: [
-          { role: "system", content: "You are AMON AI. Reply briefly and clearly in Arabic." },
-          { role: "user", content: "مرحبا AMON، هل تعمل الآن؟" }
-        ]
+      const recovery = await runAIWithRecovery(env, [
+        { role:"system", content:"AMON self-test. Reply briefly in Arabic." },
+        { role:"user", content:"AMON runtime probe" }
+      ], { model:AMON.model, maxTokens:128 });
+      const response = extractAIResponse(recovery.result);
+      return json({
+        success:true,
+        stage:"J/K",
+        response:response.slice(0,1000),
+        recovery:{status:recovery.recoveryStatus, attempts:recovery.attempts, recovered:recovery.recovered, model:recovery.model}
       });
-      return json({ success:true, response: result?.response || "", raw: result });
     } catch (error) {
-      return json({ success:false, error:String(error?.message || error), stack:String(error?.stack || "") }, 500);
+      const classified=classifyAIError(error);
+      return errorResponse(classified.code, safeRecoveryMessage(classified), classified.status);
     }
   }
 
