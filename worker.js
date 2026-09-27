@@ -735,16 +735,16 @@ function analyzeStructuredFile(text, format="txt") {
       result.type=Array.isArray(value)?"array":typeof value;
       result.items=Array.isArray(value)?value.length:undefined;
     } else if(result.format==="csv"){
-      const rows=raw.split(/\\r?\\n/).filter(Boolean);
+      const rows=raw.split(/\r?\n/).filter(Boolean);
       result.valid=rows.length>0;
       result.rows=Math.max(0,rows.length-1);
       result.columns=rows[0]?rows[0].split(",").length:0;
     } else if(result.format==="xml"){
-      result.valid=/^\\s*<\\?xml|^\\s*</.test(raw);
-      result.root=(raw.match(/<([A-Za-z_][\\w:.-]*)[\\s>]/)||[])[1]||null;
+      result.valid=/^\s*<\?xml|^\s*</.test(raw);
+      result.root=(raw.match(/<([A-Za-z_][\w:.-]*)[\s>]/)||[])[1]||null;
     } else if(result.format==="html"){
-      result.valid=/<html[\\s>]/i.test(raw)||/<body[\\s>]/i.test(raw);
-      result.title=(raw.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)||[])[1]?.trim()||null;
+      result.valid=/<html[\s>]/i.test(raw)||/<body[\s>]/i.test(raw);
+      result.title=(raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]?.trim()||null;
     } else {
       result.valid=true;
       result.language=detectCodeLanguage(raw);
@@ -763,7 +763,7 @@ function buildCodeReviewInstruction(text) {
     "لغة/نوع المحتوى المتوقع: "+language,
     "افحص الأخطاء النحوية والمنطقية ومخاطر الأمان، ثم اقترح إصلاحًا قابلًا للاختبار.",
     "لا تدّعِ تشغيل الكود إذا لم يتم تشغيله فعليًا."
-  ].join("\\n");
+  ].join("\n");
 }
 
 // ============================================================
