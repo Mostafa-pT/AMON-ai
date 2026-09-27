@@ -598,17 +598,19 @@ function localTextAnalysis(text) {
 
 async function runAI(env, messages, options = {}) {
   if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
+  const requestedModel = String(options.model || AMON.model).trim();
+  const model = modelCatalogEntry(requestedModel) ? requestedModel : AMON.model;
   const requestedTokens = Number(options.maxTokens);
   const maxTokens = Number.isFinite(requestedTokens)
     ? Math.max(128, Math.min(requestedTokens, AMON.limits.maxTokens))
     : AMON.limits.maxTokens;
   try {
-    return await env.AI.run(AMON.model, { messages, max_tokens: maxTokens });
+    return await env.AI.run(model, { messages, max_tokens: maxTokens });
   } catch (firstError) {
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
       : messages;
-    return await env.AI.run(AMON.model, { messages: safeMessages, max_tokens: maxTokens });
+    return await env.AI.run(model, { messages: safeMessages, max_tokens: maxTokens });
   }
 }
 
@@ -2046,7 +2048,8 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
     const result =
       await runAI(
         env,
-        messages
+        messages,
+        { model: understanding.model.model }
       );
 
 
