@@ -541,6 +541,48 @@ function detectTool(message, mode="learn") {
   return "chat";
 }
 
+function toolTaskScore(id,taskType,mode){
+  const map={
+    coding:["code","algorithms"],
+    research:["webResearch","knowledge","reasoning"],
+    comparison:["reasoning","textAnalysis","knowledge"],
+    analysis:["reasoning","textAnalysis","knowledge"],
+    planning:["reasoning","code"],
+    troubleshooting:["reasoning","code","textAnalysis"],
+    calculation:["math","reasoning"],
+    explanation:["explain","knowledge","chat"],
+    translation:["translate","chat"],
+    summarization:["summarize","knowledge"],
+    file:["files","summarize","textAnalysis"],
+    question:["chat","reasoning","webResearch"],
+    conversation:["chat"],
+    creative:["chat","code"]
+  };
+  const wanted=map[taskType]||map.question;
+  let score=0;
+  if(wanted.includes(id)) score+=6;
+  if(mode==="research" && id==="webResearch") score+=2;
+  if(mode==="compare" && (id==="reasoning"||id==="textAnalysis")) score+=2;
+  return score;
+}
+
+function compareToolsForTask(taskType,mode="learn",env=null){
+  const candidates=publicTools(env).map(tool=>({
+    id:tool.id,
+    type:tool.type,
+    provider:tool.provider,
+    status:tool.status,
+    available:tool.available,
+    score:toolTaskScore(tool.id,taskType,mode)
+  })).filter(x=>x.score>0);
+  return {
+    taskType,
+    mode,
+    policy:"available-tools-only",
+    candidates:candidates.sort((a,b)=>Number(b.available)-Number(a.available)||b.score-a.score)
+  };
+}
+
 function routeAMONTask(message, mode="learn", env=null) {
   const mediaType = detectMediaIntent(message);
   let requestedTool = null;
@@ -563,7 +605,8 @@ function routeAMONTask(message, mode="learn", env=null) {
     mediaType: mediaType || null,
     status: availability.status,
     available: availability.available,
-    provider: AMON_TOOLS[requestedTool]?.provider || null
+    provider: AMON_TOOLS[requestedTool]?.provider || null,
+    comparison: compareToolsForTask(detectTaskType(message),mode,env)
   };
 }
 
@@ -2152,7 +2195,7 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       presentation: responsePresentationProfile(userMessage),
 
       routing:
-        { reason:route.reason, selectedTool, mediaType, status:route.status, available:route.available, provider:route.provider },
+        { reason:route.reason, selectedTool, mediaType, status:route.status, available:route.available, provider:route.provider, comparison:route.comparison },
 
       provider:
         tool.provider,
