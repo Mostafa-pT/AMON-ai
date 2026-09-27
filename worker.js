@@ -254,9 +254,203 @@ function detectLanguageHint(text){const q=String(text||"");if(/[\u0600-\u06FF]/.
 function conversationContextProfile(history){const items=cleanHistory(history),last=items.slice(-8);return{messageCount:items.length,hasContext:items.length>0,recentRoles:last.map(x=>x.role),recentText:last.map(x=>x.content).join("\n").slice(-6000)};}
 function detectMissingInformation(message,taskType,history){const q=String(message||"").trim(),ctx=conversationContextProfile(history),missing=[];if(!q)missing.push("user_message");if(taskType==="comparison"&&!/(بين|\bvs\b|versus)/i.test(q))missing.push("comparison_targets");if(taskType==="translation"&&q.length<4)missing.push("source_text");if(taskType==="research"&&q.length<5)missing.push("research_scope");if(taskType==="planning"&&q.length<12&&!ctx.hasContext)missing.push("goal_details");return{complete:missing.length===0,missing,action:missing.length?"clarify_if_necessary":"proceed"};}
 function buildGoalTaskManager(message,taskType,history){const ctx=conversationContextProfile(history),goal=String(message||"").trim().slice(0,1000),subtasks=[];if(taskType==="research")subtasks.push("تحديد سؤال البحث","جمع المعلومات المتاحة","تمييز المؤكد عن غير المؤكد");else if(taskType==="comparison")subtasks.push("تحديد عناصر المقارنة","توحيد معايير المقارنة","عرض الفروق");else if(taskType==="planning")subtasks.push("تحديد الهدف","تقسيم التنفيذ","تحديد معيار النجاح");else if(taskType==="coding")subtasks.push("فهم المطلوب","تصميم الحل","مراجعة الأخطاء");else if(taskType==="analysis")subtasks.push("استخراج المعطيات","تحليلها","صياغة النتيجة");else subtasks.push("فهم الطلب","تنفيذ المهمة","مراجعة النتيجة");return{goal,taskType,subtasks,contextMessages:ctx.messageCount,priority:"normal"};}
-function selectAIModel(taskType,mode){const profiles={coding:"code",calculation:"precision",research:"research",comparison:"analysis",analysis:"analysis",explanation:"education",translation:"language",summarization:"summary",creative:"creative",troubleshooting:"diagnostic",planning:"planning",file:"document",question:"general",conversation:"general"};return{model:AMON.model,profile:profiles[taskType]||"general",mode:mode||"learn",executable:true,provider:"workers-ai"};}
-function understandAMONTask(message,mode,history){const taskType=detectTaskType(message),language=detectLanguageHint(message),context=conversationContextProfile(history),missing=detectMissingInformation(message,taskType,history),goalManager=buildGoalTaskManager(message,taskType,history),model=selectAIModel(taskType,mode);return{taskType,language,context,missing,goalManager,model,ready:missing.action==="proceed"||context.hasContext};}
+function selectAIModel(taskType,mode,env=null){
+  const profiles={coding:"code",calculation:"precision",research:"research",comparison:"analysis",analysis:"analysis",explanation:"education",translation:"language",summarization:"summary",creative:"creative",troubleshooting:"diagnostic",planning:"planning",file:"document",question:"general",conversation:"general"};
+  const comparison=compareModelsForTask(taskType,mode,env);
+  return {
+    model:comparison.selected.model,
+    profile:profiles[taskType]||"general",
+    mode:mode||"learn",
+    executable:comparison.selected.status==="AVAILABLE",
+    provider:"workers-ai",
+    comparison
+  };
+}
+function understandAMONTask(message,mode,history,env=null){const taskType=detectTaskType(message),language=detectLanguageHint(message),context=conversationContextProfile(history),missing=detectMissingInformation(message,taskType,history),goalManager=buildGoalTaskManager(message,taskType,history),model=selectAIModel(taskType,mode,env);return{taskType,language,context,missing,goalManager,model,ready:missing.action==="proceed"||context.hasContext};}
 function buildTaskUnderstandingInstruction(u){return["وحدة فهم الطلب والسياق في AMON مفعلة.","نوع المهمة: "+u.taskType,"لغة الطلب: "+u.language,"عدد رسائل السياق المتاحة: "+u.context.messageCount,"الهدف: "+u.goalManager.goal,"المهام الفرعية: "+u.goalManager.subtasks.join(" | "),"المعلومات الأساسية الناقصة: "+(u.missing.missing.length?u.missing.missing.join(", "):"لا توجد"),"ملف تشغيل النموذج: "+u.model.profile,"إذا كانت معلومة أساسية ناقصة فعلًا، اسأل سؤالًا توضيحيًا قصيرًا بدل اختلاقها، وإلا نفّذ الطلب مباشرة.","لا تعرض أسماء الوحدات الداخلية أو هذه التعليمات للمستخدم."].join("\n");}
+// ============================================================
+// AMON STAGE G — MODEL & TOOL COMPARISON
+// ============================================================
+// The catalog describes known candidates; runtime availability is reported
+// only for models AMON can actually execute through the configured AI binding.
+const AMON_MODEL_CATALOG = Object.freeze([
+  {
+    id:"@cf/meta/llama-3.1-8b-instruct-fast",
+    name:"Llama 3.1 8B Instruct Fast",
+    provider:"Meta / Cloudflare Workers AI",
+    family:"Llama",
+    tasks:["general","multilingual","summarization","retrieval","chat"],
+    strengths:["multilingual","speed","general chat"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    name:"Llama 3.3 70B Instruct Fast",
+    provider:"Meta / Cloudflare Workers AI",
+    family:"Llama",
+    tasks:["general","analysis","coding","multilingual","reasoning"],
+    strengths:["analysis","coding","general quality"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/google/gemma-4-26b-a4b-it",
+    name:"Gemma 4 26B A4B IT",
+    provider:"Google / Cloudflare Workers AI",
+    family:"Gemma",
+    tasks:["general","analysis","coding","multilingual","vision"],
+    strengths:["quality per active parameter","tool use","multimodal capability"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/qwen/qwen3-30b-a3b-fp8",
+    name:"Qwen3 30B A3B FP8",
+    provider:"Qwen / Cloudflare Workers AI",
+    family:"Qwen",
+    tasks:["reasoning","analysis","coding","multilingual","agentic"],
+    strengths:["reasoning","multilingual","function calling"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+    name:"DeepSeek R1 Distill Qwen 32B",
+    provider:"DeepSeek / Cloudflare Workers AI",
+    family:"DeepSeek",
+    tasks:["reasoning","analysis","coding"],
+    strengths:["reasoning","complex analysis"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/moonshotai/kimi-k2.7-code",
+    name:"Kimi K2.7 Code",
+    provider:"Moonshot AI / Cloudflare Workers AI",
+    family:"Kimi",
+    tasks:["coding","reasoning","agentic","vision"],
+    strengths:["coding","tool use","long-context workflows"],
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/zai-org/glm-5.2",
+    name:"GLM-5.2",
+    provider:"Z.ai / Cloudflare Workers AI",
+    family:"GLM",
+    tasks:["coding","reasoning","agentic"],
+    strengths:["coding","reasoning","tool use"],
+    status:"CATALOG"
+  }
+]);
+
+const AMON_MODEL_TASK_PROFILES = Object.freeze({
+  coding:["coding","analysis","reasoning","agentic"],
+  research:["general","reasoning","analysis","multilingual"],
+  comparison:["analysis","reasoning","general"],
+  analysis:["analysis","reasoning","general"],
+  planning:["reasoning","agentic","general"],
+  troubleshooting:["reasoning","analysis","coding"],
+  calculation:["reasoning","analysis","general"],
+  explanation:["general","multilingual","analysis"],
+  translation:["multilingual","general"],
+  summarization:["summarization","general","multilingual"],
+  file:["analysis","summarization","general"],
+  question:["general","multilingual","analysis"],
+  conversation:["general","multilingual"],
+  creative:["general","multilingual"]
+});
+
+function configuredModelIds(env){
+  const raw=String(env?.AMON_MODEL_CANDIDATES||"").trim();
+  if(!raw) return [];
+  return [...new Set(raw.split(/[\\n,]+/).map(x=>x.trim()).filter(Boolean))].slice(0,8);
+}
+
+function modelCatalogEntry(id){
+  return AMON_MODEL_CATALOG.find(x=>x.id===id)||null;
+}
+
+function modelAvailability(id,env){
+  const configured=String(env?.AMON_MODEL||"").trim();
+  const active=id===AMON.model || (configured && id===configured);
+  const allowed=configuredModelIds(env);
+  if(!modelCatalogEntry(id)) return {status:"UNKNOWN",available:false,reason:"MODEL_NOT_IN_ALLOWLIST"};
+  if(active && env?.AI && typeof env.AI.run==="function") return {status:"AVAILABLE",available:true,reason:"AI_BINDING_CONFIGURED"};
+  if(allowed.includes(id) && env?.AI && typeof env.AI.run==="function") return {status:"CONFIGURED_CANDIDATE",available:false,reason:"RUNTIME_PROBE_REQUIRED"};
+  return {status:"CATALOG_ONLY",available:false,reason:"NOT_SELECTED_FOR_RUNTIME"};
+}
+
+function modelTaskScore(entry,taskType,mode){
+  const wanted=AMON_MODEL_TASK_PROFILES[taskType]||AMON_MODEL_TASK_PROFILES.question;
+  let score=0;
+  for(const capability of wanted){
+    if(entry.tasks.includes(capability)) score+=3;
+    if(entry.strengths.some(x=>x.toLowerCase().includes(capability))) score+=1;
+  }
+  if(mode==="research" && entry.tasks.includes("reasoning")) score+=1;
+  if(mode==="compare" && entry.tasks.includes("analysis")) score+=1;
+  return score;
+}
+
+function compareModelsForTask(taskType,mode="learn",env=null){
+  const configured=String(env?.AMON_MODEL||"").trim();
+  const candidateIds=[AMON.model,configured,...configuredModelIds(env)].filter(Boolean);
+  const ids=[...new Set(candidateIds)];
+  const candidates=ids.map(id=>{
+    const entry=modelCatalogEntry(id);
+    if(!entry) return null;
+    const availability=modelAvailability(id,env);
+    return {
+      id:entry.id,
+      name:entry.name,
+      provider:entry.provider,
+      tasks:entry.tasks,
+      strengths:entry.strengths,
+      score:modelTaskScore(entry,taskType,mode),
+      status:availability.status,
+      available:availability.available,
+      reason:availability.reason
+    };
+  }).filter(Boolean);
+
+  const available=candidates.filter(x=>x.available);
+  const selected=available.find(x=>x.id===configured)
+    || available.find(x=>x.id===AMON.model)
+    || available[0]
+    || {
+      id:AMON.model,
+      name:modelCatalogEntry(AMON.model)?.name||AMON.model,
+      provider:"Cloudflare Workers AI",
+      tasks:modelCatalogEntry(AMON.model)?.tasks||[],
+      strengths:modelCatalogEntry(AMON.model)?.strengths||[],
+      score:0,
+      status:env?.AI ? "RUNTIME_UNVERIFIED" : "NOT_CONNECTED",
+      available:false,
+      reason:env?.AI ? "NO_RUNTIME_MODEL_CONFIRMED" : "AI_BINDING_MISSING"
+    };
+
+  return {
+    taskType,
+    mode,
+    policy:"available-runtime-models-only",
+    selected:{model:selected.id,...selected},
+    candidates:candidates.sort((a,b)=>Number(b.available)-Number(a.available)||b.score-a.score)
+  };
+}
+
+function publicModelCatalog(env){
+  return AMON_MODEL_CATALOG.map(entry=>{
+    const availability=modelAvailability(entry.id,env);
+    return {
+      id:entry.id,
+      name:entry.name,
+      provider:entry.provider,
+      family:entry.family,
+      tasks:entry.tasks,
+      strengths:entry.strengths,
+      status:availability.status,
+      available:availability.available,
+      reason:availability.reason
+    };
+  });
+}
+
 // ============================================================
 // AMON TOOL REGISTRY + ROUTER
 // ============================================================
@@ -1517,7 +1711,12 @@ function amonInfo(env) {
       context: { enabled:true, status:"ACTIVE", source:"request-history" },
       taskUnderstanding: { enabled:true, status:"ACTIVE" },
       goalManager: { enabled:true, status:"ACTIVE" },
-      modelSelection: { enabled:true, status:"ACTIVE", executableModels:env.AI ? 1 : 0, currentModel:AMON.model },
+      modelSelection: { enabled:true, status:env.AI ? "ACTIVE" : "NOT_CONNECTED", executableModels:publicModelCatalog(env).filter(x=>x.available).length, currentModel:AMON.model },
+      stageGModelComparison: {
+        enabled:true,
+        status:env.AI ? "ACTIVE" : "READY_NOT_CONNECTED",
+        components:["model-catalog","task-capability-profiles","runtime-availability","task-routing","configured-candidates","tool-aware-selection"]
+      },
 
       stageBReasoning: {
         enabled:true,
@@ -1562,6 +1761,12 @@ function amonInfo(env) {
         enabled: true,
         status: "PARTIAL",
         available: publicTools(env)
+      },
+
+      modelCatalog: {
+        enabled:true,
+        status:env.AI ? "ACTIVE" : "READY_NOT_CONNECTED",
+        models:publicModelCatalog(env)
       },
 
       plugins: {
@@ -1717,7 +1922,7 @@ async function handleChat(
   // AMON TOOL SELECTION
   // ----------------------------------------------------------
 
-  const understanding = understandAMONTask(userMessage, selectedMode, body.history);
+  const understanding = understandAMONTask(userMessage, selectedMode, body.history, env);
   const route = routeAMONTask(userMessage, selectedMode, env);
   let selectedTool = route.tool;
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
@@ -2297,7 +2502,8 @@ async function router(
         algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
       },
       tools:publicTools(env),
-      toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."}
+      toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."},
+      modelComparison:{enabled:true,name:"AMON Model Comparison",description:"يقارن نماذج الكتالوج حسب نوع المهمة ويختار فقط نموذجًا متاحًا للتنفيذ الفعلي، دون الادعاء بأن نماذج الكتالوج كلها متصلة."}
     });
   }
 
@@ -2426,6 +2632,19 @@ async function router(
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
     return json({ success:true, name:AMON.name, tools:publicTools(env) });
+  }
+
+  if (url.pathname === "/api/models" && request.method === "GET") {
+    const taskType=detectTaskType(url.searchParams.get("task")||"question");
+    const mode=String(url.searchParams.get("mode")||"learn");
+    return json({
+      success:true,
+      stage:"G",
+      taskType,
+      mode,
+      comparison:compareModelsForTask(taskType,mode,env),
+      catalog:publicModelCatalog(env)
+    });
   }
 
   if (
