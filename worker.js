@@ -2886,6 +2886,8 @@ async function router(
   request,
   env
 ) {
+  const requestStarted=Date.now();
+  recordRuntimeMetric("request");
 
   const url =
     new URL(
@@ -3257,12 +3259,12 @@ export default {
 
     try {
 
-      return await router(
-        request,
-        env
-      );
+      const response = await router(request, env);
+      recordRuntimeMetric("latency", Date.now()-requestStarted);
+      return response;
 
     } catch (error) {
+      recordRuntimeMetric("error", Date.now()-requestStarted);
       console.error("AMON WORKER ERROR", error);
       if(String(error?.message)==="REQUEST_BODY_TOO_LARGE"){
         return errorResponse("REQUEST_BODY_TOO_LARGE","حجم الطلب أكبر من الحد المسموح.",413);
