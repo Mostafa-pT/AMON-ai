@@ -1169,6 +1169,12 @@ function amonInfo(env) {
       goalManager: { enabled:true, status:"ACTIVE" },
       modelSelection: { enabled:true, status:"ACTIVE", executableModels:env.AI ? 1 : 0, currentModel:AMON.model },
 
+      stageBReasoning: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["multi-path","council","contradiction-check","answer-check","retry"]
+      },
+
       search: {
         enabled: false,
         status: "PLANNED"
