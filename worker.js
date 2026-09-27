@@ -263,28 +263,75 @@ function buildTaskUnderstandingInstruction(u){return["وحدة فهم الطلب
 // Tools are declared separately from providers so new free providers
 // can be enabled without changing the central chat protocol.
 
-const AMON_TOOLS = {
-  chat:          { type:"text",        enabled:true, provider:"workers-ai" },
-  reasoning:     { type:"reasoning",   enabled:true, provider:"workers-ai" },
-  code:          { type:"code",        enabled:true, provider:"workers-ai" },
-  explain:       { type:"education",   enabled:true, provider:"workers-ai" },
-  translate:     { type:"language",    enabled:true, provider:"workers-ai" },
-  summarize:     { type:"document",    enabled:true, provider:"workers-ai" },
-  math:          { type:"mathematics", enabled:true, provider:"local-engine" },
-  textAnalysis:  { type:"nlp",         enabled:true, provider:"local-engine+workers-ai" },
-  algorithms:    { type:"algorithms",  enabled:true, provider:"workers-ai" },
-  knowledge:     { type:"knowledge",   enabled:true, provider:"workers-ai" },
-  vision:        { type:"vision",      enabled:false,provider:"not-bound" },
-  image:         { type:"image",       enabled:false,provider:"not-bound" },
-  speechToText:  { type:"audio",       enabled:false,provider:"not-bound" },
-  textToSpeech:  { type:"audio",       enabled:false,provider:"not-bound" },
-  webResearch:   { type:"research",    enabled:true, provider:"safe-google-gateway" },
-  files:         { type:"files",       enabled:true, provider:"amon-file-studio" }
-};
+const AMON_TOOLS = Object.freeze({
+  chat:         { type:"text",        provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  reasoning:    { type:"reasoning",   provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  code:         { type:"code",        provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  explain:      { type:"education",  provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  translate:    { type:"language",   provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  summarize:    { type:"document",   provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  math:         { type:"mathematics",provider:"local-engine", risk:"low",  requiresAI:false, enabled:true },
+  textAnalysis: { type:"nlp",        provider:"local-engine", risk:"low",  requiresAI:false, enabled:true },
+  algorithms:   { type:"algorithms", provider:"workers-ai", risk:"low",  requiresAI:true,  enabled:true },
+  knowledge:    { type:"knowledge",  provider:"AMON_KNOWLEDGE", risk:"medium",requiresAI:false,enabled:true },
+  vision:       { type:"vision",     provider:"not-bound",   risk:"medium",requiresAI:false,enabled:false },
+  image:        { type:"image",      provider:"not-bound",   risk:"medium",requiresAI:false,enabled:false },
+  speechToText: { type:"audio",      provider:"not-bound",   risk:"medium",requiresAI:false,enabled:false },
+  textToSpeech: { type:"audio",      provider:"not-bound",   risk:"medium",requiresAI:false,enabled:false },
+  webResearch:  { type:"research",   provider:"search-provider",risk:"medium",requiresAI:false,enabled:true },
+  files:        { type:"files",      provider:"amon-file-studio",risk:"low",requiresAI:false,enabled:true }
+});
+
+function toolAvailability(id, env) {
+  const tool = AMON_TOOLS[id];
+  if (!tool) return { status:"UNKNOWN", available:false, reason:"TOOL_NOT_REGISTERED" };
+  if (!tool.enabled) return { status:"DISABLED", available:false, reason:"TOOL_DISABLED" };
+  if (tool.requiresAI && (!env?.AI || typeof env.AI.run !== "function")) {
+    return { status:"NOT_CONNECTED", available:false, reason:"AI_BINDING_MISSING" };
+  }
+  if (id === "knowledge" && !hasKV(env, "AMON_KNOWLEDGE")) {
+    return { status:"NOT_CONNECTED", available:false, reason:"KNOWLEDGE_BINDING_NOT_CONNECTED" };
+  }
+  if (id === "webResearch" && !env?.AMON_SEARCH_ENDPOINT) {
+    return { status:"FALLBACK_LINKS_ONLY", available:true, reason:"SEARCH_PROVIDER_NOT_CONNECTED" };
+  }
+  return { status:"AVAILABLE", available:true, reason:null };
+}
+
+function toolInstruction(tool) {
+  const instructions = {
+    code:"أنت تعمل كأداة AMON Code. اكتب كودًا صحيحًا وقابلًا للتشغيل، واشرحه للمبتدئ وراجع الأخطاء المنطقية.",
+    algorithms:"أنت تعمل كأداة AMON Algorithms. حدد المدخلات والمخرجات، اختر الخوارزمية المناسبة، اشرح التعقيد الزمني والذاكرة وقدّم مثالًا أو كودًا عند الحاجة.",
+    reasoning:"أنت تعمل كأداة AMON Reasoning. حلل المشكلة على مراحل وقدّم الاستنتاج النهائي بوضوح.",
+    explain:"أنت تعمل كأداة AMON Explain. اشرح من الأساسيات إلى التطبيق مع مثال عملي.",
+    translate:"أنت تعمل كأداة AMON Translate. ترجم بدقة مع الحفاظ على المعنى والأسلوب.",
+    summarize:"أنت تعمل كأداة AMON Summary. استخرج أهم النقاط دون اختلاق معلومات.",
+    textAnalysis:"أنت تعمل كأداة AMON NLP. حلل البنية والمعنى والموضوع والنبرة والمشاعر عند طلب ذلك، وميّز بين الحقائق والاستنتاجات.",
+    knowledge:"أنت تعمل كأداة AMON Knowledge. استخدم قاعدة المعرفة الخاصة بالمستخدم فقط عندما تكون متصلة، ولا تختلق قاعدة بيانات غير متاحة.",
+    math:"أنت تعمل كأداة AMON Math. تحقق من الحساب خطوة بخطوة، واستخدم النتيجة الحسابية المحلية إن تم تمريرها.",
+    chat:"أنت تعمل كأداة AMON Chat. قدّم أفضل إجابة مفيدة ودقيقة ضمن المعلومات المتاحة."
+  };
+  return instructions[tool] || instructions.chat;
+}
+
+function publicTools(env) {
+  return Object.entries(AMON_TOOLS).map(([id, tool]) => {
+    const availability = toolAvailability(id, env);
+    return {
+      id,
+      type:tool.type,
+      provider:tool.provider,
+      risk:tool.risk,
+      enabled:tool.enabled,
+      status:availability.status,
+      available:availability.available,
+      reason:availability.reason
+    };
+  });
+}
 
 function detectTool(message, mode="learn") {
   const m = String(message || "").toLowerCase();
-
   if (/\b(html|css|javascript|typescript|python|java|c\+\+|php|sql|api|function|class|bug|error|debug|code|algorithm|data structure)\b|كود|برمج|خوارزم|موقع|تطبيق|خطأ برمجي|جافاسكربت|بايثون/.test(m)) {
     if (/خوارزم|algorithm|data structure/.test(m)) return "algorithms";
     return "code";
@@ -300,34 +347,30 @@ function detectTool(message, mode="learn") {
   return "chat";
 }
 
-function routeAMONTask(message, mode="learn") {
+function routeAMONTask(message, mode="learn", env=null) {
   const mediaType = detectMediaIntent(message);
-  if (mediaType) return {tool:"webResearch",reason:"media-intent",mediaType};
-  if (wantsExternalSearch(message,mode)) return {tool:"webResearch",reason:"external-search",mediaType:null};
-  const tool=detectTool(message,mode);
-  return {tool,reason:tool==="chat"?"general-chat":"intent-detection",mediaType:null};
-}
+  let requestedTool = null;
+  let reason = "general-chat";
+  if (mediaType) {
+    requestedTool = "webResearch";
+    reason = "media-intent";
+  } else if (wantsExternalSearch(message, mode)) {
+    requestedTool = "webResearch";
+    reason = "external-search";
+  } else {
+    requestedTool = detectTool(message, mode);
+    reason = requestedTool === "chat" ? "general-chat" : "intent-detection";
+  }
 
-function toolInstruction(tool) {
-  const instructions = {
-    code:"أنت تعمل كأداة AMON Code. اكتب كودًا صحيحًا وقابلًا للتشغيل، واشرحه للمبتدئ وراجع الأخطاء المنطقية.",
-    algorithms:"أنت تعمل كأداة AMON Algorithms. حدد المدخلات والمخرجات، اختر الخوارزمية المناسبة، اشرح التعقيد الزمني والذاكرة وقدّم مثالًا أو كودًا عند الحاجة.",
-    reasoning:"أنت تعمل كأداة AMON Reasoning. حلل المشكلة على مراحل وقدّم الاستنتاج النهائي بوضوح.",
-    explain:"أنت تعمل كأداة AMON Explain. اشرح من الأساسيات إلى التطبيق مع مثال عملي.",
-    translate:"أنت تعمل كأداة AMON Translate. ترجم بدقة مع الحفاظ على المعنى والأسلوب.",
-    summarize:"أنت تعمل كأداة AMON Summary. استخرج أهم النقاط دون اختلاق معلومات.",
-    textAnalysis:"أنت تعمل كأداة AMON NLP. حلل البنية والمعنى والموضوع والنبرة والمشاعر عند طلب ذلك، وميّز بين الحقائق والاستنتاجات.",
-    knowledge:"أنت تعمل كأداة AMON Knowledge. نظّم الإجابة، واذكر حدود المعرفة الحالية بدل اختلاق مصادر أو قواعد بيانات غير متاحة.",
-    math:"أنت تعمل كأداة AMON Math. تحقق من الحساب خطوة بخطوة، واستخدم النتيجة الحسابية المتاحة إن تم تمريرها.",
-    chat:"أنت تعمل كأداة AMON Chat. قدّم أفضل إجابة مفيدة ودقيقة ضمن المعلومات المتاحة."
+  const availability = toolAvailability(requestedTool, env);
+  return {
+    tool: requestedTool,
+    reason,
+    mediaType: mediaType || null,
+    status: availability.status,
+    available: availability.available,
+    provider: AMON_TOOLS[requestedTool]?.provider || null
   };
-  return instructions[tool] || instructions.chat;
-}
-
-function publicTools() {
-  return Object.entries(AMON_TOOLS).map(([id,tool]) => ({
-    id, type:tool.type, enabled:tool.enabled, provider:tool.provider
-  }));
 }
 
 function safeMath(expression) {
