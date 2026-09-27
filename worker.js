@@ -773,27 +773,163 @@ function buildMemoryContext(items) {
   ].join("\n");
 }
 
-async function knowledgeSave(env,body) {
-  if (!hasKV(env,"AMON_KNOWLEDGE")) return {stored:false,reason:"OPTIONAL_BINDING_REQUIRED"};
-  const title=String(body?.title||"").trim().slice(0,150);
-  const content=String(body?.content||"").trim().slice(0,20000);
-  if (!title||!content) return {stored:false,reason:"TITLE_OR_CONTENT_REQUIRED"};
-  const id=String(body?.id||crypto.randomUUID());
-  const item={id,title,content,tags:Array.isArray(body?.tags)?body.tags.slice(0,20):[],createdAt:new Date().toISOString()};
-  await env.AMON_KNOWLEDGE.put(kvKey("knowledge",id),JSON.stringify(item));
-  return {stored:true,item};
+const AMON_KNOWLEDGE_POLICY = Object.freeze({
+  maxTitleLength: 150,
+  maxContentLength: 20000,
+  maxTags: 20,
+  maxTagLength: 40,
+  maxResults: 10,
+  maxScan: 100,
+  ttlSeconds: 60 * 60 * 24 * 365,
+  userScoped: true,
+  sensitiveFilter: true
+});
+
+function sanitizeKnowledgeText(value, maxLength) {
+  const text = String(value || "").trim().slice(0, maxLength);
+  if (!text) return "";
+  if (/api[_ -]?key|access[_ -]?token|password|passwd|secret|private[_ -]?key|authorization|bearer\s+[a-z0-9._-]+/i.test(text)) return "";
+  return text;
 }
-async function knowledgeSearch(env,q) {
-  if (!hasKV(env,"AMON_KNOWLEDGE")) return [];
-  const query=String(q||"").toLowerCase().trim();
-  const list=await env.AMON_KNOWLEDGE.list({prefix:"knowledge:"});
-  const out=[];
-  for(const key of (list.keys||[]).slice(0,100)) {
-    const x=await env.AMON_KNOWLEDGE.get(key.name,"json");
-    if(x&&(!query||(x.title+" "+x.content+" "+(x.tags||[]).join(" ")).toLowerCase().includes(query))) out.push(x);
+
+function knowledgeUserKey(userId) {
+  return userIdOf(userId);
+}
+
+function knowledgeKey(userId, id) {
+  return "knowledge:" + knowledgeUserKey(userId) + ":" + String(id);
+}
+
+function knowledgePrefix(userId) {
+  return "knowledge:" + knowledgeUserKey(userId) + ":";
+}
+
+function normalizeKnowledgeTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map(tag => String(tag || "").trim().slice(0, AMON_KNOWLEDGE_POLICY.maxTagLength))
+    .filter(Boolean)
+    .slice(0, AMON_KNOWLEDGE_POLICY.maxTags);
+}
+
+function knowledgeTokens(text) {
+  return [...new Set(
+    String(text || "")
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}_-]+/u)
+      .map(x => x.trim())
+      .filter(x => x.length >= 2)
+  )].slice(0, 40);
+}
+
+function knowledgeScore(item, query) {
+  const tokens = knowledgeTokens(query);
+  if (!tokens.length) return 0;
+  const haystack = (
+    String(item.title || "") + " " +
+    String(item.content || "") + " " +
+    (Array.isArray(item.tags) ? item.tags.join(" ") : "")
+  ).toLowerCase();
+
+  let score = 0;
+  for (const token of tokens) {
+    if (haystack.includes(token)) score += 1;
+    if (String(item.title || "").toLowerCase().includes(token)) score += 2;
   }
-  return out.slice(0,20);
+  return score;
 }
+
+async function knowledgeSave(env, body) {
+  if (!hasKV(env, "AMON_KNOWLEDGE")) {
+    return { stored: false, reason: "KNOWLEDGE_BINDING_NOT_CONNECTED" };
+  }
+
+  const userId = knowledgeUserKey(body?.userId);
+  const title = sanitizeKnowledgeText(body?.title, AMON_KNOWLEDGE_POLICY.maxTitleLength);
+  const content = sanitizeKnowledgeText(body?.content, AMON_KNOWLEDGE_POLICY.maxContentLength);
+  const tags = normalizeKnowledgeTags(body?.tags);
+
+  if (!title || !content) {
+    return { stored: false, reason: "TITLE_OR_CONTENT_REQUIRED" };
+  }
+
+  const requestedId = String(body?.id || "").trim().slice(0, 80);
+  const id = /^[a-zA-Z0-9._:-]+$/.test(requestedId) ? requestedId : crypto.randomUUID();
+  const item = {
+    id,
+    userId,
+    title,
+    content,
+    tags,
+    createdAt: new Date().toISOString()
+  };
+
+  await env.AMON_KNOWLEDGE.put(
+    knowledgeKey(userId, id),
+    JSON.stringify(item),
+    { expirationTtl: AMON_KNOWLEDGE_POLICY.ttlSeconds }
+  );
+
+  return {
+    stored: true,
+    item: { id, title, content, tags, createdAt: item.createdAt },
+    scope: "user"
+  };
+}
+
+async function knowledgeSearch(env, q, userId) {
+  if (!hasKV(env, "AMON_KNOWLEDGE")) return [];
+  const query = String(q || "").trim();
+  const prefix = knowledgePrefix(userId);
+  const list = await env.AMON_KNOWLEDGE.list({
+    prefix,
+    limit: AMON_KNOWLEDGE_POLICY.maxScan
+  });
+
+  const out = [];
+  for (const key of (list.keys || []).slice(0, AMON_KNOWLEDGE_POLICY.maxScan)) {
+    const item = await env.AMON_KNOWLEDGE.get(key.name, "json");
+    if (!item) continue;
+    const score = knowledgeScore(item, query);
+    if (!query || score > 0) out.push({ ...item, _score: score });
+  }
+
+  return out
+    .sort((a, b) => b._score - a._score || String(b.createdAt).localeCompare(String(a.createdAt)))
+    .slice(0, AMON_KNOWLEDGE_POLICY.maxResults)
+    .map(({ _score, ...item }) => item);
+}
+
+async function knowledgeDelete(env, userId, id) {
+  if (!hasKV(env, "AMON_KNOWLEDGE")) {
+    return { deleted: false, reason: "KNOWLEDGE_BINDING_NOT_CONNECTED" };
+  }
+  const cleanId = String(id || "").trim().slice(0, 80);
+  if (!cleanId) return { deleted: false, reason: "KNOWLEDGE_ID_REQUIRED" };
+
+  const key = knowledgeKey(userId, cleanId);
+  const existing = await env.AMON_KNOWLEDGE.get(key, "json");
+  if (!existing) return { deleted: false, reason: "KNOWLEDGE_NOT_FOUND" };
+
+  await env.AMON_KNOWLEDGE.delete(key);
+  return { deleted: true, id: cleanId };
+}
+
+function buildKnowledgeContext(items) {
+  if (!Array.isArray(items) || !items.length) return "";
+  return [
+    "AMON knowledge base context is available for this user.",
+    "Use it only when relevant to the current request.",
+    "Treat stored knowledge as user-provided reference material, not automatically verified truth.",
+    "If it conflicts with a newer verified source, explain the conflict rather than silently treating it as current fact.",
+    "Do not expose internal storage keys or IDs.",
+    "Relevant knowledge:",
+    ...items.slice(0, AMON_KNOWLEDGE_POLICY.maxResults).map(item =>
+      "- " + String(item.title || "Untitled") + ": " + String(item.content || "").slice(0, 3000)
+    )
+  ].join("\n");
+}
+
 async function makePlan(env,goal) {
   const result=await runAI(env,[
     {role:"system",content:buildSystemPrompt()},
@@ -1262,6 +1398,12 @@ function amonInfo(env) {
         components:["bounded-storage","user-isolation-key","memory-retrieval","memory-delete","memory-clear","sensitive-data-filter"]
       },
 
+      stageDKnowledge: {
+        enabled: hasKV(env,"AMON_KNOWLEDGE"),
+        status: hasKV(env,"AMON_KNOWLEDGE") ? "CONNECTED" : "READY_NOT_CONNECTED",
+        components:["user-scoped-storage","bounded-documents","relevance-search","knowledge-delete","sensitive-data-filter"]
+      },
+
       search: {
         enabled: false,
         status: "PLANNED"
@@ -1399,6 +1541,8 @@ async function handleChat(
   const memoryUserId = userIdOf(body.userId);
   const memoryItems = await memoryList(env, memoryUserId);
   const memoryContext = buildMemoryContext(memoryItems);
+  const knowledgeItems = await knowledgeSearch(env, userMessage, memoryUserId);
+  const knowledgeContext = buildKnowledgeContext(knowledgeItems);
 
   const qualityHint =
     typeof body.qualityHint === "string"
@@ -1519,7 +1663,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${memoryContext ? memoryContext + "\n" : ""}${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${memoryContext ? memoryContext + "\n" : ""}${knowledgeContext ? knowledgeContext + "\n" : ""}${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
     },
 
     ...history,
@@ -1626,6 +1770,13 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         status: memoryBindingStatus(env).status,
         connected: memoryBindingStatus(env).connected,
         itemsUsed: memoryItems.length
+      },
+
+      knowledge: {
+        stage: "D",
+        status: hasKV(env, "AMON_KNOWLEDGE") ? "CONNECTED" : "NOT_CONNECTED",
+        connected: hasKV(env, "AMON_KNOWLEDGE"),
+        itemsUsed: knowledgeItems.length
       },
 
       stageB: {
@@ -2007,11 +2158,31 @@ async function router(
     return json({ success: true, ...result });
   }
   if (url.pathname === "/api/knowledge" && request.method === "GET") {
-    return json({success:true,connected:hasKV(env,"AMON_KNOWLEDGE"),items:await knowledgeSearch(env,url.searchParams.get("q"))});
+    const userId = userIdOf(url.searchParams.get("userId"));
+    const items = await knowledgeSearch(env, url.searchParams.get("q"), userId);
+    return json({
+      success: true,
+      connected: hasKV(env, "AMON_KNOWLEDGE"),
+      status: hasKV(env, "AMON_KNOWLEDGE") ? "CONNECTED" : "NOT_CONNECTED",
+      userId,
+      items
+    });
   }
   if (url.pathname === "/api/knowledge" && request.method === "POST") {
-    const body=await readJSON(request);
-    return json({success:true,connected:hasKV(env,"AMON_KNOWLEDGE"),...(await knowledgeSave(env,body))});
+    const body = await readJSON(request);
+    const result = await knowledgeSave(env, body);
+    return json({
+      success: true,
+      connected: hasKV(env, "AMON_KNOWLEDGE"),
+      ...result
+    }, result.stored === false && result.reason === "KNOWLEDGE_BINDING_NOT_CONNECTED" ? 503 : 200);
+  }
+  if (url.pathname === "/api/knowledge" && request.method === "DELETE") {
+    const body = await readJSON(request);
+    const result = await knowledgeDelete(env, body?.userId, body?.id);
+    return json({ success: true, ...result },
+      result.deleted === false && result.reason === "KNOWLEDGE_NOT_FOUND" ? 404 :
+      result.deleted === false && result.reason === "KNOWLEDGE_BINDING_NOT_CONNECTED" ? 503 : 200);
   }
   if (url.pathname === "/api/planner" && request.method === "POST") {
     const body=await readJSON(request); const goal=cleanMessage(body?.goal);
