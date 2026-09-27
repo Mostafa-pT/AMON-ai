@@ -1335,7 +1335,8 @@ async function handleChat(
   // AMON TOOL SELECTION
   // ----------------------------------------------------------
 
-  const understanding = understandAMONTask(userMessage, selectedMode, body.history);\n  const route = routeAMONTask(userMessage, selectedMode);
+  const understanding = understandAMONTask(userMessage, selectedMode, body.history);
+  const route = routeAMONTask(userMessage, selectedMode);
   let selectedTool = route.tool;
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
 
@@ -1373,7 +1374,8 @@ async function handleChat(
   const responsePlan = qualityPlan(userMessage, selectedMode);
   const qualityInstruction = buildQualityInstruction(responsePlan);
   const requestProfile = analyzeRequestProfile(userMessage);
-  const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false) + "\n" + responseStyle.instruction;\n  const taskUnderstandingInstruction = buildTaskUnderstandingInstruction(understanding);
+  const adaptiveInstruction = buildAdaptiveInstruction(requestProfile, false) + "\n" + responseStyle.instruction;
+  const taskUnderstandingInstruction = buildTaskUnderstandingInstruction(understanding);
   const largeListRequest = detectLargeListRequest(userMessage);
   const structuredListInstruction = buildStructuredListInstruction(largeListRequest);
   const responseDatabaseInstructionText = responseDatabaseInstruction(userMessage);
