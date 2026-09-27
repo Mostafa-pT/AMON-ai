@@ -1465,7 +1465,7 @@ function amonInfo(env) {
       tools: {
         enabled: true,
         status: "PARTIAL",
-        available: publicTools()
+        available: publicTools(env)
       },
 
       plugins: {
@@ -1622,7 +1622,7 @@ async function handleChat(
   // ----------------------------------------------------------
 
   const understanding = understandAMONTask(userMessage, selectedMode, body.history);
-  const route = routeAMONTask(userMessage, selectedMode);
+  const route = routeAMONTask(userMessage, selectedMode, env);
   let selectedTool = route.tool;
   const tool = AMON_TOOLS[selectedTool] || AMON_TOOLS.chat;
 
@@ -2177,7 +2177,7 @@ async function router(
         textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
         algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
       },
-      tools:publicTools(),
+      tools:publicTools(env),
       toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."}
     });
   }
@@ -2306,7 +2306,7 @@ async function router(
   }
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
-    return json({ success:true, name:AMON.name, tools:publicTools() });
+    return json({ success:true, name:AMON.name, tools:publicTools(env) });
   }
 
   if (
