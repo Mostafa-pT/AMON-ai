@@ -677,23 +677,102 @@ function classifyAIError(error) {
 // Optional persistent storage and provider adapters.
 // ============================================================
 
-function hasKV(env, name) { return Boolean(env?.[name] && typeof env[name].get === "function"); }
-function userIdOf(v) { const x=String(v||"anonymous").trim().slice(0,80); return /^[a-zA-Z0-9._:-]+$/.test(x)?x:"anonymous"; }
-function kvKey(kind,id) { return kind+":"+String(id); }
+function hasKV(env, name) {
+  return Boolean(env?.[name] && typeof env[name].get === "function" && typeof env[name].put === "function");
+}
+function userIdOf(v) {
+  const x = String(v || "anonymous").trim().slice(0, 80);
+  return /^[a-zA-Z0-9._:-]+$/.test(x) ? x : "anonymous";
+}
+function kvKey(kind, id) { return kind + ":" + String(id); }
 
-async function memoryList(env,userId) {
-  if (!hasKV(env,"AMON_MEMORY")) return [];
-  return (await env.AMON_MEMORY.get(kvKey("memory",userIdOf(userId)),"json")) || [];
+const AMON_MEMORY_POLICY = Object.freeze({
+  maxItems: 50,
+  maxFactLength: 500,
+  ttlSeconds: 60 * 60 * 24 * 365,
+  explicitOnly: true,
+  sensitiveFilter: true
+});
+
+function memoryBindingStatus(env) {
+  return {
+    connected: hasKV(env, "AMON_MEMORY"),
+    status: hasKV(env, "AMON_MEMORY") ? "CONNECTED" : "NOT_CONNECTED",
+    persistence: hasKV(env, "AMON_MEMORY") ? "KV" : "NONE",
+    policy: AMON_MEMORY_POLICY
+  };
 }
-async function memoryAdd(env,userId,fact) {
-  if (!hasKV(env,"AMON_MEMORY")) return {stored:false,reason:"OPTIONAL_BINDING_REQUIRED"};
-  const value=String(fact||"").trim().slice(0,500);
-  if (!value) return {stored:false,reason:"EMPTY"};
-  const items=await memoryList(env,userId);
-  items.push({id:crypto.randomUUID(),fact:value,createdAt:new Date().toISOString()});
-  await env.AMON_MEMORY.put(kvKey("memory",userIdOf(userId)),JSON.stringify(items.slice(-50)));
-  return {stored:true,itemCount:Math.min(items.length,50)};
+
+function sanitizeMemoryFact(fact) {
+  const value = String(fact || "").trim().slice(0, AMON_MEMORY_POLICY.maxFactLength);
+  if (!value) return "";
+  if (/api[_ -]?key|access[_ -]?token|password|passwd|secret|private[_ -]?key|authorization|bearer\s+[a-z0-9._-]+/i.test(value)) return "";
+  return value;
 }
+
+async function memoryList(env, userId) {
+  if (!hasKV(env, "AMON_MEMORY")) return [];
+  const stored = await env.AMON_MEMORY.get(kvKey("memory", userIdOf(userId)), "json");
+  if (!Array.isArray(stored)) return [];
+  return stored
+    .filter(item => item && typeof item === "object" && typeof item.fact === "string")
+    .slice(-AMON_MEMORY_POLICY.maxItems)
+    .map(item => ({
+      id: String(item.id || ""),
+      fact: String(item.fact).slice(0, AMON_MEMORY_POLICY.maxFactLength),
+      createdAt: String(item.createdAt || "")
+    }));
+}
+
+async function memoryAdd(env, userId, fact) {
+  if (!hasKV(env, "AMON_MEMORY")) return { stored: false, reason: "MEMORY_BINDING_NOT_CONNECTED" };
+  const normalizedUser = userIdOf(userId);
+  const value = sanitizeMemoryFact(fact);
+  if (!value) return { stored: false, reason: "EMPTY_OR_SENSITIVE_FACT" };
+  const items = await memoryList(env, normalizedUser);
+  const item = { id: crypto.randomUUID(), fact: value, createdAt: new Date().toISOString() };
+  const next = [...items, item].slice(-AMON_MEMORY_POLICY.maxItems);
+  await env.AMON_MEMORY.put(
+    kvKey("memory", normalizedUser),
+    JSON.stringify(next),
+    { expirationTtl: AMON_MEMORY_POLICY.ttlSeconds }
+  );
+  return { stored: true, item, itemCount: next.length, memory: memoryBindingStatus(env) };
+}
+
+async function memoryDelete(env, userId, memoryId) {
+  if (!hasKV(env, "AMON_MEMORY")) return { deleted: false, reason: "MEMORY_BINDING_NOT_CONNECTED" };
+  const id = String(memoryId || "").trim().slice(0, 80);
+  if (!id) return { deleted: false, reason: "MEMORY_ID_REQUIRED" };
+  const items = await memoryList(env, userId);
+  const next = items.filter(item => item.id !== id);
+  if (next.length === items.length) return { deleted: false, reason: "MEMORY_NOT_FOUND" };
+  await env.AMON_MEMORY.put(
+    kvKey("memory", userIdOf(userId)),
+    JSON.stringify(next),
+    { expirationTtl: AMON_MEMORY_POLICY.ttlSeconds }
+  );
+  return { deleted: true, itemCount: next.length };
+}
+
+async function memoryClear(env, userId) {
+  if (!hasKV(env, "AMON_MEMORY")) return { cleared: false, reason: "MEMORY_BINDING_NOT_CONNECTED" };
+  await env.AMON_MEMORY.delete(kvKey("memory", userIdOf(userId)));
+  return { cleared: true, itemCount: 0 };
+}
+
+function buildMemoryContext(items) {
+  if (!Array.isArray(items) || !items.length) return "";
+  return [
+    "AMON long-term memory context is available.",
+    "Use it only when relevant to the current request.",
+    "Treat stored memory as user-provided context, not authoritative facts.",
+    "Never expose memory IDs or internal storage details.",
+    "Stored context:",
+    ...items.slice(-20).map(item => "- " + String(item.fact).slice(0, AMON_MEMORY_POLICY.maxFactLength))
+  ].join("\n");
+}
+
 async function knowledgeSave(env,body) {
   if (!hasKV(env,"AMON_KNOWLEDGE")) return {stored:false,reason:"OPTIONAL_BINDING_REQUIRED"};
   const title=String(body?.title||"").trim().slice(0,150);
@@ -1091,7 +1170,7 @@ function health(env) {
 
       ai: Boolean(env.AI),
 
-      memory: false,
+      memory: hasKV(env,"AMON_MEMORY"),
 
       search: true,
 
@@ -1161,7 +1240,9 @@ function amonInfo(env) {
 
       memory: {
         enabled: hasKV(env,"AMON_MEMORY"),
-        status: hasKV(env,"AMON_MEMORY") ? "CONNECTED" : "PLANNED"
+        status: hasKV(env,"AMON_MEMORY") ? "CONNECTED" : "NOT_CONNECTED",
+        persistence: hasKV(env,"AMON_MEMORY") ? "KV" : "NONE",
+        policy: AMON_MEMORY_POLICY
       },
 
       context: { enabled:true, status:"ACTIVE", source:"request-history" },
@@ -1173,6 +1254,12 @@ function amonInfo(env) {
         enabled:true,
         status:"ACTIVE",
         components:["multi-path","council","contradiction-check","answer-check","retry"]
+      },
+
+      stageCMemory: {
+        enabled: hasKV(env,"AMON_MEMORY"),
+        status: hasKV(env,"AMON_MEMORY") ? "CONNECTED" : "READY_NOT_CONNECTED",
+        components:["bounded-storage","user-isolation-key","memory-retrieval","memory-delete","memory-clear","sensitive-data-filter"]
       },
 
       search: {
@@ -1307,6 +1394,12 @@ async function handleChat(
       body.history
     );
 
+  // STAGE C — LONG-TERM MEMORY
+  // Persistence is optional and is used only when AMON_MEMORY is actually bound.
+  const memoryUserId = userIdOf(body.userId);
+  const memoryItems = await memoryList(env, memoryUserId);
+  const memoryContext = buildMemoryContext(memoryItems);
+
   const qualityHint =
     typeof body.qualityHint === "string"
       ? body.qualityHint.slice(0, 600)
@@ -1426,7 +1519,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${memoryContext ? memoryContext + "\n" : ""}${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
     },
 
     ...history,
@@ -1527,6 +1620,13 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key, responseDatabaseProfile:responseDatabaseProfile(userMessage) },
 
       understanding: { taskType: understanding.taskType, language: understanding.language, contextMessages: understanding.context.messageCount, missing: understanding.missing, goal: understanding.goalManager.goal, subtasks: understanding.goalManager.subtasks, modelProfile: understanding.model.profile },
+
+      memory: {
+        stage: "C",
+        status: memoryBindingStatus(env).status,
+        connected: memoryBindingStatus(env).connected,
+        itemsUsed: memoryItems.length
+      },
 
       stageB: {
         active: stageB.active,
@@ -1889,12 +1989,22 @@ async function router(
   }
 
   if (url.pathname === "/api/memory" && request.method === "GET") {
-    const id=userIdOf(url.searchParams.get("userId"));
-    return json({success:true,connected:hasKV(env,"AMON_MEMORY"),items:await memoryList(env,id)});
+    const id = userIdOf(url.searchParams.get("userId"));
+    const items = await memoryList(env, id);
+    return json({ success: true, ...memoryBindingStatus(env), userId: id, items });
   }
   if (url.pathname === "/api/memory" && request.method === "POST") {
-    const body=await readJSON(request);
-    return json({success:true,connected:hasKV(env,"AMON_MEMORY"),...(await memoryAdd(env,body?.userId,body?.fact))});
+    const body = await readJSON(request);
+    const result = await memoryAdd(env, body?.userId, body?.fact);
+    return json({ success: true, ...result },
+      result.stored === false && result.reason === "MEMORY_BINDING_NOT_CONNECTED" ? 503 : 200);
+  }
+  if (url.pathname === "/api/memory" && request.method === "DELETE") {
+    const body = await readJSON(request);
+    const result = body?.memoryId
+      ? await memoryDelete(env, body?.userId, body?.memoryId)
+      : await memoryClear(env, body?.userId);
+    return json({ success: true, ...result });
   }
   if (url.pathname === "/api/knowledge" && request.method === "GET") {
     return json({success:true,connected:hasKV(env,"AMON_KNOWLEDGE"),items:await knowledgeSearch(env,url.searchParams.get("q"))});
