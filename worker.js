@@ -2283,11 +2283,14 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
   try {
 
+    const boundedMessages = enforcePromptBudget(messages);
     const recovery = await runAIWithRecovery(
       env,
-      messages,
-      { model: understanding.model.model }
+      boundedMessages,
+      { model:understanding.model.model, maxTokens:AMON_PERFORMANCE_POLICY.maxAIOutputTokens }
     );
+    recordRuntimeMetric("ai");
+    if (recovery.recovered) recordRuntimeMetric("recovered");
     const result = recovery.result;
 
 
@@ -2786,7 +2789,7 @@ async function runAMONSelfTests(env, options = {}) {
 // ============================================================
 
 const AMON_RECOVERY_POLICY = Object.freeze({
-  maxAttempts: 3,
+  maxAttempts: AMON_PERFORMANCE_POLICY.maxRecoveryAttempts,
   maxFallbackModels: 2,
   retrySameModel: true,
   hideInternalErrors: true
