@@ -359,25 +359,176 @@ function localTextAnalysis(text) {
 // AI ENGINE
 // ============================================================
 
-async function runAI(env, messages) {
-  if (!env?.AI || typeof env.AI.run !== "function") {
-    throw new Error("AI_BINDING_MISSING");
-  }
-
-  // Use the exact request format that passed /api/test-ai successfully.
+async function runAI(env, messages, options = {}) {
+  if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
+  const requestedTokens = Number(options.maxTokens);
+  const maxTokens = Number.isFinite(requestedTokens)
+    ? Math.max(128, Math.min(requestedTokens, AMON.limits.maxTokens))
+    : AMON.limits.maxTokens;
   try {
-    return await env.AI.run(AMON.model, { messages, max_tokens: AMON.limits.maxTokens });
+    return await env.AI.run(AMON.model, { messages, max_tokens: maxTokens });
   } catch (firstError) {
-    // Automatic retry with a minimal context. This prevents a malformed
-    // history or oversized context from taking the whole chat offline.
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
       : messages;
-
-    return await env.AI.run(AMON.model, { messages: safeMessages, max_tokens: AMON.limits.maxTokens });
+    return await env.AI.run(AMON.model, { messages: safeMessages, max_tokens: maxTokens });
   }
 }
 
+
+// ============================================================
+// AMON STAGE B — MULTI-PATH REASONING / COUNCIL / VERIFICATION
+// ============================================================
+
+const AMON_STAGE_B_TASKS = Object.freeze([
+  "research","comparison","analysis","planning","coding",
+  "troubleshooting","calculation","explanation","question"
+]);
+
+function stageBComplexity(message, taskType) {
+  const text = String(message || "").trim();
+  return AMON_STAGE_B_TASKS.includes(taskType) || text.length >= 80;
+}
+
+function stageBPathInstruction(pathName, localContext) {
+  const base = [
+    "AMON Stage B — مسار تفكير مستقل.",
+    "لا تكتب إجابة نهائية للمستخدم.",
+    "حلّل الطلب داخليًا: المعطيات، الافتراضات، القيود، المخاطر، وما الذي يجب التحقق منه.",
+    "لا تختلق مصادر أو نتائج أو أدوات غير متاحة.",
+    localContext ? "السياق المحلي المتاح: " + localContext : ""
+  ].filter(Boolean).join("\n");
+  return pathName === "analytical"
+    ? base + "\nالمسار التحليلي: ركّز على المنطق والحالات الاستثنائية والحل المتسق مع المعطيات."
+    : base + "\nالمسار النقدي: ابحث عن الأخطاء والافتراضات الخفية والتفسيرات البديلة والتناقضات المحتملة.";
+}
+
+async function runStageBPath(env, pathName, userMessage, history, localContext) {
+  const result = await runAI(env, [
+    { role: "system", content: buildSystemPrompt() },
+    { role: "system", content: stageBPathInstruction(pathName, localContext) },
+    ...history.slice(-8),
+    { role: "user", content: userMessage }
+  ], { maxTokens: 900 });
+  return extractAIResponse(result);
+}
+
+async function runStageBCouncil(env, userMessage, taskType, pathA, pathB) {
+  const prompt = [
+    "AMON Internal AI Council — المقارنة والتحقق.",
+    "قارن المسارين دون الانحياز لأي منهما.",
+    "استخرج نقاط الاتفاق.",
+    "حدّد أي تعارض أو تناقض حقيقي، وميّز بين اختلاف الأسلوب واختلاف المعلومة.",
+    "حدّد المعلومات غير المؤكدة.",
+    "ابنِ قرارًا داخليًا واضحًا لما تعتمد عليه الإجابة النهائية.",
+    "لا تكشف التفكير الداخلي للمستخدم.",
+    "",
+    "المسار التحليلي:",
+    pathA || "[فشل المسار]",
+    "",
+    "المسار النقدي:",
+    pathB || "[فشل المسار]"
+  ].join("\n");
+
+  const result = await runAI(env, [
+    { role: "system", content: buildSystemPrompt() },
+    { role: "system", content: prompt },
+    { role: "user", content: "المهمة: " + userMessage + "\nنوع المهمة: " + taskType }
+  ], { maxTokens: 1100 });
+
+  return extractAIResponse(result);
+}
+
+function stageBHeuristicCheck(answer) {
+  const text = String(answer || "").trim();
+  const issues = [];
+  if (!text) issues.push("empty");
+  if (text.length < 8) issues.push("too_short");
+  const lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const normalized = lines.map(x => x.toLowerCase().replace(/[\W_]+/g, " ").trim()).filter(Boolean);
+  const unique = new Set(normalized);
+  if (normalized.length >= 6 && unique.size / normalized.length < 0.45) issues.push("high_repetition");
+  return { pass: issues.length === 0, issues };
+}
+
+async function verifyStageBAnswer(env, userMessage, taskType, answer, council) {
+  const heuristic = stageBHeuristicCheck(answer);
+  if (!stageBComplexity(userMessage, taskType)) {
+    return { pass: heuristic.pass, mode: "heuristic", issues: heuristic.issues, feedback: heuristic.issues.join(", ") };
+  }
+
+  const result = await runAI(env, [
+    { role: "system", content: buildSystemPrompt() },
+    { role: "system", content: [
+      "AMON Stage B — المراجع النهائي.",
+      "راجع الإجابة مقابل سؤال المستخدم وقرار المجلس.",
+      "أعد السطر الأول فقط بصيغة PASS أو RETRY.",
+      "استخدم RETRY عند وجود خطأ جوهري أو تناقض أو نقص أو ادعاء تحقق غير موجود.",
+      "بعد السطر الأول اكتب سببًا موجزًا وإصلاحًا محددًا عند RETRY.",
+      "لا تكشف التفكير الداخلي."
+    ].join("\n") },
+    { role: "user", content:
+      "السؤال:\n" + String(userMessage).slice(0, 9000) +
+      "\n\nقرار المجلس:\n" + String(council || "").slice(0, 8000) +
+      "\n\nالإجابة:\n" + String(answer || "").slice(0, 14000) }
+  ], { maxTokens: 650 });
+
+  const review = extractAIResponse(result);
+  const firstLine = review.split(/\n+/).map(x => x.trim()).find(Boolean) || "";
+  const aiPass = /^PASS\b/i.test(firstLine);
+  return {
+    pass: heuristic.pass && aiPass,
+    mode: "council+ai",
+    issues: heuristic.issues,
+    review,
+    feedback: review.slice(0, 3000)
+  };
+}
+
+async function regenerateStageBAnswer(env, userMessage, history, stageBContext, review) {
+  const result = await runAI(env, [
+    { role: "system", content: buildSystemPrompt() },
+    { role: "system", content: [
+      "AMON Stage B — إعادة توليد آمنة بعد فشل المراجعة.",
+      "أعد الإجابة النهائية اعتمادًا على سياق المجلس والمراجعة.",
+      "صحّح المشكلة المحددة فقط.",
+      "لا تذكر وجود مراجعة أو مجلس أو مسارات تفكير.",
+      "لا تختلق معلومات غير موجودة."
+    ].join("\n") },
+    { role: "system", content:
+      "سياق Stage B:\n" + String(stageBContext || "").slice(0, 12000) +
+      "\n\nملاحظات المراجع:\n" + String(review || "").slice(0, 4000) },
+    ...history.slice(-8),
+    { role: "user", content: userMessage }
+  ], { maxTokens: AMON.limits.maxTokens });
+  return extractAIResponse(result);
+}
+
+async function runStageBReasoning(env, userMessage, taskType, history, localContext) {
+  if (!stageBComplexity(userMessage, taskType)) {
+    return { active: false, stage: "B", paths: 0, council: "", status: "bypassed_for_simple_request" };
+  }
+
+  let pathA = "", pathB = "";
+  try { pathA = await runStageBPath(env, "analytical", userMessage, history, localContext); } catch {}
+  try { pathB = await runStageBPath(env, "critical", userMessage, history, localContext); } catch {}
+
+  if (!pathA && !pathB) {
+    return { active: true, stage: "B", paths: 0, council: "", status: "failed" };
+  }
+
+  let council = "";
+  try { council = await runStageBCouncil(env, userMessage, taskType, pathA, pathB); }
+  catch { council = pathA || pathB; }
+
+  return {
+    active: true,
+    stage: "B",
+    paths: Number(Boolean(pathA)) + Number(Boolean(pathB)),
+    council,
+    status: council ? "verified_context_ready" : "partial"
+  };
+}
 
 // ============================================================
 // AI RESPONSE EXTRACTION
@@ -1229,6 +1380,22 @@ async function handleChat(
   const responsePresentationInstructionText = responsePresentationInstruction(userMessage);
 
   // ----------------------------------------------------------
+  // STAGE B — MULTI-PATH REASONING / INTERNAL COUNCIL
+  // ----------------------------------------------------------
+
+  const stageB = await runStageBReasoning(
+    env,
+    userMessage,
+    understanding.taskType,
+    history,
+    localToolContext
+  );
+
+  const stageBContext = stageB.council
+    ? "AMON Stage B internal verification context:\n" + stageB.council.slice(0, 12000)
+    : "";
+
+  // ----------------------------------------------------------
   // MESSAGES
   // ----------------------------------------------------------
 
@@ -1251,7 +1418,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
     },
 
     ...history,
@@ -1280,20 +1447,37 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       );
 
 
-    const answer =
+    let answer =
       extractAIResponse(
         result
       );
 
 
     if (!answer) {
-
       return errorResponse(
         "EMPTY_AI_RESPONSE",
         "عاد النموذج دون إجابة.",
         502
       );
+    }
 
+    const stageBVerification = await verifyStageBAnswer(
+      env,
+      userMessage,
+      understanding.taskType,
+      answer,
+      stageB.council
+    );
+
+    if (!stageBVerification.pass && stageB.active) {
+      const regenerated = await regenerateStageBAnswer(
+        env,
+        userMessage,
+        history,
+        stageBContext,
+        stageBVerification.feedback
+      );
+      if (regenerated) answer = regenerated;
     }
 
     let generatedFile = null;
@@ -1335,6 +1519,13 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key, responseDatabaseProfile:responseDatabaseProfile(userMessage) },
 
       understanding: { taskType: understanding.taskType, language: understanding.language, contextMessages: understanding.context.messageCount, missing: understanding.missing, goal: understanding.goalManager.goal, subtasks: understanding.goalManager.subtasks, modelProfile: understanding.model.profile },
+
+      stageB: {
+        active: stageB.active,
+        paths: stageB.paths,
+        status: stageB.status,
+        verification: stageBVerification.pass ? "PASS" : "REGENERATED"
+      },
 
       responseQuality: basicResponseQuality(answer),
 
