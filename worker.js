@@ -1537,9 +1537,15 @@ function amonInfo(env) {
         components:["user-scoped-storage","bounded-documents","relevance-search","knowledge-delete","sensitive-data-filter"]
       },
 
+      stageFResearch: {
+        enabled: true,
+        status: (env.AMON_SEARCH_ENDPOINT || env.AMON_SEARCH_ENDPOINTS) ? "CONNECTED" : "READY_NOT_CONNECTED",
+        components:["multi-source-search","parallel-source-fetch","deduplication","source-status","bounded-results","safe-fallback-links"]
+      },
+
       search: {
-        enabled: false,
-        status: "PLANNED"
+        enabled: true,
+        status: (env.AMON_SEARCH_ENDPOINT || env.AMON_SEARCH_ENDPOINTS) ? "CONNECTED" : "READY_NOT_CONNECTED"
       },
 
       planner: {
