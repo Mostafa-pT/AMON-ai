@@ -22,6 +22,86 @@ const AMON = {
 
 
 // ============================================================
+// STAGE I — SECURITY / REQUEST HARDENING
+// ============================================================
+
+const AMON_SECURITY_POLICY = Object.freeze({
+  maxBodyBytes: 600000,
+  maxFileBytes: 500000,
+  sessionTtlSeconds: 60 * 60 * 24,
+  maxHistoryMessages: 24,
+  securityHeaders: true
+});
+
+const securityHeaders = {
+  "X-Content-Type-Options":"nosniff",
+  "X-Frame-Options":"DENY",
+  "Referrer-Policy":"no-referrer",
+  "Permissions-Policy":"camera=(), microphone=(), geolocation=(), bluetooth=()",
+  "Content-Security-Policy":"default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+  "Strict-Transport-Security":"max-age=31536000; includeSubDomains"
+};
+
+function mergeHeaders(base, extra={}) {
+  return Object.assign({}, base, AMON_SECURITY_POLICY.securityHeaders ? securityHeaders : {}, extra);
+}
+
+function requestContentLength(request) {
+  const n=Number(request.headers.get("content-length")||0);
+  return Number.isFinite(n) && n>=0 ? n : 0;
+}
+
+function isJsonRequest(request) {
+  const type=String(request.headers.get("content-type")||"").toLowerCase();
+  return !type || type.includes("application/json");
+}
+
+function safeMethod(method, allowed) {
+  return allowed.includes(String(method||"").toUpperCase());
+}
+
+async function readJSONLimited(request, maxBytes=AMON_SECURITY_POLICY.maxBodyBytes) {
+  if (!isJsonRequest(request)) return null;
+  const length=requestContentLength(request);
+  if (length && length>maxBytes) throw new Error("REQUEST_BODY_TOO_LARGE");
+  const text=await request.text();
+  if (new TextEncoder().encode(text).byteLength>maxBytes) throw new Error("REQUEST_BODY_TOO_LARGE");
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+function randomUserId() {
+  return "u_"+crypto.randomUUID().replace(/-/g,"").slice(0,24);
+}
+
+function sessionSecret(env) {
+  return String(env?.AMON_USER_SESSION_KEY || env?.AMON_PRIVATE_CORE_KEY || "").trim();
+}
+
+async function createUserSession(userId, secret) {
+  const now=Math.floor(Date.now()/1000);
+  const payload={sub:userId,iat:now,exp:now+AMON_SECURITY_POLICY.sessionTtlSeconds};
+  return createOwnerToken(payload,secret);
+}
+
+async function readUserSession(token, secret) {
+  if(!token || !secret) return null;
+  const payload=await readOwnerToken(token,secret);
+  if(!payload || payload.role==="owner") return null;
+  const exp=Number(payload.exp||0);
+  const sub=String(payload.sub||"");
+  if(!sub || !exp || exp<Math.floor(Date.now()/1000) || !/^[a-zA-Z0-9._:-]{3,80}$/.test(sub)) return null;
+  return payload;
+}
+
+async function resolveUserSession(request, body, env) {
+  const token=getBearer(request);
+  const secret=sessionSecret(env);
+  const session=await readUserSession(token,secret);
+  if(session) return {authenticated:true,userId:session.sub,expiresAt:session.exp};
+  return {authenticated:false,userId:"anonymous",expiresAt:null};
+}
+
+// ============================================================
 // CORS
 // ============================================================
 
@@ -46,7 +126,7 @@ function json(data, status = 200) {
     JSON.stringify(data),
     {
       status,
-      headers: corsHeaders
+      headers: mergeHeaders(corsHeaders)
     }
   );
 }
@@ -83,13 +163,12 @@ function errorResponse(
 // ============================================================
 
 async function readJSON(request) {
-
   try {
-    return await request.json();
-  } catch {
+    return await readJSONLimited(request);
+  } catch (error) {
+    if(String(error?.message)==="REQUEST_BODY_TOO_LARGE") throw error;
     return null;
   }
-
 }
 
 
@@ -633,6 +712,58 @@ function localTextAnalysis(text) {
     uniqueWords: unique.size,
     sentences: (String(text || "").match(/[.!؟!?]+/g) || []).length || (words.length ? 1 : 0)
   };
+}
+
+function detectCodeLanguage(text) {
+  const q=String(text||"");
+  if(/\\b(const|let|function|=>|require\\()\\b/.test(q)) return "javascript";
+  if(/\\b(def|import|from|print\\()\\b/.test(q)) return "python";
+  if(/<html|<div|<body|<!doctype/i.test(q)) return "html";
+  if(/SELECT\\s+.+\\s+FROM\\s+/i.test(q)) return "sql";
+  if(/\\b(public|private|class|static|void)\\b/.test(q) && /;/.test(q)) return "java-or-csharp";
+  return "text";
+}
+
+function analyzeStructuredFile(text, format="txt") {
+  const raw=String(text||"").slice(0,AMON_SECURITY_POLICY.maxFileBytes);
+  const base=localTextAnalysis(raw);
+  const result={format:String(format||"txt").toLowerCase(),sizeBytes:new TextEncoder().encode(raw).byteLength,...base};
+  try {
+    if(result.format==="json"){
+      const value=JSON.parse(raw);
+      result.valid=true;
+      result.type=Array.isArray(value)?"array":typeof value;
+      result.items=Array.isArray(value)?value.length:undefined;
+    } else if(result.format==="csv"){
+      const rows=raw.split(/\\r?\\n/).filter(Boolean);
+      result.valid=rows.length>0;
+      result.rows=Math.max(0,rows.length-1);
+      result.columns=rows[0]?rows[0].split(",").length:0;
+    } else if(result.format==="xml"){
+      result.valid=/^\\s*<\\?xml|^\\s*</.test(raw);
+      result.root=(raw.match(/<([A-Za-z_][\\w:.-]*)[\\s>]/)||[])[1]||null;
+    } else if(result.format==="html"){
+      result.valid=/<html[\\s>]/i.test(raw)||/<body[\\s>]/i.test(raw);
+      result.title=(raw.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)||[])[1]?.trim()||null;
+    } else {
+      result.valid=true;
+      result.language=detectCodeLanguage(raw);
+    }
+  } catch(error) {
+    result.valid=false;
+    result.error="INVALID_"+result.format.toUpperCase();
+  }
+  return result;
+}
+
+function buildCodeReviewInstruction(text) {
+  const language=detectCodeLanguage(text);
+  return [
+    "AMON Stage H — مراجعة برمجية.",
+    "لغة/نوع المحتوى المتوقع: "+language,
+    "افحص الأخطاء النحوية والمنطقية ومخاطر الأمان، ثم اقترح إصلاحًا قابلًا للاختبار.",
+    "لا تدّعِ تشغيل الكود إذا لم يتم تشغيله فعليًا."
+  ].join("\\n");
 }
 
 // ============================================================
@@ -1757,6 +1888,17 @@ function amonInfo(env) {
       taskUnderstanding: { enabled:true, status:"ACTIVE" },
       goalManager: { enabled:true, status:"ACTIVE" },
       modelSelection: { enabled:true, status:env.AI ? "ACTIVE" : "NOT_CONNECTED", executableModels:publicModelCatalog(env).filter(x=>x.available).length, currentModel:AMON.model },
+      stageHTools: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["code-assistance","safe-math","text-analysis","structured-file-analysis","code-review-instructions","file-generation"]
+      },
+      stageISecurity: {
+        enabled:true,
+        status:sessionSecret(env) ? "ACTIVE" : "READY_SECRET_REQUIRED",
+        components:["signed-user-sessions","user-isolation","request-size-limits","security-headers","owner-authentication","secret-filtering"]
+      },
+
       stageGModelComparison: {
         enabled:true,
         status:env.AI ? "ACTIVE" : "READY_NOT_CONNECTED",
@@ -2542,7 +2684,9 @@ async function router(
         knowledge:"إجابات منظمة مع عدم ادعاء قاعدة بيانات غير متاحة",
         webResearch:"بحث متعدد المصادر عند توفر مزودات متصلة، مع دمج النتائج وإزالة التكرار وعرض حالة كل مصدر، وإلا يستخدم بوابات بحث خارجية دون ادعاء قراءة نتائج غير متاحة",
         machineLearning:"يعتمد حاليًا على Workers AI ولا يدّعي تدريبًا ذاتيًا",
-        security:"حماية التعليمات والأسرار والصلاحيات",
+        security:"حماية التعليمات والأسرار والصلاحيات والجلسات ورؤوس الأمان وحدود الطلبات",
+        stageH:"محرك البرمجة والحساب وتحليل الملفات مع تحليل منظم للملفات النصية وبيانات JSON/CSV/XML/HTML ومراجعة الكود",
+        stageI:"جلسات مستخدم موقعة، عزل الذاكرة وقاعدة المعرفة، حدود حجم الطلبات، ورؤوس أمان للمتصفح",
         mathematics:"محرك حساب محلي للعمليات الرياضية الأساسية",
         textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
         algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
@@ -2553,26 +2697,43 @@ async function router(
     });
   }
 
+  if (url.pathname === "/api/session" && request.method === "POST") {
+    const secret=sessionSecret(env);
+    if(!secret) return errorResponse("USER_SESSION_SECRET_MISSING","لم يتم إعداد مفتاح جلسات المستخدم في البيئة.",503);
+    const userId=randomUserId();
+    const now=Math.floor(Date.now()/1000);
+    const token=await createUserSession(userId,secret);
+    return json({success:true,stage:"I",userId,token,expiresAt:now+AMON_SECURITY_POLICY.sessionTtlSeconds});
+  }
+
   if (url.pathname === "/api/memory" && request.method === "GET") {
-    const id = userIdOf(url.searchParams.get("userId"));
+    const session = await resolveUserSession(request, null, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى الذاكرة.",401);
+    const id = session.userId;
     const items = await memoryList(env, id);
     return json({ success: true, ...memoryBindingStatus(env), userId: id, items });
   }
   if (url.pathname === "/api/memory" && request.method === "POST") {
     const body = await readJSON(request);
-    const result = await memoryAdd(env, body?.userId, body?.fact);
+    const session = await resolveUserSession(request, body, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى الذاكرة.",401);
+    const result = await memoryAdd(env, session.userId, body?.fact);
     return json({ success: true, ...result },
       result.stored === false && result.reason === "MEMORY_BINDING_NOT_CONNECTED" ? 503 : 200);
   }
   if (url.pathname === "/api/memory" && request.method === "DELETE") {
     const body = await readJSON(request);
+    const session = await resolveUserSession(request, body, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى الذاكرة.",401);
     const result = body?.memoryId
-      ? await memoryDelete(env, body?.userId, body?.memoryId)
-      : await memoryClear(env, body?.userId);
+      ? await memoryDelete(env, session.userId, body?.memoryId)
+      : await memoryClear(env, session.userId);
     return json({ success: true, ...result });
   }
   if (url.pathname === "/api/knowledge" && request.method === "GET") {
-    const userId = userIdOf(url.searchParams.get("userId"));
+    const session = await resolveUserSession(request, null, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى قاعدة المعرفة.",401);
+    const userId = session.userId;
     const items = await knowledgeSearch(env, url.searchParams.get("q"), userId);
     return json({
       success: true,
@@ -2584,7 +2745,9 @@ async function router(
   }
   if (url.pathname === "/api/knowledge" && request.method === "POST") {
     const body = await readJSON(request);
-    const result = await knowledgeSave(env, body);
+    const session = await resolveUserSession(request, body, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى قاعدة المعرفة.",401);
+    const result = await knowledgeSave(env, {...body,userId:session.userId});
     return json({
       success: true,
       connected: hasKV(env, "AMON_KNOWLEDGE"),
@@ -2593,7 +2756,9 @@ async function router(
   }
   if (url.pathname === "/api/knowledge" && request.method === "DELETE") {
     const body = await readJSON(request);
-    const result = await knowledgeDelete(env, body?.userId, body?.id);
+    const session = await resolveUserSession(request, body, env);
+    if(!session.authenticated) return errorResponse("USER_SESSION_REQUIRED","جلسة مستخدم موثقة مطلوبة للوصول إلى قاعدة المعرفة.",401);
+    const result = await knowledgeDelete(env, session.userId, body?.id);
     return json({ success: true, ...result },
       result.deleted === false && result.reason === "KNOWLEDGE_NOT_FOUND" ? 404 :
       result.deleted === false && result.reason === "KNOWLEDGE_BINDING_NOT_CONNECTED" ? 503 : 200);
@@ -2659,9 +2824,11 @@ async function router(
   if (url.pathname === "/api/files/analyze" && request.method === "POST") {
     const body=await readJSON(request); const text=String(body?.content||body?.text||"").trim().slice(0,50000);
     if(!text) return errorResponse("EMPTY_FILE_CONTENT","أرسل محتوى نصيًا للتحليل.",400);
-    const analysis=localTextAnalysis(text);
-    const result=await runAI(env,[{role:"system",content:buildSystemPrompt()},{role:"system",content:"حلل النص ولخص أهم النقاط دون ادعاء قراءة ملف غير متاح."},{role:"user",content:text}]);
-    return json({success:true,analysis,summary:extractAIResponse(result)});
+    const format=String(body?.format||detectRequestedFileFormat(text)).toLowerCase();
+    const analysis=analyzeStructuredFile(text,format);
+    const instruction=detectCodeLanguage(text)!=="text" ? buildCodeReviewInstruction(text) : "حلل المحتوى ولخص أهم النقاط، ولا تدّعِ قراءة ملف غير متاح.";
+    const result=await runAI(env,[{role:"system",content:buildSystemPrompt()},{role:"system",content:instruction},{role:"user",content:text}]);
+    return json({success:true,stage:"H",analysis,summary:extractAIResponse(result)});
   }
   if (url.pathname === "/api/evaluate" && request.method === "POST") {
     const body=await readJSON(request);
