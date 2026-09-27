@@ -1069,17 +1069,9 @@ function classifyAIError(error) {
   // ----------------------------------------------------------
 
   return {
-    code:
-      "AI_REQUEST_FAILED",
-
-    status:
-      500,
-
-    message:
-      "تعذر تنفيذ طلب AMON حاليًا.",
-
-    details:
-      text
+    code:"AI_REQUEST_FAILED",
+    status:500,
+    message:"تعذر تنفيذ طلب AMON حاليًا."
   };
 
 }
@@ -1888,6 +1880,18 @@ function amonInfo(env) {
       taskUnderstanding: { enabled:true, status:"ACTIVE" },
       goalManager: { enabled:true, status:"ACTIVE" },
       modelSelection: { enabled:true, status:env.AI ? "ACTIVE" : "NOT_CONNECTED", executableModels:publicModelCatalog(env).filter(x=>x.available).length, currentModel:AMON.model },
+      stageJSelfTest: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["core-checks","binding-checks","tool-registry-check","security-check","routing-check","error-classification"]
+      },
+
+      stageKRecovery: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["bounded-retry","configured-model-fallback","safe-error-messages","internal-detail-hiding"]
+      },
+
       stageHTools: {
         enabled:true,
         status:"ACTIVE",
@@ -2231,12 +2235,12 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
   try {
 
-    const result =
-      await runAI(
-        env,
-        messages,
-        { model: understanding.model.model }
-      );
+    const recovery = await runAIWithRecovery(
+      env,
+      messages,
+      { model: understanding.model.model }
+    );
+    const result = recovery.result;
 
 
     let answer =
@@ -2296,7 +2300,9 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         selectedMode,
 
       model:
-        AMON.model,
+        recovery.model,
+      recovery:
+        { status: recovery.recoveryStatus, attempts: recovery.attempts, recovered: recovery.recovered },
 
       tool:
         selectedTool,
@@ -2437,14 +2443,18 @@ async function readOwnerToken(token, secret) {
   if (!token || !secret) return null;
   const parts = token.split(".");
   if (parts.length !== 2) return null;
-  const valid = await crypto.subtle.verify(
-    "HMAC", await ownerKey(secret), ownerUnb64(parts[1]),
-    new TextEncoder().encode(parts[0])
-  );
-  if (!valid) return null;
   try {
+    const valid = await crypto.subtle.verify(
+      "HMAC", await ownerKey(secret), ownerUnb64(parts[1]),
+      new TextEncoder().encode(parts[0])
+    );
+    if (!valid) return null;
     const payload = JSON.parse(new TextDecoder().decode(ownerUnb64(parts[0])));
-    return payload && payload.role === "owner" && payload.exp > Date.now() ? payload : null;
+    if (!payload || !payload.exp) return null;
+    const exp = Number(payload.exp);
+    const now = Date.now();
+    const validExpiry = exp > 100000000000 ? exp > now : exp > Math.floor(now / 1000);
+    return validExpiry ? payload : null;
   } catch { return null; }
 }
 function getBearer(request) {
@@ -2452,7 +2462,8 @@ function getBearer(request) {
   return value.startsWith("Bearer ") ? value.slice(7) : "";
 }
 async function requireOwner(request, env) {
-  return readOwnerToken(getBearer(request), env.AMON_PRIVATE_CORE_KEY || "");
+  const payload = await readOwnerToken(getBearer(request), env.AMON_PRIVATE_CORE_KEY || "");
+  return payload?.role === "owner" ? payload : null;
 }
 
 async function handleOwnerLogin(request, env) {
@@ -2554,6 +2565,7 @@ async function handleOwnerChat(request, env) {
 async function handleOwnerDiagnostics(request, env) {
   const owner = await requireOwner(request, env);
   if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك.", 401);
+  const selfTest = await runAMONSelfTests(env, { deep:false });
   return json({
     success:true,
     diagnostics:{
@@ -2563,9 +2575,221 @@ async function handleOwnerDiagnostics(request, env) {
       ownerSecrets:Boolean(env.AMON_MASTER_ACCESS && env.AMON_PRIVATE_CORE_KEY),
       model:AMON.model,
       version:AMON.version,
-      persistentStorage:"not-connected"
+      storage:{
+        memory:hasKV(env,"AMON_MEMORY"),
+        knowledge:hasKV(env,"AMON_KNOWLEDGE")
+      },
+      selfTest
     }
   });
+}
+
+
+// ============================================================
+// STAGE J — SELF-TESTS / DIAGNOSTICS
+// ============================================================
+
+const AMON_SELF_TEST_POLICY = Object.freeze({
+  maxTests: 32,
+  deepAI: false,
+  exposeDetails: false
+});
+
+function selfTestResult(id, status, message, details = null) {
+  return {
+    id,
+    status: ["PASS","WARN","FAIL"].includes(status) ? status : "WARN",
+    message: String(message || ""),
+    ...(details && AMON_SELF_TEST_POLICY.exposeDetails ? { details } : {})
+  };
+}
+
+function testCoreConfiguration(env) {
+  const ok = Boolean(AMON.name && AMON.version && AMON.model && AMON.limits?.maxMessageLength > 0);
+  return selfTestResult("core-configuration", ok ? "PASS" : "FAIL",
+    ok ? "تهيئة AMON الأساسية سليمة." : "تهيئة AMON الأساسية غير مكتملة.");
+}
+
+function testAIBinding(env) {
+  const ok = Boolean(env?.AI && typeof env.AI.run === "function");
+  return selfTestResult("ai-binding", ok ? "PASS" : "WARN",
+    ok ? "Workers AI متصل بواجهة التشغيل." : "Workers AI غير متصل حاليًا؛ الاختبارات التي تحتاج نموذجًا لن تعمل.");
+}
+
+function testModelCatalog(env) {
+  const catalog = Array.isArray(AMON_MODEL_CATALOG) ? AMON_MODEL_CATALOG : [];
+  const valid = catalog.length > 0 && catalog.every(x => x && typeof x.id === "string" && Array.isArray(x.tasks));
+  const currentKnown = Boolean(modelCatalogEntry(AMON.model));
+  const configured = configuredModelIds(env);
+  return selfTestResult("model-catalog", valid && currentKnown ? "PASS" : "FAIL",
+    valid && currentKnown ? "كتالوج النماذج متسق والنموذج الحالي معروف." : "يوجد خلل في كتالوج النماذج أو النموذج الحالي.",
+    { count: catalog.length, configuredCandidates: configured.length });
+}
+
+function testToolRegistry(env) {
+  const entries = Object.entries(AMON_TOOLS || {});
+  const valid = entries.length > 0 && entries.every(([id, tool]) =>
+    id && tool && typeof tool.type === "string" && typeof tool.enabled === "boolean" && typeof tool.requiresAI === "boolean"
+  );
+  return selfTestResult("tool-registry", valid ? "PASS" : "FAIL",
+    valid ? "سجل أدوات AMON متسق." : "سجل أدوات AMON يحتوي على تعريف غير صالح.");
+}
+
+function testStorageBindings(env) {
+  const memory = hasKV(env, "AMON_MEMORY");
+  const knowledge = hasKV(env, "AMON_KNOWLEDGE");
+  return selfTestResult("storage-bindings", memory || knowledge ? "PASS" : "WARN",
+    memory || knowledge ? "تم العثور على مخزن KV واحد على الأقل." : "لا توجد روابط KV؛ الذاكرة وقاعدة المعرفة غير متصلتين.",
+    { memory, knowledge });
+}
+
+function testSearchConfiguration(env) {
+  const sources = configuredSearchSources(env);
+  return selfTestResult("search-configuration", sources.length ? "PASS" : "WARN",
+    sources.length ? "يوجد مزود بحث واحد أو أكثر." : "لا يوجد مزود بحث خارجي متصل؛ سيستخدم AMON المسارات الاحتياطية.",
+    { sourceCount: sources.length });
+}
+
+function testSecurityConfiguration(env) {
+  const session = Boolean(sessionSecret(env));
+  const limits = AMON_SECURITY_POLICY.maxBodyBytes > 0 && AMON_SECURITY_POLICY.maxFileBytes > 0;
+  const headers = AMON_SECURITY_POLICY.securityHeaders === true;
+  return selfTestResult("security-configuration", session && limits && headers ? "PASS" : "WARN",
+    session && limits && headers ? "طبقة الأمان الأساسية مهيأة." : "طبقة الأمان مهيأة جزئيًا؛ مفتاح جلسات منفصل أو إعداد أمني إضافي قد يكون مطلوبًا.");
+}
+
+function testLocalEngines() {
+  const math = safeMath("2+3*4") === 14;
+  const text = localTextAnalysis("AMON test text").words === 3;
+  const json = analyzeStructuredFile("{\"ok\":true}", "json").valid === true;
+  const url = isSafeExternalUrl("https://example.com") === true && isSafeExternalUrl("javascript:alert(1)") === false;
+  return selfTestResult("local-engines", math && text && json && url ? "PASS" : "FAIL",
+    math && text && json && url ? "المحركات المحلية الأساسية تعمل." : "فشل اختبار واحد أو أكثر من المحركات المحلية.");
+}
+
+function testStageRouting(env) {
+  const route = routeAMONTask("احسب 2+2", "learn", env);
+  const understand = understandAMONTask("اشرح لي الفكرة", "learn", [], env);
+  const ok = route?.tool === "math" && understand?.taskType === "explanation";
+  return selfTestResult("stage-routing", ok ? "PASS" : "FAIL",
+    ok ? "التوجيه وفهم المهمة يعملان في الاختبار المحلي." : "يوجد خلل في توجيه المهام أو فهمها.");
+}
+
+function testErrorRecovery() {
+  const free = classifyAIError(new Error("daily free allocation limit"));
+  const paid = classifyAIError(new Error("Workers paid plan required"));
+  const generic = classifyAIError(new Error("temporary network failure"));
+  const ok = free.code === "FREE_DAILY_LIMIT_REACHED" && paid.code === "MODEL_REQUIRES_PAID_PLAN" && generic.code === "AI_REQUEST_FAILED";
+  return selfTestResult("error-recovery", ok ? "PASS" : "FAIL",
+    ok ? "تصنيف أخطاء التشغيل ومسارات الاسترداد الأساسية متسقة." : "فشل اختبار تصنيف أخطاء التشغيل.");
+}
+
+async function runAMONSelfTests(env, options = {}) {
+  const started = Date.now();
+  const tests = [
+    testCoreConfiguration(env),
+    testAIBinding(env),
+    testModelCatalog(env),
+    testToolRegistry(env),
+    testStorageBindings(env),
+    testSearchConfiguration(env),
+    testSecurityConfiguration(env),
+    testLocalEngines(),
+    testStageRouting(env),
+    testErrorRecovery()
+  ].slice(0, AMON_SELF_TEST_POLICY.maxTests);
+
+  if (options.deep === true) {
+    if (env?.AI && typeof env.AI.run === "function") {
+      try {
+        const probe = await runAI(env, [
+          { role:"system", content:"AMON self-test. Reply with exactly: AMON_OK" },
+          { role:"user", content:"self-test" }
+        ], { model:AMON.model, maxTokens:128 });
+        const answer = extractAIResponse(probe);
+        tests.push(selfTestResult("ai-runtime-probe", answer ? "PASS" : "FAIL",
+          answer ? "تمت استجابة النموذج في اختبار التشغيل." : "استجاب محرك AI دون نص قابل للقراءة."));
+      } catch {
+        tests.push(selfTestResult("ai-runtime-probe", "FAIL", "فشل اختبار التشغيل المباشر للنموذج."));
+      }
+    } else {
+      tests.push(selfTestResult("ai-runtime-probe", "WARN", "لم يُنفذ اختبار AI المباشر لأن Workers AI غير متصل."));
+    }
+  }
+
+  const counts = tests.reduce((acc, item) => {
+    acc[item.status] = (acc[item.status] || 0) + 1;
+    return acc;
+  }, { PASS:0, WARN:0, FAIL:0 });
+
+  const overall = counts.FAIL > 0 ? "FAIL" : counts.WARN > 0 ? "WARN" : "PASS";
+  return {
+    stage:"J",
+    overall,
+    durationMs:Date.now() - started,
+    counts,
+    tests,
+    policy:{ localByDefault:true, deepAI:Boolean(options.deep === true), secretsExposed:false }
+  };
+}
+
+// ============================================================
+// STAGE K — ERROR RECOVERY / SAFE FALLBACKS
+// ============================================================
+
+const AMON_RECOVERY_POLICY = Object.freeze({
+  maxAttempts: 3,
+  maxFallbackModels: 2,
+  retrySameModel: true,
+  hideInternalErrors: true
+});
+
+function recoveryModelCandidates(env, primaryModel) {
+  const configured = configuredModelIds(env);
+  const candidates = [primaryModel, ...configured, AMON.model];
+  return [...new Set(candidates.map(x => String(x || "").trim()).filter(Boolean))]
+    .filter(id => modelCatalogEntry(id))
+    .slice(0, AMON_RECOVERY_POLICY.maxFallbackModels + 1);
+}
+
+async function runAIWithRecovery(env, messages, options = {}) {
+  const primaryModel = String(options.model || AMON.model).trim();
+  const candidates = recoveryModelCandidates(env, primaryModel);
+  const attempts = [];
+  let lastError = null;
+
+  for (const model of candidates) {
+    if (attempts.length >= AMON_RECOVERY_POLICY.maxAttempts) break;
+    try {
+      const result = await runAI(env, messages, { ...options, model });
+      return {
+        result,
+        model,
+        recovered: model !== primaryModel,
+        attempts: attempts.length + 1,
+        recoveryStatus: model === primaryModel ? "PRIMARY_SUCCESS" : "FALLBACK_SUCCESS"
+      };
+    } catch (error) {
+      lastError = error;
+      attempts.push({ model, code:classifyAIError(error).code });
+    }
+  }
+
+  const error = new Error(lastError?.message || "AI_RECOVERY_EXHAUSTED");
+  error.recovery = {
+    status:"EXHAUSTED",
+    attempts:attempts.length,
+    triedModels:attempts.map(x => x.model)
+  };
+  throw error;
+}
+
+function safeRecoveryMessage(classified) {
+  if (!classified) return "تعذر تنفيذ طلب AMON حاليًا.";
+  if (classified.code === "FREE_DAILY_LIMIT_REACHED") return "تم الوصول إلى الحد المجاني المتاح حاليًا لـ AMON. حاول لاحقًا.";
+  if (classified.code === "MODEL_REQUIRES_PAID_PLAN") return "النموذج الحالي غير متاح في الخطة الحالية، ولم يتمكن AMON من إيجاد مسار احتياطي متاح.";
+  if (classified.code === "AI_BINDING_MISSING") return "خدمة الذكاء الاصطناعي غير متصلة حاليًا.";
+  return "تعذر تنفيذ طلب AMON حاليًا. تم تشغيل آلية الاسترداد الآمنة دون كشف تفاصيل داخلية.";
 }
 
 // ============================================================
@@ -2673,6 +2897,17 @@ async function router(
     }
   }
 
+  if (url.pathname === "/api/self-test" && (request.method === "GET" || request.method === "POST")) {
+    const owner = await requireOwner(request, env);
+    if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك لإجراء التشخيص التفصيلي.", 401);
+    let deep = false;
+    if (request.method === "POST") {
+      const body = await readJSON(request);
+      deep = body?.deep === true;
+    }
+    return json({ success:true, selfTest:await runAMONSelfTests(env,{deep}) });
+  }
+
   if (url.pathname === "/api/capabilities" && request.method === "GET") {
     return json({
       success:true,
@@ -2690,7 +2925,9 @@ async function router(
         stageI:"جلسات مستخدم موقعة، عزل الذاكرة وقاعدة المعرفة، حدود حجم الطلبات، ورؤوس أمان للمتصفح",
         mathematics:"محرك حساب محلي للعمليات الرياضية الأساسية",
         textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
-        algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة"
+        algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة",
+        stageJSelfTest:"اختبارات ذاتية محلية وتشخيص آمن مع اختبار AI مباشر اختياري للمالك",
+        stageKRecovery:"إعادة محاولة آمنة، نماذج احتياطية مضبوطة، وتصنيف أخطاء دون كشف تفاصيل داخلية"
       },
       tools:publicTools(env),
       toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."},
