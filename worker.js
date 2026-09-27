@@ -716,11 +716,11 @@ function localTextAnalysis(text) {
 
 function detectCodeLanguage(text) {
   const q=String(text||"");
-  if(/\\b(const|let|function|=>|require\\()\\b/.test(q)) return "javascript";
-  if(/\\b(def|import|from|print\\()\\b/.test(q)) return "python";
+  if(/\b(const|let|function|=>|require\()\b/.test(q)) return "javascript";
+  if(/\b(def|import|from|print\()\b/.test(q)) return "python";
   if(/<html|<div|<body|<!doctype/i.test(q)) return "html";
-  if(/SELECT\\s+.+\\s+FROM\\s+/i.test(q)) return "sql";
-  if(/\\b(public|private|class|static|void)\\b/.test(q) && /;/.test(q)) return "java-or-csharp";
+  if(/SELECT\s+.+\s+FROM\s+/i.test(q)) return "sql";
+  if(/\b(public|private|class|static|void)\b/.test(q) && /;/.test(q)) return "java-or-csharp";
   return "text";
 }
 
