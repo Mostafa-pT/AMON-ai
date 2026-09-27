@@ -1834,7 +1834,7 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       presentation: responsePresentationProfile(userMessage),
 
       routing:
-        { reason:route.reason, selectedTool, mediaType },
+        { reason:route.reason, selectedTool, mediaType, status:route.status, available:route.available, provider:route.provider },
 
       provider:
         tool.provider,
