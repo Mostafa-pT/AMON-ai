@@ -2069,7 +2069,8 @@ async function handleChat(
 
   // STAGE C — LONG-TERM MEMORY
   // Persistence is optional and is used only when AMON_MEMORY is actually bound.
-  const memoryUserId = userIdOf(body.userId);
+  const userSession = await resolveUserSession(request, body, env);
+  const memoryUserId = userSession.authenticated ? userSession.userId : "anonymous";
   const memoryItems = await memoryList(env, memoryUserId);
   const memoryContext = buildMemoryContext(memoryItems);
   const knowledgeItems = await knowledgeSearch(env, userMessage, memoryUserId);
@@ -2968,19 +2969,15 @@ export default {
       );
 
     } catch (error) {
-
-      console.error(
-        "AMON WORKER ERROR",
-        error
-      );
-
-
+      console.error("AMON WORKER ERROR", error);
+      if(String(error?.message)==="REQUEST_BODY_TOO_LARGE"){
+        return errorResponse("REQUEST_BODY_TOO_LARGE","حجم الطلب أكبر من الحد المسموح.",413);
+      }
       return errorResponse(
         "INTERNAL_WORKER_ERROR",
         "حدث خطأ داخلي في AMON.",
         500
       );
-
     }
 
   }
