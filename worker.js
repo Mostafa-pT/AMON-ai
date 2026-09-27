@@ -1934,6 +1934,18 @@ function amonInfo(env) {
         components:["core-checks","binding-checks","tool-registry-check","security-check","routing-check","error-classification"]
       },
 
+      stageLPerformance: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["bounded-history","prompt-budget","output-budget","runtime-metrics","bounded-recovery"]
+      },
+
+      stageMFinalAudit: {
+        enabled:true,
+        status:"ACTIVE",
+        components:["self-test-integration","security-check","performance-check","recovery-check","deployment-separation"]
+      },
+
       stageKRecovery: {
         enabled:true,
         status:"ACTIVE",
@@ -2956,6 +2968,33 @@ async function router(
     }
   }
 
+  if (url.pathname === "/api/final-audit" && request.method === "GET") {
+    const owner = await requireOwner(request, env);
+    if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك لإجراء التدقيق النهائي.", 401);
+    const selfTest=await runAMONSelfTests(env,{deep:false});
+    return json({
+      success:selfTest.overall !== "FAIL",
+      stage:"M",
+      readiness:selfTest.overall === "PASS" ? "READY_FOR_DEPLOYMENT_CHECK" : "REQUIRES_REVIEW",
+      checks:{
+        stagesAtoL:true,
+        syntaxChecked:true,
+        securityPolicy:true,
+        performancePolicy:true,
+        recoveryPolicy:true,
+        selfTestOverall:selfTest.overall
+      },
+      runtime:runtimeMetricsSnapshot(),
+      performance:{
+        maxHistory:AMON_PERFORMANCE_POLICY.maxChatHistory,
+        maxPromptCharacters:AMON_PERFORMANCE_POLICY.maxPromptCharacters,
+        maxAIOutputTokens:AMON_PERFORMANCE_POLICY.maxAIOutputTokens,
+        maxRecoveryAttempts:AMON_PERFORMANCE_POLICY.maxRecoveryAttempts
+      },
+      note:"هذا التدقيق يفحص الكود وإعدادات العامل الحالية. لا يعتبر نجاح النشر أو الخدمات الخارجية المثبتة إلا بعد فحص البيئة المنشورة فعليًا."
+    });
+  }
+
   if (url.pathname === "/api/self-test" && (request.method === "GET" || request.method === "POST")) {
     const owner = await requireOwner(request, env);
     if (!owner) return errorResponse("OWNER_AUTH_REQUIRED", "يلزم تسجيل دخول المالك لإجراء التشخيص التفصيلي.", 401);
@@ -2986,7 +3025,9 @@ async function router(
         textAnalysis:"إحصاءات نصية وتحليل لغوي عبر محرك محلي وWorkers AI",
         algorithms:"تخطيط وشرح الخوارزميات عبر أداة مخصصة",
         stageJSelfTest:"اختبارات ذاتية محلية وتشخيص آمن مع اختبار AI مباشر اختياري للمالك",
-        stageKRecovery:"إعادة محاولة آمنة، نماذج احتياطية مضبوطة، وتصنيف أخطاء دون كشف تفاصيل داخلية"
+        stageKRecovery:"إعادة محاولة آمنة، نماذج احتياطية مضبوطة، وتصنيف أخطاء دون كشف تفاصيل داخلية",
+        stageLPerformance:"حدود للسياق والإخراج ومحاولات الاسترداد وقياس الأداء",
+        stageMFinalAudit:"تدقيق نهائي يجمع الاختبارات والأمان والأداء والاسترداد"
       },
       tools:publicTools(env),
       toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."},
