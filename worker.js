@@ -3298,6 +3298,8 @@ export default {
     ctx
   ) {
 
+    const requestStarted=Date.now();
+
     try {
 
       const response = await router(request, env);
