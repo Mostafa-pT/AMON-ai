@@ -815,24 +815,168 @@ function buildCodeReviewInstruction(text) {
 }
 
 // ============================================================
+// AMON FREE AI PROVIDER REGISTRY
+// Providers are only marked AVAILABLE when a valid runtime key/binding exists.
+// No provider is claimed to be connected merely because it is listed.
+// ============================================================
+const AMON_PROVIDER_CATALOG = Object.freeze([
+  {
+    id:"cloudflare-workers-ai",
+    name:"Cloudflare Workers AI",
+    kind:"native",
+    free:"included-quota",
+    keyEnv:null,
+    defaultModel:"@cf/meta/llama-3.1-8b-instruct-fast",
+    endpoint:null,
+    notes:"Native AMON runtime provider."
+  },
+  {
+    id:"google-gemini",
+    name:"Google Gemini API",
+    kind:"gemini",
+    free:"free-tier",
+    keyEnv:"GEMINI_API_KEY",
+    defaultModel:"gemini-3.6-flash",
+    endpoint:"https://generativelanguage.googleapis.com/v1beta/models"
+  },
+  {
+    id:"groq",
+    name:"Groq",
+    kind:"openai-compatible",
+    free:"free-tier",
+    keyEnv:"GROQ_API_KEY",
+    defaultModel:"openai/gpt-oss-120b",
+    endpoint:"https://api.groq.com/openai/v1/chat/completions"
+  },
+  {
+    id:"openrouter",
+    name:"OpenRouter",
+    kind:"openai-compatible",
+    free:"free-models",
+    keyEnv:"OPENROUTER_API_KEY",
+    defaultModel:"openai/gpt-oss-120b:free",
+    endpoint:"https://openrouter.ai/api/v1/chat/completions"
+  },
+  {
+    id:"mistral",
+    name:"Mistral AI",
+    kind:"openai-compatible",
+    free:"free-mode",
+    keyEnv:"MISTRAL_API_KEY",
+    defaultModel:"mistral-small-latest",
+    endpoint:"https://api.mistral.ai/v1/chat/completions"
+  },
+  {
+    id:"hugging-face",
+    name:"Hugging Face Inference Providers",
+    kind:"openai-compatible",
+    free:"limited-free-credit",
+    keyEnv:"HF_TOKEN",
+    defaultModel:"deepseek-ai/DeepSeek-V3-0324",
+    endpoint:"https://router.huggingface.co/v1/chat/completions"
+  }
+]);
+
+function providerConfigured(provider,env){
+  if(provider.id==="cloudflare-workers-ai") return Boolean(env?.AI && typeof env.AI.run==="function");
+  return Boolean(provider.keyEnv && String(env?.[provider.keyEnv]||"").trim());
+}
+
+function publicProviderCatalog(env){
+  return AMON_PROVIDER_CATALOG.map(provider=>({
+    id:provider.id,
+    name:provider.name,
+    kind:provider.kind,
+    free:provider.free,
+    configured:providerConfigured(provider,env),
+    status:providerConfigured(provider,env) ? "CONFIGURED" : "NOT_CONNECTED",
+    defaultModel:provider.defaultModel,
+    notes:provider.notes||null
+  }));
+}
+
+function providerForModel(model){
+  const id=String(model||"");
+  if(id.startsWith("gemini-")) return "google-gemini";
+  if(id.startsWith("openai/") && id.includes(":free")) return "openrouter";
+  if(id.startsWith("openai/") || id.startsWith("qwen/") || id.startsWith("llama-")) return "groq";
+  if(id.startsWith("mistral-") || id.startsWith("codestral")) return "mistral";
+  if(id.includes("/") && !id.startsWith("@cf/")) return "hugging-face";
+  return "cloudflare-workers-ai";
+}
+
+function providerKey(env,providerId){
+  const p=AMON_PROVIDER_CATALOG.find(x=>x.id===providerId);
+  return p?.keyEnv ? String(env?.[p.keyEnv]||"").trim() : "";
+}
+
+async function runExternalProvider(env,providerId,model,messages,maxTokens){
+  const provider=AMON_PROVIDER_CATALOG.find(x=>x.id===providerId);
+  const key=providerKey(env,providerId);
+  if(!provider || providerId==="cloudflare-workers-ai" || !key) throw new Error("PROVIDER_NOT_CONFIGURED");
+  if(provider.kind==="gemini"){
+    const endpoint="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(key);
+    const contents=(Array.isArray(messages)?messages:[]).filter(x=>x && typeof x.content==="string").map(x=>({
+      role:x.role==="assistant" ? "model" : "user",
+      parts:[{text:x.content}]
+    }));
+    const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      contents,
+      generationConfig:{maxOutputTokens:maxTokens}
+    })});
+    if(!response.ok) throw new Error("GEMINI_HTTP_"+response.status);
+    return await response.json();
+  }
+  const headers={"Content-Type":"application/json","Authorization":"Bearer "+key};
+  if(providerId==="openrouter"){
+    headers["HTTP-Referer"]="https://amon-ai.vo133vo321.workers.dev";
+    headers["X-Title"]="AMON AI";
+  }
+  const response=await fetch(provider.endpoint,{method:"POST",headers,body:JSON.stringify({
+    model,
+    messages,
+    max_tokens:maxTokens
+  })});
+  if(!response.ok) throw new Error(providerId.toUpperCase()+"_HTTP_"+response.status);
+  return await response.json();
+}
+
+function extractProviderText(result,providerId){
+  if(providerId==="google-gemini"){
+    return result?.candidates?.[0]?.content?.parts?.map(x=>x?.text||"").join("")||"";
+  }
+  return result?.choices?.[0]?.message?.content || "";
+}
+
+// ============================================================
 // AI ENGINE
 // ============================================================
 
 async function runAI(env, messages, options = {}) {
-  if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
   const requestedModel = String(options.model || AMON.model).trim();
-  const model = modelCatalogEntry(requestedModel) ? requestedModel : AMON.model;
+  const requestedProvider = String(options.provider || "").trim();
+  const providerId = requestedProvider || providerForModel(requestedModel);
+  const provider = AMON_PROVIDER_CATALOG.find(x=>x.id===providerId);
+  const model = requestedModel || provider?.defaultModel || AMON.model;
   const requestedTokens = Number(options.maxTokens);
   const maxTokens = Number.isFinite(requestedTokens)
     ? Math.max(128, Math.min(requestedTokens, AMON.limits.maxTokens))
     : AMON.limits.maxTokens;
+
+  if(providerId!=="cloudflare-workers-ai" && providerConfigured(provider,env)){
+    const external = await runExternalProvider(env,providerId,model,messages,maxTokens);
+    return { ...external, _amonProvider:providerId, _amonText:extractProviderText(external,providerId) };
+  }
+
+  if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
+  const cloudflareModel = modelCatalogEntry(model) ? model : AMON.model;
   try {
-    return await env.AI.run(model, { messages, max_tokens: maxTokens });
+    return await env.AI.run(cloudflareModel, { messages, max_tokens: maxTokens });
   } catch (firstError) {
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
       : messages;
-    return await env.AI.run(model, { messages: safeMessages, max_tokens: maxTokens });
+    return await env.AI.run(cloudflareModel, { messages: safeMessages, max_tokens: maxTokens });
   }
 }
 
@@ -2747,6 +2891,16 @@ function testErrorRecovery() {
     ok ? "تصنيف أخطاء التشغيل ومسارات الاسترداد الأساسية متسقة." : "فشل اختبار تصنيف أخطاء التشغيل.");
 }
 
+function freeProviderSelfTest(env){
+  const providers=publicProviderCatalog(env);
+  return {
+    total:providers.length,
+    configured:providers.filter(x=>x.configured).length,
+    notConnected:providers.filter(x=>!x.configured).length,
+    providers
+  };
+}
+
 async function runAMONSelfTests(env, options = {}) {
   const started = Date.now();
   const tests = [
@@ -3027,7 +3181,8 @@ async function router(
         stageJSelfTest:"اختبارات ذاتية محلية وتشخيص آمن مع اختبار AI مباشر اختياري للمالك",
         stageKRecovery:"إعادة محاولة آمنة، نماذج احتياطية مضبوطة، وتصنيف أخطاء دون كشف تفاصيل داخلية",
         stageLPerformance:"حدود للسياق والإخراج ومحاولات الاسترداد وقياس الأداء",
-        stageMFinalAudit:"تدقيق نهائي يجمع الاختبارات والأمان والأداء والاسترداد"
+        stageMFinalAudit:"تدقيق نهائي يجمع الاختبارات والأمان والأداء والاسترداد",
+        freeAIProviders:"كتالوج مزودي AI المجانيين/المجانيين جزئيًا مع كشف الاتصال الفعلي دون ادعاء اتصال غير موجود"
       },
       tools:publicTools(env),
       toolRouter:{enabled:true,name:"AMON Tool Router",description:"يحلل نوع الطلب ويختار أداة AMON المناسبة تلقائيًا دون حاجة المستخدم لاختيارها يدويًا."},
@@ -3183,6 +3338,14 @@ async function router(
 
   if (url.pathname === "/api/tools" && request.method === "GET") {
     return json({ success:true, name:AMON.name, tools:publicTools(env) });
+  }
+
+  if (url.pathname === "/api/providers" && request.method === "GET") {
+    return json({
+      success:true,
+      policy:"free-first",
+      providers:publicProviderCatalog(env)
+    });
   }
 
   if (url.pathname === "/api/models" && request.method === "GET") {
