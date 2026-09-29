@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import vm from "node:vm";
+import { execFileSync } from "node:child_process";
 
 const files = [
   "worker.js",
@@ -9,26 +10,23 @@ const files = [
 
 let failed = false;
 
-function checkJs(file) {
-  const source = fs.readFileSync(file, "utf8");
+for (const file of files) {
   try {
-    if (file === "worker.js") {
-      new vm.SourceTextModule(source);
-    } else {
-      new vm.Script(source, { filename: file });
-    }
+    execFileSync(process.execPath, ["--check", file], { stdio: "pipe" });
     console.log("PASS", file);
   } catch (error) {
     failed = true;
-    console.error("FAIL", file, error.message);
+    const detail = error?.stderr?.toString() || error?.stdout?.toString() || error.message;
+    console.error("FAIL", file, detail);
   }
 }
 
-for (const file of files) checkJs(file);
-
 const html = fs.readFileSync("public/index.html", "utf8");
-const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map((m) => m[1]).filter(Boolean);
-console.log("PASS public/index.html inline scripts:", scripts.length);
+const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+  .map((m) => m[1])
+  .filter(Boolean);
+
+console.log("Found inline scripts:", scripts.length);
 
 for (let i = 0; i < scripts.length; i++) {
   try {
