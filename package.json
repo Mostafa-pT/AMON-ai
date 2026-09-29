@@ -6,7 +6,9 @@
   "description": "AMON AI central runtime and Cloudflare Worker deployment",
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "validate": "node scripts/validate.mjs",
+    "test": "npm run validate"
   },
   "dependencies": {
     "fflate": "^0.8.2"
