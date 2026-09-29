@@ -1,4 +1,4 @@
-import { AMON_MASTER_RULES, buildAMONMasterRulesPrompt } from "./amon-rules.js";
+import { buildAMONMasterRulesPrompt } from "./amon-rules.js";
 import { zipSync, strToU8 } from "fflate";
 
 // ============================================================
