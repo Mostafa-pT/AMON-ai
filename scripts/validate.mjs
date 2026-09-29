@@ -2,39 +2,87 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { execFileSync } from "node:child_process";
 
-const files = [
+const requiredFiles = [
+  "worker.js",
+  "wrangler.toml",
+  "package.json",
+  "public/index.html",
+  "public/amon-supabase.js",
+  "amon-owner.js"
+];
+
+let failed = false;
+
+for (const file of requiredFiles) {
+  if (!fs.existsSync(file)) {
+    failed = true;
+    console.error("FAIL missing file:", file);
+  } else {
+    console.log("PASS file:", file);
+  }
+}
+
+const syntaxFiles = [
   "worker.js",
   "amon-owner.js",
   "public/amon-supabase.js"
 ];
 
-let failed = false;
-
-for (const file of files) {
+for (const file of syntaxFiles) {
+  if (!fs.existsSync(file)) continue;
   try {
     execFileSync(process.execPath, ["--check", file], { stdio: "pipe" });
-    console.log("PASS", file);
+    console.log("PASS syntax:", file);
   } catch (error) {
     failed = true;
-    const detail = error?.stderr?.toString() || error?.stdout?.toString() || error.message;
-    console.error("FAIL", file, detail);
+    const detail =
+      error?.stderr?.toString() ||
+      error?.stdout?.toString() ||
+      error.message;
+    console.error("FAIL syntax:", file, detail);
   }
 }
 
-const html = fs.readFileSync("public/index.html", "utf8");
-const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
-  .map((m) => m[1])
-  .filter(Boolean);
+if (fs.existsSync("public/index.html")) {
+  const html = fs.readFileSync("public/index.html", "utf8");
+  const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+    .map((m) => m[1])
+    .filter(Boolean);
 
-console.log("Found inline scripts:", scripts.length);
+  console.log("Found inline scripts:", scripts.length);
 
-for (let i = 0; i < scripts.length; i++) {
-  try {
-    new vm.Script(scripts[i], { filename: `public/index.html#script-${i + 1}` });
-    console.log("PASS public/index.html#script-" + (i + 1));
-  } catch (error) {
+  for (let i = 0; i < scripts.length; i++) {
+    try {
+      new vm.Script(scripts[i], {
+        filename: `public/index.html#script-${i + 1}`
+      });
+      console.log("PASS inline:", `public/index.html#script-${i + 1}`);
+    } catch (error) {
+      failed = true;
+      console.error(
+        "FAIL inline:",
+        `public/index.html#script-${i + 1}`,
+        error.message
+      );
+    }
+  }
+}
+
+if (fs.existsSync("wrangler.toml")) {
+  const wrangler = fs.readFileSync("wrangler.toml", "utf8");
+
+  if (!/^\s*main\s*=\s*"worker\.js"\s*$/m.test(wrangler)) {
     failed = true;
-    console.error("FAIL public/index.html#script-" + (i + 1), error.message);
+    console.error("FAIL wrangler: main must point to worker.js");
+  } else {
+    console.log("PASS wrangler: main -> worker.js");
+  }
+
+  if (!/^\s*directory\s*=\s*"\.\/public"\s*$/m.test(wrangler)) {
+    failed = true;
+    console.error("FAIL wrangler: assets directory must be ./public");
+  } else {
+    console.log("PASS wrangler: assets -> ./public");
   }
 }
 
