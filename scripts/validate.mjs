@@ -8,7 +8,8 @@ const requiredFiles = [
   "package.json",
   "public/index.html",
   "public/amon-supabase.js",
-  "amon-owner.js"
+  "amon-owner.js",
+  "amon-rules.js"
 ];
 
 let failed = false;
@@ -25,7 +26,8 @@ for (const file of requiredFiles) {
 const syntaxFiles = [
   "worker.js",
   "amon-owner.js",
-  "public/amon-supabase.js"
+  "public/amon-supabase.js",
+  "amon-rules.js"
 ];
 
 for (const file of syntaxFiles) {
