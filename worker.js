@@ -1,3 +1,4 @@
+import { AMON_MASTER_RULES, buildAMONMasterRulesPrompt } from "./amon-rules.js";
 import { zipSync, strToU8 } from "fflate";
 
 // ============================================================
@@ -282,7 +283,8 @@ function cleanHistory(history) {
 
 function buildSystemPrompt() {
 
-  return `
+  return buildAMONMasterRulesPrompt() + `
+
 أنت AMON AI، منصة ذكاء اصطناعي عامة واحترافية تابعة لشركة PIXEL GAMES.
 
 الهوية الرسمية:
