@@ -40,7 +40,10 @@ const requiredStageAContracts = [
   "successCriteria",
   "temporalScope",
   "geographicScope",
-  "privacySensitive"
+  "privacySensitive",
+  "extractAIResponse",
+  "_amonText",
+  "AI_EMPTY_RESPONSE"
 ];
 for (const contract of requiredStageAContracts) {
   if (!workerText.includes(contract)) {
@@ -49,6 +52,13 @@ for (const contract of requiredStageAContracts) {
   } else {
     console.log("PASS Stage A contract:", contract);
   }
+}
+
+if (/async\\s+async\\s+async|async\\s+async\\s+function\\s+runStageBReasoning/.test(workerText)) {
+  failed = true;
+  console.error("FAIL Stage B: duplicate async declaration detected");
+} else {
+  console.log("PASS Stage B: no duplicate async declaration");
 }
 
 if (!/async function runStageBReasoning\s*\(/.test(workerText)) {
