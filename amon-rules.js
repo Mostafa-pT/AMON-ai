@@ -6,7 +6,8 @@
 export const AMON_MASTER_RULES = Object.freeze({
   identity: {
     product: "AMON AI",
-    company: "PIXEL GAMES",
+    company: "Morval Technology Group",
+    companyNameStatus: "WORKING_NAME_PENDING_LEGAL_CLEARANCE",
     ownerRole: "OWNER",
     ownerControl: true
   },
