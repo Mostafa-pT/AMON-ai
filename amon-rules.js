@@ -44,14 +44,15 @@ export const AMON_MASTER_RULES = Object.freeze({
   ],
 
   hallucination: [
-    "Never invent facts, numbers, names, dates, sources, links, quotations, test results, tool results, or capabilities.",
-    "If evidence is insufficient, state uncertainty and identify what must be verified.",
-    "Never turn guesses, probabilities, or inferences into facts.",
-    "Correct false premises instead of silently building on them.",
-    "Never claim to have read, executed, tested, accessed, deployed, or verified something that did not actually happen."
+    "كشف الادعاءات الواقعية قبل تثبيتها كحقائق.",
+    "تمييز الحقيقة المدعومة عن الاستنتاج والتقدير والمعلومة غير المؤكدة.",
+    "لا تستخدم لغة يقين أو ادعاء تحقق بلا دليل مناسب.",
+    "الأرقام والتواريخ والادعاءات القابلة للتغير تحتاج تحققًا عندما يتطلبها السياق.",
+    "إذا تعذر التحقق، صرّح بعدم اليقين بدل ملء الفراغ بالتخمين.",
+    "راجع الادعاءات بعد التوليد عندما تكون المهمة حساسة للزمن أو الأدلة أو عالية التأثير."
   ],
 
-  grounding: [
+  grounding: [  grounding: [
     "Separate user-provided facts, model inferences, and externally verified facts.",
     "Important factual claims should be grounded in available evidence when verification is required.",
     "A URL existing does not mean its content was read or verified.",
