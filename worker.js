@@ -405,24 +405,90 @@ function extractTaskSignals(message){
   return patterns.filter(([,rx])=>rx.test(q)).map(([type])=>type);
 }
 
-function inferAMONTaskProfile(message,taskType,history){
+function extractTaskEntities(message){
   const q=String(message||"").trim();
-  const signals=extractTaskSignals(q);
-  const secondaryTaskTypes=signals.filter(x=>x!==taskType).slice(0,3);
-  const hasCurrent=/الآن|اليوم|حالي|حاليا|حاليًا|آخر|أحدث|latest|today|current/.test(q.toLowerCase());
-  const needsExternalVerification=/مصدر|مصادر|تحقق|دليل|أثبت|إثبات|آخر|أحدث|اليوم|قانون|سعر|خبر|احصائ|إحصائ|official|source|verify|evidence/i.test(q);
-  const needsTool=/كود|برمج|احسب|حساب|pdf|docx|xlsx|csv|ابحث|بحث|مصادر|ملف|code|api|search|calculate/i.test(q);
-  const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/i.test(q);
-  const ambiguity=/^.{0,18}$/.test(q)||/ساعدني|اعمل|افعل|حل|اشرح$/i.test(q);
-  const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|only|without|do not|must|under|less than)\b[^.!?\n]*/gi)||[]).slice(0,5);
-  const outputFormat=/جدول|table/.test(q)?"table":/كود|code/.test(q)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(q)?"steps":/قائمة|نقاط|list/.test(q)?"list":"auto";
-  const complexity=Math.min(100,Math.round(15+q.length/5+signals.length*8+(needsTool?10:0)+(needsExternalVerification?12:0)+(highImpact?15:0)+(history.length>6?8:0)));
-  const risk=highImpact?"high":(needsExternalVerification||needsTool?"medium":"low");
-  const confidence=Math.max(0.35,Math.min(0.99,0.62+(signals.length?0.08:0)+(q.length>25?0.08:0)+(taskType!=="question"?0.06:0)-(ambiguity?0.18:0)));
-  const clarification=ambiguity||signals.length===0&&q.length<8;
-  return {complexity,risk,confidence:Number(confidence.toFixed(2)),signals,secondaryTaskTypes,needsExternalVerification,needsCurrentVerification:hasCurrent,needsTool,highImpact,ambiguity,explicitConstraints,outputFormat,clarification};
+  const urls=[...q.matchAll(/https?:\/\/[^\s]+/gi)].map(m=>m[0]).slice(0,5);
+  const quoted=[...q.matchAll(/["“”«»]([^"“”«»]{2,120})["“”«»]/g)].map(m=>m[1]).slice(0,5);
+  const numbers=[...q.matchAll(/\b\d+(?:[.,]\d+)?\b/g)].map(m=>m[0]).slice(0,10);
+  return {urls,quoted,numbers};
 }
 
+function inferAMONTaskProfile(message,taskType,history){
+  const q=String(message||"").trim();
+  const lower=q.toLowerCase();
+  const safeHistory=Array.isArray(history)?history:[];
+  const signals=extractTaskSignals(q);
+  const secondaryTaskTypes=signals.filter(x=>x!==taskType).slice(0,4);
+  const entities=extractTaskEntities(q);
+  const hasCurrent=/الآن|اليوم|حالي|حاليًا|آخر|أحدث|هذا الشهر|هذا العام|latest|today|current|recent/.test(lower);
+  const temporalScope=/اليوم|أمس|غد|هذا الأسبوع|هذا الشهر|هذا العام|منذ|قبل|بعد|today|yesterday|tomorrow|this week|this month|this year|since|before|after/.test(lower)?"explicit":"unspecified";
+  const geographicScope=/مصر|السعودية|الإمارات|أمريكا|بريطانيا|أوروبا|العالم|دولي|محلي|egypt|saudi|uae|usa|uk|europe|global|international|local/.test(lower)?"mentioned":"unspecified";
+  const needsExternalVerification=/مصدر|مصادر|تحقق|دليل|أثبت|إثبات|آخر|أحدث|اليوم|قانون|سعر|خبر|إحصائ|official|source|verify|evidence|citation/.test(lower);
+  const needsTool=/كود|برمج|احسب|حساب|pdf|docx|xlsx|csv|ابحث|بحث|مصادر|ملف|code|api|search|calculate|حلل ملف/.test(lower);
+  const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/.test(lower);
+  const privacySensitive=/كلمة مرور|رمز|مفتاح|سر|خصوص|بيانات شخصية|حسابي|password|token|secret|private|personal data/.test(lower);
+  const ambiguity=q.length<=18||/ساعدني|اعمل|افعل|حل|اشرح$/i.test(q);
+  const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\\b[^.!?\\n]*/gi)||[]).slice(0,6);
+  const outputFormat=/جدول|table/.test(lower)?"table":/كود|code/.test(lower)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(lower)?"steps":/قائمة|نقاط|list/.test(lower)?"list":/مختصر|باختصار|short|brief/.test(lower)?"concise":"auto";
+  const contextContinuity=safeHistory.length>0;
+  const contextDepth=Math.min(10,safeHistory.length);
+  const complexity=Math.min(100,Math.round(
+    12+q.length/6+signals.length*7+secondaryTaskTypes.length*5+
+    (needsTool?8:0)+(needsExternalVerification?12:0)+(highImpact?16:0)+
+    (entities.urls.length?5:0)+(entities.numbers.length>2?4:0)+(contextDepth>6?6:0)
+  ));
+  const risk=highImpact?"high":(privacySensitive?"high":(needsExternalVerification||needsTool||secondaryTaskTypes.length>0?"medium":"low"));
+  const confidence=Math.max(0.35,Math.min(0.99,
+    0.60+(signals.length?0.09:0)+(q.length>25?0.08:0)+(taskType!=="question"?0.06:0)+
+    (contextContinuity?0.04:0)-(ambiguity?0.18:0)
+  ));
+  const missingCore=(
+    (taskType==="comparison"&&!/(بين|مقابل|vs|versus)/i.test(q))||
+    (taskType==="translation"&&q.length<4)||
+    (taskType==="research"&&q.length<5)||
+    (taskType==="planning"&&q.length<12&&!contextContinuity)
+  );
+  const clarification=Boolean(ambiguity||signals.length===0&&q.length<8||missingCore);
+  const decision=clarification?"CLARIFY":(needsExternalVerification||hasCurrent||highImpact?"VERIFY_THEN_EXECUTE":"EXECUTE");
+  const executionPlan=[];
+  if(clarification) executionPlan.push("تحديد المعلومة الناقصة");
+  executionPlan.push("تثبيت الهدف والنطاق");
+  if(secondaryTaskTypes.length) executionPlan.push("تنسيق المهام الثانوية مع المهمة الأساسية");
+  if(needsExternalVerification||hasCurrent||highImpact) executionPlan.push("التحقق من المعلومات المطلوبة قبل تثبيت النتيجة");
+  if(needsTool) executionPlan.push("اختيار الأداة المناسبة ثم التحقق من نتيجة الأداة");
+  executionPlan.push("تنفيذ الحل");
+  executionPlan.push("مراجعة النتيجة مقابل الهدف والقيود");
+  const successCriteria=[
+    "الإجابة تعالج الهدف الفعلي",
+    "القيود الصريحة محترمة",
+    "لا توجد ادعاءات تحقق غير مثبتة",
+    "النتيجة متسقة مع المعطيات المتاحة"
+  ];
+  return {
+    complexity,
+    risk,
+    confidence:Number(confidence.toFixed(2)),
+    signals,
+    secondaryTaskTypes,
+    needsExternalVerification,
+    needsCurrentVerification:hasCurrent,
+    needsTool,
+    highImpact,
+    privacySensitive,
+    ambiguity,
+    clarification,
+    decision,
+    temporalScope,
+    geographicScope,
+    explicitConstraints,
+    outputFormat,
+    contextContinuity,
+    contextDepth,
+    entities,
+    executionPlan,
+    successCriteria
+  };
+}
 function detectMissingInformation(message,taskType,history,profile=null){
   const q=String(message||"").trim(),ctx=conversationContextProfile(history),missing=[];
   if(!q) missing.push("user_message");
@@ -435,7 +501,9 @@ function detectMissingInformation(message,taskType,history,profile=null){
 }
 
 function buildGoalTaskManager(message,taskType,history,profile=null){
-  const ctx=conversationContextProfile(history),goal=String(message||"").trim().slice(0,1000),subtasks=[];
+  const ctx=conversationContextProfile(Array.isArray(history)?history:[]);
+  const goal=String(message||"").trim().slice(0,1000);
+  const subtasks=[];
   if(taskType==="research")subtasks.push("تحديد سؤال البحث","تحديد النطاق والزمن","جمع المصادر","مقارنة الأدلة","تمييز المؤكد عن غير المؤكد");
   else if(taskType==="comparison")subtasks.push("تحديد عناصر المقارنة","استخراج المعايير","توحيد نطاق المقارنة","عرض الفروق والقيود");
   else if(taskType==="planning")subtasks.push("تحديد الهدف","استخراج القيود","تقسيم التنفيذ","تحديد الاعتماديات","تحديد معيار النجاح");
@@ -443,9 +511,17 @@ function buildGoalTaskManager(message,taskType,history,profile=null){
   else if(taskType==="analysis")subtasks.push("استخراج المعطيات","تمييز الحقائق عن الافتراضات","تحليل البدائل","اختبار الاتساق","صياغة النتيجة");
   else if(taskType==="troubleshooting")subtasks.push("تحديد العَرَض","حصر الأسباب المحتملة","اختبار الأقل خطورة","الإصلاح","التحقق من النتيجة");
   else subtasks.push("فهم الطلب","تحديد القيود","تنفيذ المهمة","مراجعة النتيجة");
-  return{goal,taskType,subtasks,contextMessages:ctx.messageCount,priority:profile?.risk==="high"?"high":"normal"};
+  if(profile?.executionPlan?.length) subtasks.push(...profile.executionPlan.slice(0,4));
+  return {
+    goal,
+    taskType,
+    subtasks:[...new Set(subtasks)],
+    contextMessages:ctx.messageCount,
+    priority:profile?.risk==="high"?"high":profile?.complexity>=70?"high":"normal",
+    decision:profile?.decision||"EXECUTE",
+    successCriteria:profile?.successCriteria||[]
+  };
 }
-
 function selectAIModel(taskType,mode,env=null){
   const profiles={coding:"code",calculation:"precision",research:"research",comparison:"analysis",analysis:"analysis",explanation:"education",translation:"language",summarization:"summary",creative:"creative",troubleshooting:"diagnostic",planning:"planning",file:"document",question:"general",conversation:"general"};
   const comparison=compareModelsForTask(taskType,mode,env);
@@ -464,7 +540,7 @@ function understandAMONTask(message,mode,history,env=null){
   const missing=detectMissingInformation(message,taskType,history,profile);
   const goalManager=buildGoalTaskManager(message,taskType,history,profile);
   const model=selectAIModel(taskType,mode,env);
-  return{taskType,language,context,profile,missing,goalManager,model,ready:missing.action==="proceed"&&!profile.clarification||context.hasContext};
+  return{taskType,language,context,profile,missing,goalManager,model,ready:missing.action==="proceed" && (!profile.clarification || context.hasContext)};
 }
 function buildTaskUnderstandingInstruction(u){
   const p=u.profile||{};
@@ -483,6 +559,12 @@ function buildTaskUnderstandingInstruction(u){
     "يحتاج معلومات حالية: "+(p.needsCurrentVerification?"نعم":"لا"),
     "يحتاج أداة: "+(p.needsTool?"نعم":"لا"),
     "صيغة الإخراج المطلوبة: "+p.outputFormat,
+    "قرار التنفيذ المركزي: "+(p.decision||"EXECUTE"),
+    "النطاق الزمني: "+(p.temporalScope||"unspecified"),
+    "النطاق الجغرافي: "+(p.geographicScope||"unspecified"),
+    "حساسية الخصوصية: "+(p.privacySensitive?"مرتفعة":"عادية"),
+    "خطة التنفيذ: "+(p.executionPlan?.join(" | ")||"تلقائية"),
+    "معايير النجاح: "+(p.successCriteria?.join(" | ")||"تحقق عام"),
     "القيود الصريحة: "+(p.explicitConstraints?.join(" | ")||"لا توجد"),
     "المعلومات الأساسية الناقصة: "+(u.missing.missing.length?u.missing.missing.join(", "):"لا توجد"),
     "إذا كانت معلومة أساسية ناقصة فعلًا، اسأل سؤالًا توضيحيًا قصيرًا بدل اختلاقها. إذا كانت غير أساسية، نفّذ أفضل تفسير مع التصريح بالافتراض عند الحاجة.",
@@ -1210,7 +1292,7 @@ async function regenerateStageBAnswer(env, userMessage, history, stageBContext, 
   return extractAIResponse(result);
 }
 
-async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
+async async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
   if (!stageBComplexity(userMessage, taskType, taskProfile)) {
     return { active: false, stage: "B", paths: 0, council: "", status: "bypassed_for_simple_request" };
   }
