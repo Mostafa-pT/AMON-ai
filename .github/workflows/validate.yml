@@ -15,3 +15,5 @@ jobs:
         with:
           node-version: 20
       - run: npm run validate
+      - name: Cloudflare deployment dry-run
+        run: npx wrangler@latest deploy --dry-run
