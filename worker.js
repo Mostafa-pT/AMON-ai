@@ -1120,9 +1120,9 @@ async function runExternalProvider(env,providerId,model,messages,maxTokens){
 
 function extractProviderText(result,providerId){
   if(providerId==="google-gemini"){
-    return result?.candidates?.[0]?.content?.parts?.map(x=>x?.text||"").join("")||"";
+    return extractAIResponse(result);
   }
-  return result?.choices?.[0]?.message?.content || "";
+  return extractAIResponse(result);
 }
 
 // ============================================================
@@ -1133,30 +1133,47 @@ async function runAI(env, messages, options = {}) {
   const requestedModel = String(options.model || AMON.model).trim();
   const requestedProvider = String(options.provider || "").trim();
   const providerId = requestedProvider || providerForModel(requestedModel);
-  const provider = AMON_PROVIDER_CATALOG.find(x=>x.id===providerId);
+  const provider = AMON_PROVIDER_CATALOG.find(x => x.id === providerId);
   const model = requestedModel || provider?.defaultModel || AMON.model;
   const requestedTokens = Number(options.maxTokens);
   const maxTokens = Number.isFinite(requestedTokens)
     ? Math.max(128, Math.min(requestedTokens, AMON.limits.maxTokens))
     : AMON.limits.maxTokens;
 
-  if(providerId!=="cloudflare-workers-ai" && providerConfigured(provider,env)){
-    const external = await runExternalProvider(env,providerId,model,messages,maxTokens);
-    return { ...external, _amonProvider:providerId, _amonText:extractProviderText(external,providerId) };
+  if (providerId !== "cloudflare-workers-ai" && providerConfigured(provider, env)) {
+    const external = await runExternalProvider(env, providerId, model, messages, maxTokens);
+    const text = extractProviderText(external, providerId);
+    if (!text) throw new Error("AI_EMPTY_RESPONSE:" + providerId);
+    return { ...external, _amonProvider: providerId, _amonText: text };
   }
 
-  if (!env?.AI || typeof env.AI.run !== "function") throw new Error("AI_BINDING_MISSING");
+  if (!env?.AI || typeof env.AI.run !== "function") {
+    throw new Error("AI_BINDING_MISSING");
+  }
+
   const cloudflareModel = modelCatalogEntry(model) ? model : AMON.model;
+  let result;
   try {
-    return await env.AI.run(cloudflareModel, { messages, max_tokens: maxTokens });
+    result = await env.AI.run(cloudflareModel, { messages, max_tokens: maxTokens });
   } catch (firstError) {
     const safeMessages = Array.isArray(messages)
-      ? messages.slice(-8).map(({ role, content }) => ({ role, content: String(content || "").slice(0, 6000) }))
+      ? messages.slice(-8).map(({ role, content }) => ({
+          role,
+          content: String(content || "").slice(0, 6000)
+        }))
       : messages;
-    return await env.AI.run(cloudflareModel, { messages: safeMessages, max_tokens: maxTokens });
-  }
-}
 
+    result = await env.AI.run(cloudflareModel, {
+      messages: safeMessages,
+      max_tokens: maxTokens
+    });
+  }
+
+  const text = extractAIResponse(result);
+  if (!text) throw new Error("AI_EMPTY_RESPONSE:" + cloudflareModel);
+
+  return result;
+}
 
 // ============================================================
 // AMON STAGE B — MULTI-PATH REASONING / COUNCIL / VERIFICATION
@@ -1292,7 +1309,7 @@ async function regenerateStageBAnswer(env, userMessage, history, stageBContext, 
   return extractAIResponse(result);
 }
 
-async async async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
+async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
   if (!stageBComplexity(userMessage, taskType, taskProfile)) {
     return { active: false, stage: "B", paths: 0, council: "", status: "bypassed_for_simple_request" };
   }
@@ -1323,53 +1340,45 @@ async async async function runStageBReasoning(env, userMessage, taskType, histor
 // ============================================================
 
 function extractAIResponse(result) {
+  const candidates = [
+    result,
+    result?._amonText,
+    result?.response,
+    result?.text,
+    result?.output_text,
+    result?.result?.response,
+    result?.result?.text,
+    result?.result?.output_text,
+    result?.result?._amonText,
+    result?.choices?.[0]?.message?.content,
+    result?.choices?.[0]?.text,
+    result?.candidates?.[0]?.content?.parts?.map(x => x?.text || "").join(""),
+    result?.candidates?.[0]?.output_text
+  ];
 
-  if (
-    result &&
-    typeof result.response === "string"
-  ) {
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) return value.trim();
 
-    return result.response.trim();
+    if (Array.isArray(value)) {
+      const joined = value
+        .map(item => typeof item === "string" ? item : item?.text || item?.content || "")
+        .join("")
+        .trim();
+      if (joined) return joined;
+    }
 
-  }
-
-  if (
-    result &&
-    typeof result.text === "string"
-  ) {
-
-    return result.text.trim();
-
-  }
-
-  if (
-    result &&
-    typeof result.output_text === "string"
-  ) {
-
-    return result.output_text.trim();
-
-  }
-
-  if (
-    result &&
-    result.result &&
-    typeof result.result.response === "string"
-  ) {
-    return result.result.response.trim();
-  }
-
-  const choiceContent =
-    result?.choices?.[0]?.message?.content ||
-    result?.choices?.[0]?.text;
-
-  if (typeof choiceContent === "string") {
-    return choiceContent.trim();
+    if (value && typeof value === "object") {
+      const nested = value.text || value.content || value.value;
+      if (typeof nested === "string" && nested.trim()) return nested.trim();
+      if (Array.isArray(value.parts)) {
+        const parts = value.parts.map(x => x?.text || "").join("").trim();
+        if (parts) return parts;
+      }
+    }
   }
 
   return "";
 }
-
 
 // ============================================================
 // ERROR CLASSIFICATION
