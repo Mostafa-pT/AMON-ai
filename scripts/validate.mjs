@@ -51,7 +51,21 @@ for (const contract of requiredStageAContracts) {
   }
 }
 
-if (!/async function runStageBReasoning\\s*\\(/.test(workerText)) {\n  failed = true;\n  console.error("FAIL Stage B: runStageBReasoning must be async because it awaits AI paths");\n} else {\n  console.log("PASS Stage B: async council orchestration");\n}\n\nif (/function runStageBReasoning\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?await /.test(workerText)) {\n  failed = true;\n  console.error("FAIL Stage B: await used in non-async reasoning function");\n} else {\n  console.log("PASS Stage B: no invalid await pattern");\n}\n\nconst syntaxFiles = [
+if (!/async function runStageBReasoning\s*\(/.test(workerText)) {
+  failed = true;
+  console.error("FAIL Stage B: runStageBReasoning must be async because it awaits AI paths");
+} else {
+  console.log("PASS Stage B: async council orchestration");
+}
+
+if (/function runStageBReasoning\s*\([^)]*\)\s*\{[\s\S]*?await /.test(workerText)) {
+  failed = true;
+  console.error("FAIL Stage B: await used in non-async reasoning function");
+} else {
+  console.log("PASS Stage B: no invalid await pattern");
+}
+
+const syntaxFiles = [
   "worker.js",
   "amon-owner.js",
   "public/amon-supabase.js",
