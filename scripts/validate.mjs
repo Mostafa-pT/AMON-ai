@@ -23,6 +23,27 @@ for (const file of requiredFiles) {
   }
 }
 
+const workerText = fs.existsSync("worker.js") ? fs.readFileSync("worker.js", "utf8") : "";
+const requiredStageAContracts = [
+  "inferAMONTaskProfile",
+  "secondaryTaskTypes",
+  "needsExternalVerification",
+  "needsCurrentVerification",
+  "explicitConstraints",
+  "outputFormat",
+  "confidence",
+  "complexity",
+  "risk"
+];
+for (const contract of requiredStageAContracts) {
+  if (!workerText.includes(contract)) {
+    failed = true;
+    console.error("FAIL Stage A contract:", contract);
+  } else {
+    console.log("PASS Stage A contract:", contract);
+  }
+}
+
 const syntaxFiles = [
   "worker.js",
   "amon-owner.js",
