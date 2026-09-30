@@ -420,14 +420,15 @@ function inferAMONTaskProfile(message,taskType,history){
   const signals=extractTaskSignals(q);
   const secondaryTaskTypes=signals.filter(x=>x!==taskType).slice(0,4);
   const entities=extractTaskEntities(q);
+  const isGreeting=taskType==="conversation" || /^(مرحبا|مرحبًا|اهلا|أهلا|أهلًا|السلام عليكم|سلام|hello|hi|hey)[!.، ]*$/.test(lower);
   const hasCurrent=/الآن|اليوم|حالي|حاليًا|آخر|أحدث|هذا الشهر|هذا العام|latest|today|current|recent/.test(lower);
   const temporalScope=/اليوم|أمس|غد|هذا الأسبوع|هذا الشهر|هذا العام|منذ|قبل|بعد|today|yesterday|tomorrow|this week|this month|this year|since|before|after/.test(lower)?"explicit":"unspecified";
   const geographicScope=/مصر|السعودية|الإمارات|أمريكا|بريطانيا|أوروبا|العالم|دولي|محلي|egypt|saudi|uae|usa|uk|europe|global|international|local/.test(lower)?"mentioned":"unspecified";
   const needsExternalVerification=/مصدر|مصادر|تحقق|دليل|أثبت|إثبات|آخر|أحدث|اليوم|قانون|سعر|خبر|إحصائ|official|source|verify|evidence|citation/.test(lower);
   const needsTool=/كود|برمج|احسب|حساب|pdf|docx|xlsx|csv|ابحث|بحث|مصادر|ملف|code|api|search|calculate|حلل ملف/.test(lower);
-  const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/.test(lower);
+  const highImpact=/(^|[\s،,.!?؛:])(?:طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security)(?=$|[\s،,.!?؛:])/i.test(lower);
   const privacySensitive=/كلمة مرور|رمز|مفتاح|سر|خصوص|بيانات شخصية|حسابي|password|token|secret|private|personal data/.test(lower);
-  const ambiguity=(q.length<=10 && signals.length===0) || /^(ساعدني|اعمل|افعل|حل|اشرح)$/i.test(q);
+  const ambiguity=(!isGreeting && ((q.length<=10 && signals.length===0) || /^(ساعدني|اعمل|افعل|حل|اشرح)$/i.test(q)));
   const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\b[^.!?\n]*/gi)||[]).slice(0,6);
   const outputFormat=/جدول|table/.test(lower)?"table":/كود|code/.test(lower)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(lower)?"steps":/قائمة|نقاط|list/.test(lower)?"list":/مختصر|باختصار|short|brief/.test(lower)?"concise":"auto";
   const contextContinuity=safeHistory.length>0;
