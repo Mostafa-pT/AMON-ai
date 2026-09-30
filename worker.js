@@ -1293,9 +1293,11 @@ function extractAMONClaims(answer) {
 
 function assessAMONGrounding(answer, taskProfile={}, evidenceText="", researchData=null) {
   const claims=extractAMONClaims(answer);
-  const evidenceAvailable=Boolean(String(evidenceText||"").trim()) ||
-    Boolean(researchData?.available && researchData?.results?.length);
   const currentSensitive=Boolean(taskProfile?.needsCurrentVerification || taskProfile?.needsExternalVerification);
+  const hasLiveResearchEvidence=Boolean(researchData?.available && researchData?.results?.length);
+  const hasLocalReliableEvidence=!currentSensitive && Boolean(String(evidenceText||"").trim()) &&
+    !/لا يوجد مزود بحث فعلي|لا توجد أدلة خارجية|بوابات خارجية|لا تدّعِ قراءة/i.test(String(evidenceText));
+  const evidenceAvailable=hasLiveResearchEvidence || hasLocalReliableEvidence;
   const issues=[];
   if(claims.some(x=>x.hasCertainty&&!evidenceAvailable)) issues.push("unsupported_certainty");
   if(claims.some(x=>x.claimsVerification&&!evidenceAvailable)) issues.push("unsupported_verification_claim");
