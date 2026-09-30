@@ -72,7 +72,7 @@ N — Professional Provider & Internet Intelligence Layer
 △ مخطط مستقبلي
 
 ## 5. الخطة رقم 2 — العقل المركزي وفهم المهمة
-**الحالة: ✓ مكتملة في طبقة التنفيذ الأساسية + تحقق ساكن.**
+**الحالة: ✓ مكتملة في طبقة التنفيذ الأساسية + تحقق ساكن + تشديد تنفيذي إضافي.**
 
 تم إغلاق نطاق الخطة 2 في الكود عبر:
 - تصنيف نوع المهمة الأساسي.
@@ -107,6 +107,10 @@ Added controls:
 - stronger clarification logic for genuinely missing core information
 - Stage B async orchestration correction so awaited AI paths are executed legally
 - expanded static validation contracts for the new central-brain fields
+- تطبيق قرار CLARIFY فعليًا قبل استدعاء المحرك عندما تكون معلومة أساسية ناقصة
+- تخفيض استدعاءات Stage B في الطلبات البسيطة، وقصر مراجعة AI على الحالات التي يعمل فيها Stage B
+- تقييد الاسترداد في وضع FREE_ONLY على النماذج المعلّمة كمجانية، مع مسارات احتياطية إضافية
+- معالجة أخطاء السعة وعدم توفر النموذج، ومنع إعادة المحاولة العمياء لنفس النموذج إلا عند خطأ حجم/سياق الطلب
 
 Verification status:
 - repository code and validation contracts updated
