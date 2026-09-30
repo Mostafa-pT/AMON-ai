@@ -112,3 +112,6 @@ Verification status:
 - repository code and validation contracts updated
 - production behavioral verification is still separate from static validation
 - the validation workflow is configured to run on pushes to main
+
+
+<!-- Plan 2 CI verification branch -->
