@@ -43,7 +43,12 @@ const requiredStageAContracts = [
   "privacySensitive",
   "extractAIResponse",
   "_amonText",
-  "AI_EMPTY_RESPONSE"
+  "AI_EMPTY_RESPONSE",
+  "freeEligible",
+  "AI_CAPACITY_BUSY",
+  "AI_MODEL_UNAVAILABLE",
+  "decision === \"CLARIFY\"",
+  "stageB.active"
 ];
 for (const contract of requiredStageAContracts) {
   if (!workerText.includes(contract)) {
