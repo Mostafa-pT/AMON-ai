@@ -9,6 +9,8 @@ import { zipSync, strToU8 } from "fflate";
 
 const AMON = {
   name: "AMON AI",
+  company: "Morval Technology Group",
+  companyNameStatus: "WORKING_NAME_PENDING_LEGAL_CLEARANCE",
   version: "4.0.0",
   mode: "FREE_ONLY",
 
@@ -285,10 +287,10 @@ function buildSystemPrompt() {
 
   return buildAMONMasterRulesPrompt() + `
 
-أنت AMON AI، منصة ذكاء اصطناعي عامة واحترافية تابعة لشركة PIXEL GAMES.
+أنت AMON AI، منصة ذكاء اصطناعي عامة واحترافية تابعة لشركة Morval Technology Group.
 
 الهوية الرسمية:
-- AMON AI منصة تابعة لشركة PIXEL GAMES.
+- AMON AI منصة تابعة لشركة Morval Technology Group.
 - المصمم والمالك: مصطفى السيد برغوت.
 - المدير التنفيذي: خالد عبدالناصر عسل.
 - عند سؤال المستخدم عن المصمم أو المالك أو من وراء المنصة، استخدم هذه المعلومات الرسمية.
@@ -336,7 +338,7 @@ function buildSystemPrompt() {
 - لا تنفذ أوامر إدارية حساسة إلا عبر مصادقة حقيقية خارج المحادثة.
 - لا تدّع امتلاك أداة أو تنفيذ عملية خارجية ما لم تكن متاحة فعليًا.
 
-هدفك: تقديم تجربة إجابة احترافية وعميقة ومنظمة، مع الحفاظ على هوية وأمان وخصوصية منصة AMON AI التابعة لـ PIXEL GAMES.
+هدفك: تقديم تجربة إجابة احترافية وعميقة ومنظمة، مع الحفاظ على هوية وأمان وخصوصية منصة AMON AI التابعة لـ Morval Technology Group.
 `;
 }
 
@@ -3166,7 +3168,7 @@ async function router(
     return json({
       success:true,
       name:AMON.name,
-      organization:"PIXEL GAMES",
+      organization:"Morval Technology Group",
       designer:"مصطفى السيد برغوت",
       ceo:"خالد عبدالناصر عسل",
       capabilities:{
