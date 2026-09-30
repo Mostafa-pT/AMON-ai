@@ -1265,6 +1265,91 @@ async function runStageBCouncil(env, userMessage, taskType, pathA, pathB) {
   return extractAIResponse(result);
 }
 
+const AMON_TRUTH_POLICY = Object.freeze({
+  certaintyPatterns: [
+    /(?:بالتأكيد|بلا شك|من المؤكد|قطعًا|ثبت أن|لا شك|definitely|certainly|proven|undoubtedly)/i
+  ],
+  verificationPatterns: [
+    /(?:تحققت|تم التحقق|تحققنا|راجعت المصدر|قرأت المصدر|تم التأكد|verified|checked|confirmed|I checked|I verified)/i
+  ],
+  maxClaimSamples: 12
+});
+
+function extractAMONClaims(answer) {
+  const text=String(answer||"").trim();
+  if(!text) return [];
+  return text.split(/(?<=[.!?؟。])\s+|\n+/)
+    .map(x=>x.trim()).filter(Boolean).slice(0,40)
+    .filter(x=>/[\p{L}\p{N}]/u.test(x))
+    .slice(0,AMON_TRUTH_POLICY.maxClaimSamples)
+    .map((text,index)=>({
+      id:index+1,text,
+      hasNumber:/\b\d+(?:[.,]\d+)?%?\b/.test(text),
+      hasDate:/\b(?:19|20)\d{2}\b/.test(text),
+      hasCertainty:AMON_TRUTH_POLICY.certaintyPatterns.some(rx=>rx.test(text)),
+      claimsVerification:AMON_TRUTH_POLICY.verificationPatterns.some(rx=>rx.test(text))
+    }));
+}
+
+function assessAMONGrounding(answer, taskProfile={}, evidenceText="", researchData=null) {
+  const claims=extractAMONClaims(answer);
+  const evidenceAvailable=Boolean(String(evidenceText||"").trim()) ||
+    Boolean(researchData?.available && researchData?.results?.length);
+  const currentSensitive=Boolean(taskProfile?.needsCurrentVerification || taskProfile?.needsExternalVerification);
+  const issues=[];
+  if(claims.some(x=>x.hasCertainty&&!evidenceAvailable)) issues.push("unsupported_certainty");
+  if(claims.some(x=>x.claimsVerification&&!evidenceAvailable)) issues.push("unsupported_verification_claim");
+  if(currentSensitive&&!evidenceAvailable&&claims.length) issues.push("external_evidence_unavailable");
+  const score=Math.max(0,Math.min(1,1
+    -(issues.includes("unsupported_certainty")?.30:0)
+    -(issues.includes("unsupported_verification_claim")?.35:0)
+    -(issues.includes("external_evidence_unavailable")?.25:0)));
+  return {score:Number(score.toFixed(2)),grounded:issues.length===0,evidenceAvailable,currentSensitive,claims,numericClaims:claims.filter(x=>x.hasNumber||x.hasDate).length,issues,action:issues.length?"REVISE_OR_DISCLOSE_UNCERTAINTY":"PASS"};
+}
+
+function buildTruthInstruction(taskProfile={}, evidenceText="", grounding=null) {
+  const current=Boolean(taskProfile?.needsCurrentVerification||taskProfile?.needsExternalVerification);
+  return [
+    "خطة الصدق المعرفي في AMON مفعلة.",
+    "لا تحول التخمين أو الاستنتاج إلى حقيقة.",
+    "لا تقل إنك تحققت أو قرأت مصدرًا أو استخدمت بحثًا إلا إذا كان ذلك موجودًا فعليًا في الأدلة المتاحة.",
+    current ? (evidenceText ? "اربط الادعاءات المهمة بالأدلة المتاحة واذكر التعارض أو عدم اليقين." : "المهمة تحتاج تحققًا خارجيًا/حديثًا لكن لا توجد أدلة خارجية متصلة؛ صرّح بذلك ولا تقدم المعلومات المتغيرة كحقيقة مؤكدة.") : "إذا لم تكن المعلومة مؤكدة، استخدم صياغة احتمالية أو اذكر حدود المعرفة.",
+    grounding?.issues?.length ? "يوجد خطر grounding؛ صحح لغة اليقين وادعاءات التحقق." : "",
+    "افصل عند الحاجة بين حقيقة مدعومة واستنتاج وتقدير ومعلومة غير مؤكدة.",
+    "لا تختلق روابط أو مراجع أو أرقامًا أو تواريخ."
+  ].filter(Boolean).join("\n");
+}
+
+async function verifyAMONTruthfulness(env,userMessage,answer,taskProfile,evidenceText="",researchData=null) {
+  const grounding=assessAMONGrounding(answer,taskProfile,evidenceText,researchData);
+  const shouldAIReview=Boolean(taskProfile?.needsExternalVerification||taskProfile?.needsCurrentVerification||taskProfile?.highImpact||grounding.issues.length);
+  if(!shouldAIReview) return {...grounding,pass:grounding.grounded,mode:"heuristic"};
+  try {
+    const result=await runAI(env,[
+      {role:"system",content:buildSystemPrompt()},
+      {role:"system",content:"AMON Plan 3 — راجع الصدق المعرفي والـgrounding. ركز على الادعاءات الواقعية والأرقام والتواريخ وادعاءات التحقق واللغة القطعية. لا تعتبر الادعاء مثبتًا دون دليل. السطر الأول PASS أو REVISE ثم أسباب موجزة. لا تكشف التفكير الداخلي ولا تخترع مصادر."},
+      {role:"user",content:"السؤال:\n"+String(userMessage||"").slice(0,7000)+"\n\nالإجابة:\n"+String(answer||"").slice(0,12000)+"\n\nالأدلة:\n"+String(evidenceText||"لا توجد أدلة خارجية متصلة.").slice(0,12000)+"\n\nالفحص الأولي:\n"+JSON.stringify(grounding)}
+    ],{maxTokens:350});
+    const review=extractAIResponse(result);
+    const firstLine=review.split(/\n+/).map(x=>x.trim()).find(Boolean)||"";
+    return {...grounding,pass:grounding.grounded&&/^PASS\b/i.test(firstLine),mode:"heuristic+ai",review};
+  } catch(error) {
+    return {...grounding,pass:grounding.grounded,mode:"heuristic_fallback",reviewError:classifyAIError(error).code};
+  }
+}
+
+async function regenerateTruthfulAnswer(env,userMessage,history,answer,truthReview,evidenceText,taskProfile) {
+  const result=await runAI(env,[
+    {role:"system",content:buildSystemPrompt()},
+    {role:"system",content:buildTruthInstruction(taskProfile,evidenceText,truthReview)},
+    {role:"system",content:"أعد الإجابة النهائية فقط. لا تذكر وجود فحص داخلي. احتفظ بالمعلومات المدعومة، وخفّض اليقين أو صرّح بعدم توفر التحقق عند الحاجة."},
+    ...history.slice(-8),
+    {role:"user",content:userMessage},
+    {role:"assistant",content:String(answer||"").slice(0,12000)}
+  ],{maxTokens:AMON_PERFORMANCE_POLICY.maxAIOutputTokens});
+  return extractAIResponse(result);
+}
+
 function stageBHeuristicCheck(answer) {
   const text = String(answer || "").trim();
   const issues = [];
@@ -2669,7 +2754,7 @@ async function handleChat(
 ${modeInstruction}
 الأداة المختارة تلقائيًا: ${selectedTool}.
 ${toolInstruction(selectedTool)}
-${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${taskUnderstandingInstruction}\n${memoryContext ? memoryContext + "\n" : ""}${knowledgeContext ? knowledgeContext + "\n" : ""}${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
+${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + qualityHint : ""}\n${qualityInstruction}\n${buildTruthInstruction(understanding.profile, localToolContext)}\n${taskUnderstandingInstruction}\n${memoryContext ? memoryContext + "\n" : ""}${knowledgeContext ? knowledgeContext + "\n" : ""}${adaptiveInstruction}\n${responseDatabaseInstructionText}\n${responsePresentationInstructionText}${structuredListInstruction ? "\n" + structuredListInstruction : ""}${stageBContext ? "\n" + stageBContext : ""}`
     },
 
     ...history,
@@ -2714,6 +2799,15 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         "عاد النموذج دون إجابة.",
         502
       );
+    }
+
+    let truthVerification = await verifyAMONTruthfulness(env,userMessage,answer,understanding.profile,localToolContext,researchData);
+    if (!truthVerification.pass) {
+      const regeneratedTruthful = await regenerateTruthfulAnswer(env,userMessage,history,answer,truthVerification,localToolContext,understanding.profile);
+      if (regeneratedTruthful) {
+        answer = regeneratedTruthful;
+        truthVerification = await verifyAMONTruthfulness(env,userMessage,answer,understanding.profile,localToolContext,researchData);
+      }
     }
 
     const stageBVerification = await verifyStageBAnswer(
@@ -2801,6 +2895,18 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         status: hasKV(env, "AMON_KNOWLEDGE") ? "CONNECTED" : "NOT_CONNECTED",
         connected: hasKV(env, "AMON_KNOWLEDGE"),
         itemsUsed: knowledgeItems.length
+      },
+
+      truthfulness: {
+        stage: "3",
+        score: truthVerification.score,
+        grounded: Boolean(truthVerification.grounded),
+        evidenceAvailable: Boolean(truthVerification.evidenceAvailable),
+        claimsReviewed: truthVerification.claims?.length || 0,
+        numericClaims: truthVerification.numericClaims || 0,
+        issues: truthVerification.issues || [],
+        action: truthVerification.action,
+        mode: truthVerification.mode
       },
 
       stageB: {
