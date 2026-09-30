@@ -114,5 +114,7 @@ Added controls:
 
 Verification status:
 - repository code and validation contracts updated
+- local JavaScript parse checks passed for worker.js, amon-rules.js, amon-owner.js, scripts/validate.mjs, and frontend inline scripts
+- focused behavioral harness passed for greetings, calculation, comparison, research/current-info detection, clarification, translation, planning, troubleshooting, compound intents, entities, scopes, constraints, and output format
 - production behavioral verification is still separate from static validation
 - the validation workflow is configured to run on pushes to main
