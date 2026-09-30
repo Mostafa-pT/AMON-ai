@@ -1272,7 +1272,12 @@ const AMON_TRUTH_POLICY = Object.freeze({
   verificationPatterns: [
     /(?:تحققت|تم التحقق|تحققنا|راجعت المصدر|قرأت المصدر|تم التأكد|verified|checked|confirmed|I checked|I verified)/i
   ],
-  maxClaimSamples: 12
+  unsupportedEstimatePatterns: [
+    /(?:حوالي|تقريبًا|تقريبا|نحو|قد يكون|ربما|يُحتمل|يحتمل|approximately|about|roughly|may be|might be|likely)/i
+  ],
+  maxClaimSamples: 24,
+  maxReviewCharacters: 12000,
+  maxRegenerations: 1
 });
 
 function extractAMONClaims(answer) {
@@ -1287,7 +1292,8 @@ function extractAMONClaims(answer) {
       hasNumber:/\b\d+(?:[.,]\d+)?%?\b/.test(text),
       hasDate:/\b(?:19|20)\d{2}\b/.test(text),
       hasCertainty:AMON_TRUTH_POLICY.certaintyPatterns.some(rx=>rx.test(text)),
-      claimsVerification:AMON_TRUTH_POLICY.verificationPatterns.some(rx=>rx.test(text))
+      claimsVerification:AMON_TRUTH_POLICY.verificationPatterns.some(rx=>rx.test(text)),
+      hasUncertainty:AMON_TRUTH_POLICY.unsupportedEstimatePatterns.some(rx=>rx.test(text))
     }));
 }
 
@@ -1336,7 +1342,14 @@ async function verifyAMONTruthfulness(env,userMessage,answer,taskProfile,evidenc
     const firstLine=review.split(/\n+/).map(x=>x.trim()).find(Boolean)||"";
     return {...grounding,pass:grounding.grounded&&/^PASS\b/i.test(firstLine),mode:"heuristic+ai",review};
   } catch(error) {
-    return {...grounding,pass:grounding.grounded,mode:"heuristic_fallback",reviewError:classifyAIError(error).code};
+    return {
+      ...grounding,
+      pass:grounding.grounded,
+      mode:"heuristic_fallback",
+      reviewAvailable:false,
+      degraded:true,
+      reviewError:classifyAIError(error).code
+    };
   }
 }
 
@@ -1350,6 +1363,22 @@ async function regenerateTruthfulAnswer(env,userMessage,history,answer,truthRevi
     {role:"assistant",content:String(answer||"").slice(0,12000)}
   ],{maxTokens:AMON_PERFORMANCE_POLICY.maxAIOutputTokens});
   return extractAIResponse(result);
+}
+
+async function enforceFinalTruthfulness(env,userMessage,history,answer,taskProfile,evidenceText,researchData,truthVerification) {
+  let currentAnswer=String(answer||"");
+  let review=truthVerification || await verifyAMONTruthfulness(env,userMessage,currentAnswer,taskProfile,evidenceText,researchData);
+  for(let attempt=0; attempt<AMON_TRUTH_POLICY.maxRegenerations && !review.pass; attempt++){
+    const regenerated=await regenerateTruthfulAnswer(
+      env,userMessage,history,currentAnswer,review,evidenceText,taskProfile
+    );
+    if(!regenerated) break;
+    currentAnswer=regenerated;
+    review=await verifyAMONTruthfulness(
+      env,userMessage,currentAnswer,taskProfile,evidenceText,researchData
+    );
+  }
+  return {answer:currentAnswer,truthVerification:review};
 }
 
 function stageBHeuristicCheck(answer) {
@@ -2805,11 +2834,11 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
 
     let truthVerification = await verifyAMONTruthfulness(env,userMessage,answer,understanding.profile,localToolContext,researchData);
     if (!truthVerification.pass) {
-      const regeneratedTruthful = await regenerateTruthfulAnswer(env,userMessage,history,answer,truthVerification,localToolContext,understanding.profile);
-      if (regeneratedTruthful) {
-        answer = regeneratedTruthful;
-        truthVerification = await verifyAMONTruthfulness(env,userMessage,answer,understanding.profile,localToolContext,researchData);
-      }
+      const enforced = await enforceFinalTruthfulness(
+        env,userMessage,history,answer,understanding.profile,localToolContext,researchData,truthVerification
+      );
+      answer = enforced.answer;
+      truthVerification = enforced.truthVerification;
     }
 
     const stageBVerification = await verifyStageBAnswer(
@@ -2831,6 +2860,22 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
         stageBVerification.feedback
       );
       if (regenerated) answer = regenerated;
+    }
+
+    // Final Plan 3 gate: Stage B may have rewritten the answer.
+    const finalTruth = await enforceFinalTruthfulness(
+      env,userMessage,history,answer,understanding.profile,localToolContext,researchData
+    );
+    answer = finalTruth.answer;
+    truthVerification = finalTruth.truthVerification;
+
+    if (!truthVerification.pass) {
+      return errorResponse(
+        "TRUTHFULNESS_GATE_FAILED",
+        "تعذر إنتاج إجابة يمكن اجتياز فحص الصدق المعرفي لها.",
+        502,
+        { stage:"3", action:"retry_later_or_verify_sources" }
+      );
     }
 
     let generatedFile = null;
