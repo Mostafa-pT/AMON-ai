@@ -449,7 +449,7 @@ function inferAMONTaskProfile(message,taskType,history){
     (taskType==="research"&&q.length<5)||
     (taskType==="planning"&&q.length<12&&!contextContinuity)
   );
-  const clarification=Boolean(ambiguity||(!isGreeting && signals.length===0 && q.length<8)||missingCore);
+  const clarification=Boolean(!isGreeting && (ambiguity||signals.length===0&&q.length<8||missingCore));
   const decision=clarification?"CLARIFY":(needsExternalVerification||hasCurrent||highImpact?"VERIFY_THEN_EXECUTE":"EXECUTE");
   const executionPlan=[];
   if(clarification) executionPlan.push("تحديد المعلومة الناقصة");
