@@ -381,7 +381,7 @@ function responsePresentationInstruction(text){const p=responsePresentationProfi
 // ============================================================
 const AMON_TASK_TYPES = Object.freeze(["conversation","question","explanation","research","comparison","planning","coding","calculation","translation","summarization","file","analysis","creative","troubleshooting"]);
 
-function detectTaskType(message){const q=String(message||"").toLowerCase();if(/كود|برمج|javascript|typescript|python|sql|api|debug|خطأ برمجي/.test(q))return"coding";if(/احسب|حساب|معادلة|نسبة|جمع|طرح|ضرب|قسمة/.test(q)||/^[0-9+\-*/().,%\s]+$/.test(q))return"calculation";if(/ابحث|بحث|مصادر|تحقق|دراسة|آخر|احدث|اليوم/.test(q))return"research";if(/قارن|مقارنة|الفرق بين/.test(q))return"comparison";if(/خطة|خطوات|مراحل|كيف أبدأ|كيف ابدا|طريقة/.test(q))return"planning";if(/ترجم|translation|translate/.test(q))return"translation";if(/لخص|تلخيص|summary|summarize/.test(q))return"summarization";if(/ملف|pdf|docx|xlsx|csv|word|excel/.test(q))return"file";if(/حلل|تحليل|قيّم|قيم|استنتج/.test(q))return"analysis";if(/اشرح|علمني|علّمني|ما هو|ما هي|كيف يعمل/.test(q))return"explanation";if(/حل مشكلة|لا يعمل|مشكلة|إصلاح|اصلح|خطأ/.test(q))return"troubleshooting";if(/اكتب|قصة|شعر|منشور|رسالة|صياغة/.test(q))return"creative";return q?"question":"conversation";}
+function detectTaskType(message){const q=String(message||"").toLowerCase();if(/^(مرحبا|مرحبًا|اهلا|أهلا|أهلًا|السلام عليكم|سلام|hello|hi|hey)[!.، ]*$/.test(q))return"conversation";if(/كود|برمج|javascript|typescript|python|sql|api|debug|خطأ برمجي/.test(q))return"coding";if(/احسب|حساب|معادلة|نسبة|جمع|طرح|ضرب|قسمة/.test(q)||/^[0-9+\-*/().,%\s]+$/.test(q))return"calculation";if(/ابحث|بحث|مصادر|تحقق|دراسة|آخر|احدث|اليوم/.test(q))return"research";if(/قارن|مقارنة|الفرق بين/.test(q))return"comparison";if(/خطة|خطوات|مراحل|كيف أبدأ|كيف ابدا|طريقة/.test(q))return"planning";if(/ترجم|translation|translate/.test(q))return"translation";if(/لخص|تلخيص|summary|summarize/.test(q))return"summarization";if(/ملف|pdf|docx|xlsx|csv|word|excel/.test(q))return"file";if(/حلل|تحليل|قيّم|قيم|استنتج/.test(q))return"analysis";if(/اشرح|علمني|علّمني|ما هو|ما هي|كيف يعمل/.test(q))return"explanation";if(/حل مشكلة|لا يعمل|مشكلة|إصلاح|اصلح|خطأ/.test(q))return"troubleshooting";if(/اكتب|قصة|شعر|منشور|رسالة|صياغة/.test(q))return"creative";return q?"question":"conversation";}
 
 function detectLanguageHint(text){const q=String(text||"");if(/[\u0600-\u06FF]/.test(q))return"ar";if(/[A-Za-z]/.test(q))return"en";if(/[\u0400-\u04FF]/.test(q))return"ru";if(/[\u4E00-\u9FFF]/.test(q))return"zh";return"unknown";}
 function conversationContextProfile(history){const items=cleanHistory(history),last=items.slice(-8);return{messageCount:items.length,hasContext:items.length>0,recentRoles:last.map(x=>x.role),recentText:last.map(x=>x.content).join("\n").slice(-6000)};}
@@ -427,7 +427,7 @@ function inferAMONTaskProfile(message,taskType,history){
   const needsTool=/كود|برمج|احسب|حساب|pdf|docx|xlsx|csv|ابحث|بحث|مصادر|ملف|code|api|search|calculate|حلل ملف/.test(lower);
   const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/.test(lower);
   const privacySensitive=/كلمة مرور|رمز|مفتاح|سر|خصوص|بيانات شخصية|حسابي|password|token|secret|private|personal data/.test(lower);
-  const ambiguity=(q.length<=10 && signals.length===0) || /ساعدني|اعمل|افعل|حل$|اشرح$/i.test(q);
+  const ambiguity=(q.length<=10 && signals.length===0) || /^(ساعدني|اعمل|افعل|حل|اشرح)$/i.test(q);
   const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\b[^.!?\n]*/gi)||[]).slice(0,6);
   const outputFormat=/جدول|table/.test(lower)?"table":/كود|code/.test(lower)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(lower)?"steps":/قائمة|نقاط|list/.test(lower)?"list":/مختصر|باختصار|short|brief/.test(lower)?"concise":"auto";
   const contextContinuity=safeHistory.length>0;
@@ -444,7 +444,7 @@ function inferAMONTaskProfile(message,taskType,history){
   ));
   const missingCore=(
     (taskType==="comparison"&&!/(بين|مقابل|vs|versus)/i.test(q))||
-    (taskType==="translation"&&q.length<4)||
+    (taskType==="translation"&&q.length<8)||
     (taskType==="research"&&q.length<5)||
     (taskType==="planning"&&q.length<12&&!contextContinuity)
   );
