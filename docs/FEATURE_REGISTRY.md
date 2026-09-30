@@ -108,3 +108,6 @@
 | تكرار async في Stage B | ✓ | إصلاح تعريف runStageBReasoning |
 | اختبارات منع رجوع المشكلة | ✓ | إضافة عقود استخراج الإجابة واختبار duplicate-async |
 | التحقق من البيئة المنشورة | ◐ | يحتاج نشر النسخة الجديدة ثم اختبار /api/test-ai |
+
+
+<!-- validation verification branch: Plan 2 final contract run -->
