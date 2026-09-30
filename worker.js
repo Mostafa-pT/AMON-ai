@@ -2626,7 +2626,17 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       professionalism:
         { state:AMON_QUALITY_STATE.version, profile:requestProfile, contract:buildProfessionalResponseContract(), responseStyle:responseStyle.key, responseDatabaseProfile:responseDatabaseProfile(userMessage) },
 
-      understanding: { taskType: understanding.taskType, language: understanding.language, contextMessages: understanding.context.messageCount, missing: understanding.missing, goal: understanding.goalManager.goal, subtasks: understanding.goalManager.subtasks, modelProfile: understanding.model.profile },
+      understanding: {
+        taskType: understanding.taskType,
+        secondaryTaskTypes: understanding.profile.secondaryTaskTypes,
+        language: understanding.language,
+        contextMessages: understanding.context.messageCount,
+        missing: understanding.missing,
+        goal: understanding.goalManager.goal,
+        subtasks: understanding.goalManager.subtasks,
+        modelProfile: understanding.model.profile,
+        profile: understanding.profile
+      },
 
       memory: {
         stage: "C",
