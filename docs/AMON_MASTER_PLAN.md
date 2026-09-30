@@ -1,5 +1,19 @@
 # AMON AI — Master Plan
 
+## 0. الخطة رقم 1 — الهوية والأساس الحاكم
+**الحالة: ✓ مكتملة في المستودع بعد المراجعة والتصحيح.**
+
+تم إغلاق العناصر التالية:
+- هوية المنتج المركزية: AMON AI.
+- هوية الشركة الحالية: Morval Technology Group.
+- حالة اسم الشركة: اسم عمل مؤقت إلى حين التحقق القانوني؛ لا يُعامل كإثبات لسلامة الاسم تجاريًا.
+- قواعد AMON MASTER: truth, hallucination control, grounding, research, source conflict, prompt injection, tool truth, temporal awareness, reasoning, security, privacy, safety, memory, self-improvement, observability, evaluation, development cycle, UX.
+- تحكم المالك موجود كمسار مصادقة مستقل، مع عدم منح صلاحية المالك من نص المحادثة وحده.
+- فصل AMON عن KRUWAN ومشروع العناكب/الغرفة المغلقة مثبت في القواعد.
+- تمت إزالة مرجع PIXEL GAMES القديم من runtime الحالي وتوحيد هوية الشركة في worker.js.
+
+**معيار الإغلاق:** لا توجد بقايا هوية PIXEL GAMES في worker.js، والهوية المركزية متطابقة مع amon-rules.js. التحقق من نشر Cloudflare الفعلي يظل مهمة تشغيلية مستقلة في مراحل ما قبل الإطلاق.
+
 ## 1. مراحل مكتملة في الكود
 A — فهم الطلب والسياق وإدارة الهدف/المهمة. ✓
 B — التفكير متعدد المسارات والمجلس الداخلي والتحقق وإعادة المحاولة. ✓
