@@ -89,3 +89,26 @@ N — Professional Provider & Internet Intelligence Layer
 - إضافة فحوصات ساكنة في scripts/validate.mjs لعقود Stage A الأساسية.
 
 **حدود التحقق:** التحقق الساكن لا يثبت وحده جودة سلوك النموذج في الإنتاج؛ الاختبار السلوكي الحي الشامل سيأتي ضمن مرحلة الاختبارات والإطلاق بعد تثبيت بيئة النشر والمزودات.
+
+
+### Plan 2 — Professional Central Brain Expansion
+The central task-understanding layer was expanded beyond basic intent classification.
+
+Added controls:
+- multi-intent task signals and secondary task types
+- task entities: URLs, quoted targets, and numeric references
+- explicit temporal scope and geographic scope detection
+- privacy sensitivity classification
+- execution decision: CLARIFY / EXECUTE / VERIFY_THEN_EXECUTE
+- adaptive execution plan and success criteria
+- context continuity/depth awareness
+- priority escalation for high-risk or high-complexity tasks
+- centralized orchestration metadata passed to the reasoning layer
+- stronger clarification logic for genuinely missing core information
+- Stage B async orchestration correction so awaited AI paths are executed legally
+- expanded static validation contracts for the new central-brain fields
+
+Verification status:
+- repository code and validation contracts updated
+- production behavioral verification is still separate from static validation
+- the validation workflow is configured to run on pushes to main
