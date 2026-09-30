@@ -1085,8 +1085,14 @@ const AMON_STAGE_B_TASKS = Object.freeze([
   "troubleshooting","calculation","explanation","question"
 ]);
 
-function stageBComplexity(message, taskType) {
+function stageBComplexity(message, taskType, taskProfile=null) {
   const text = String(message || "").trim();
+  if (taskProfile && typeof taskProfile.complexity === "number") {
+    return taskProfile.complexity >= 42 ||
+      taskProfile.risk === "high" ||
+      taskProfile.needsExternalVerification ||
+      taskProfile.secondaryTaskTypes?.length > 0;
+  }
   return AMON_STAGE_B_TASKS.includes(taskType) || text.length >= 80;
 }
 
@@ -1151,9 +1157,9 @@ function stageBHeuristicCheck(answer) {
   return { pass: issues.length === 0, issues };
 }
 
-async function verifyStageBAnswer(env, userMessage, taskType, answer, council) {
+async function verifyStageBAnswer(env, userMessage, taskType, answer, council, taskProfile=null) {
   const heuristic = stageBHeuristicCheck(answer);
-  if (!stageBComplexity(userMessage, taskType)) {
+  if (!stageBComplexity(userMessage, taskType, taskProfile)) {
     return { pass: heuristic.pass, mode: "heuristic", issues: heuristic.issues, feedback: heuristic.issues.join(", ") };
   }
 
@@ -1204,8 +1210,8 @@ async function regenerateStageBAnswer(env, userMessage, history, stageBContext, 
   return extractAIResponse(result);
 }
 
-async function runStageBReasoning(env, userMessage, taskType, history, localContext) {
-  if (!stageBComplexity(userMessage, taskType)) {
+async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
+  if (!stageBComplexity(userMessage, taskType, taskProfile)) {
     return { active: false, stage: "B", paths: 0, council: "", status: "bypassed_for_simple_request" };
   }
 
@@ -2482,7 +2488,8 @@ async function handleChat(
     userMessage,
     understanding.taskType,
     history,
-    localToolContext
+    localToolContext,
+    understanding.profile
   );
 
   const stageBContext = stageB.council
@@ -2564,7 +2571,8 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       userMessage,
       understanding.taskType,
       answer,
-      stageB.council
+      stageB.council,
+      understanding.profile
     );
 
     if (!stageBVerification.pass && stageB.active) {
