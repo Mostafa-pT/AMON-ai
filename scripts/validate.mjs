@@ -54,6 +54,8 @@ const requiredStageAContracts = [
   "assessAMONGrounding",
   "verifyAMONTruthfulness",
   "buildTruthInstruction",
+  "enforceFinalTruthfulness",
+  "TRUTHFULNESS_GATE_FAILED",
   "testTruthfulnessLayer"
 ];
 for (const contract of requiredStageAContracts) {
