@@ -616,15 +616,13 @@ const AMON_MODEL_CATALOG = Object.freeze([
     tasks:["general","analysis","coding","multilingual","reasoning"],
     strengths:["analysis","coding","general quality"],
     freeEligible:false,
-    status:"CATALOG"
-  },
-  {
-    id:"@cf/google/gemma-4-26b-a4b-it",
-    name:"Gemma 4 26B A4B IT",
-    provider:"Google / Cloudflare Workers AI",
-    family:"Gemma",
-    tasks:["general","analysis","coding","multilingual","vision"],
-    strengths:["quality per active parameter","tool use","multimodal capability"],
+    id:"@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    name:"Llama 3.3 70B Instruct Fast",
+    provider:"Meta / Cloudflare Workers AI",
+    family:"Llama",
+    tasks:["general","analysis","coding","multilingual","reasoning"],
+    strengths:["analysis","coding","general quality"],
+    freeEligible:true,
     status:"CATALOG"
   },
   {
@@ -635,6 +633,13 @@ const AMON_MODEL_CATALOG = Object.freeze([
     tasks:["reasoning","analysis","coding","multilingual","agentic"],
     strengths:["reasoning","multilingual","function calling"],
     freeEligible:false,
+    id:"@cf/qwen/qwen3-30b-a3b-fp8",
+    name:"Qwen3 30B A3B FP8",
+    provider:"Qwen / Cloudflare Workers AI",
+    family:"Qwen",
+    tasks:["reasoning","analysis","coding","multilingual","agentic"],
+    strengths:["reasoning","multilingual","function calling"],
+    freeEligible:true,
     status:"CATALOG"
   },
   {
@@ -645,6 +650,13 @@ const AMON_MODEL_CATALOG = Object.freeze([
     tasks:["reasoning","analysis","coding"],
     strengths:["reasoning","complex analysis"],
     freeEligible:false,
+    id:"@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+    name:"DeepSeek R1 Distill Qwen 32B",
+    provider:"DeepSeek / Cloudflare Workers AI",
+    family:"DeepSeek",
+    tasks:["reasoning","analysis","coding"],
+    strengths:["reasoning","complex analysis"],
+    freeEligible:true,
     status:"CATALOG"
   },
   {
