@@ -3254,6 +3254,20 @@ function testStageRouting(env) {
     ok ? "التوجيه وفهم المهمة يعملان في الاختبار المحلي." : "يوجد خلل في توجيه المهام أو فهمها.");
 }
 
+function testTruthfulnessLayer() {
+  const clean=assessAMONGrounding("هذه معلومة عامة وغير مؤكدة.",{needsExternalVerification:false},"");
+  const certainty=assessAMONGrounding("بالتأكيد الرقم هو 100%.",{needsExternalVerification:false},"");
+  const fakeVerification=assessAMONGrounding("تحققت من المصدر الرسمي اليوم.",{needsCurrentVerification:true},"لا يوجد مزود بحث فعلي متصل حاليًا.");
+  const evidence=assessAMONGrounding("النتيجة وفق الدليل هي 42.",{needsCurrentVerification:true},"[1] دليل فعلي",{available:true,results:[{title:"evidence"}]});
+  const ok=clean.grounded && !certainty.grounded && !fakeVerification.grounded && evidence.grounded &&
+    certainty.issues.includes("unsupported_certainty") &&
+    fakeVerification.issues.includes("unsupported_verification_claim") &&
+    fakeVerification.evidenceAvailable===false &&
+    evidence.evidenceAvailable===true;
+  return selfTestResult("truthfulness-layer",ok?"PASS":"FAIL",
+    ok?"طبقة كشف الهلوسة والـgrounding اجتازت الاختبار المحلي.":"فشل اختبار واحد أو أكثر في طبقة الصدق المعرفي.");
+}
+
 function testErrorRecovery() {
   const free = classifyAIError(new Error("daily free allocation limit"));
   const paid = classifyAIError(new Error("Workers paid plan required"));
@@ -3285,7 +3299,8 @@ async function runAMONSelfTests(env, options = {}) {
     testSecurityConfiguration(env),
     testLocalEngines(),
     testStageRouting(env),
-    testErrorRecovery()
+    testErrorRecovery(),
+    testTruthfulnessLayer()
   ].slice(0, AMON_SELF_TEST_POLICY.maxTests);
 
   if (options.deep === true) {
