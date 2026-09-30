@@ -48,7 +48,13 @@ const requiredStageAContracts = [
   "AI_CAPACITY_BUSY",
   "AI_MODEL_UNAVAILABLE",
   "decision === \"CLARIFY\"",
-  "stageB.active"
+  "stageB.active",
+  "AMON_TRUTH_POLICY",
+  "extractAMONClaims",
+  "assessAMONGrounding",
+  "verifyAMONTruthfulness",
+  "buildTruthInstruction",
+  "testTruthfulnessLayer"
 ];
 for (const contract of requiredStageAContracts) {
   if (!workerText.includes(contract)) {
