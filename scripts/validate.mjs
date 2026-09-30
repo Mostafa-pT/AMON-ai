@@ -81,7 +81,7 @@ if (!/async function runStageBReasoning\s*\(/.test(workerText)) {
   console.log("PASS Stage B: async council orchestration");
 }
 
-if (/function runStageBReasoning\s*\([^)]*\)\s*\{[\s\S]*?await /.test(workerText)) {
+if (/(?<!async\s)function runStageBReasoning\s*\([^)]*\)\s*\{[\s\S]*?await /.test(workerText)) {
   failed = true;
   console.error("FAIL Stage B: await used in non-async reasoning function");
 } else {
