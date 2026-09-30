@@ -1292,7 +1292,7 @@ async function regenerateStageBAnswer(env, userMessage, history, stageBContext, 
   return extractAIResponse(result);
 }
 
-async async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
+async async async function runStageBReasoning(env, userMessage, taskType, history, localContext, taskProfile=null) {
   if (!stageBComplexity(userMessage, taskType, taskProfile)) {
     return { active: false, stage: "B", paths: 0, council: "", status: "bypassed_for_simple_request" };
   }
