@@ -427,7 +427,7 @@ function inferAMONTaskProfile(message,taskType,history){
   const needsTool=/كود|برمج|احسب|حساب|pdf|docx|xlsx|csv|ابحث|بحث|مصادر|ملف|code|api|search|calculate|حلل ملف/.test(lower);
   const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/.test(lower);
   const privacySensitive=/كلمة مرور|رمز|مفتاح|سر|خصوص|بيانات شخصية|حسابي|password|token|secret|private|personal data/.test(lower);
-  const ambiguity=q.length<=18||/ساعدني|اعمل|افعل|حل|اشرح$/i.test(q);
+  const ambiguity=(q.length<=10 && signals.length===0) || /ساعدني|اعمل|افعل|حل$|اشرح$/i.test(q);
   const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\b[^.!?\n]*/gi)||[]).slice(0,6);
   const outputFormat=/جدول|table/.test(lower)?"table":/كود|code/.test(lower)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(lower)?"steps":/قائمة|نقاط|list/.test(lower)?"list":/مختصر|باختصار|short|brief/.test(lower)?"concise":"auto";
   const contextContinuity=safeHistory.length>0;
@@ -585,6 +585,27 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"Llama",
     tasks:["general","multilingual","summarization","retrieval","chat"],
     strengths:["multilingual","speed","general chat"],
+    freeEligible:true,
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/google/gemma-4-26b-a4b-it",
+    name:"Gemma 4 26B A4B IT",
+    provider:"Google / Cloudflare Workers AI",
+    family:"Gemma",
+    tasks:["general","analysis","coding","multilingual","vision"],
+    strengths:["quality per active parameter","tool use","multimodal capability"],
+    freeEligible:true,
+    status:"CATALOG"
+  },
+  {
+    id:"@cf/zai-org/glm-4.7-flash",
+    name:"GLM 4.7 Flash",
+    provider:"Z.ai / Cloudflare Workers AI",
+    family:"GLM",
+    tasks:["general","analysis","coding","multilingual","agentic"],
+    strengths:["multilingual","coding","tool use"],
+    freeEligible:true,
     status:"CATALOG"
   },
   {
@@ -594,6 +615,7 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"Llama",
     tasks:["general","analysis","coding","multilingual","reasoning"],
     strengths:["analysis","coding","general quality"],
+    freeEligible:false,
     status:"CATALOG"
   },
   {
@@ -612,6 +634,7 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"Qwen",
     tasks:["reasoning","analysis","coding","multilingual","agentic"],
     strengths:["reasoning","multilingual","function calling"],
+    freeEligible:false,
     status:"CATALOG"
   },
   {
@@ -621,6 +644,7 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"DeepSeek",
     tasks:["reasoning","analysis","coding"],
     strengths:["reasoning","complex analysis"],
+    freeEligible:false,
     status:"CATALOG"
   },
   {
@@ -630,6 +654,7 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"Kimi",
     tasks:["coding","reasoning","agentic","vision"],
     strengths:["coding","tool use","long-context workflows"],
+    freeEligible:false,
     status:"CATALOG"
   },
   {
@@ -639,6 +664,7 @@ const AMON_MODEL_CATALOG = Object.freeze([
     family:"GLM",
     tasks:["coding","reasoning","agentic"],
     strengths:["coding","reasoning","tool use"],
+    freeEligible:false,
     status:"CATALOG"
   }
 ]);
@@ -1156,6 +1182,10 @@ async function runAI(env, messages, options = {}) {
   try {
     result = await env.AI.run(cloudflareModel, { messages, max_tokens: maxTokens });
   } catch (firstError) {
+    const firstText = String(firstError?.message || firstError || "").toLowerCase();
+    const retryablePromptError = /3006|request too large|context|prompt|token|input too large|payload/.test(firstText);
+    if (!retryablePromptError) throw firstError;
+
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-8).map(({ role, content }) => ({
           role,
@@ -1165,7 +1195,7 @@ async function runAI(env, messages, options = {}) {
 
     result = await env.AI.run(cloudflareModel, {
       messages: safeMessages,
-      max_tokens: maxTokens
+      max_tokens: Math.min(maxTokens, 1024)
     });
   }
 
@@ -1187,12 +1217,11 @@ const AMON_STAGE_B_TASKS = Object.freeze([
 function stageBComplexity(message, taskType, taskProfile=null) {
   const text = String(message || "").trim();
   if (taskProfile && typeof taskProfile.complexity === "number") {
-    return taskProfile.complexity >= 42 ||
+    return taskProfile.complexity >= 60 ||
       taskProfile.risk === "high" ||
-      taskProfile.needsExternalVerification ||
       taskProfile.secondaryTaskTypes?.length > 0;
   }
-  return AMON_STAGE_B_TASKS.includes(taskType) || text.length >= 80;
+  return AMON_STAGE_B_TASKS.includes(taskType) || text.length >= 120;
 }
 
 function stageBPathInstruction(pathName, localContext) {
@@ -1214,7 +1243,7 @@ async function runStageBPath(env, pathName, userMessage, history, localContext) 
     { role: "system", content: stageBPathInstruction(pathName, localContext) },
     ...history.slice(-8),
     { role: "user", content: userMessage }
-  ], { maxTokens: 900 });
+  ], { maxTokens: 500 });
   return extractAIResponse(result);
 }
 
@@ -1239,7 +1268,7 @@ async function runStageBCouncil(env, userMessage, taskType, pathA, pathB) {
     { role: "system", content: buildSystemPrompt() },
     { role: "system", content: prompt },
     { role: "user", content: "المهمة: " + userMessage + "\nنوع المهمة: " + taskType }
-  ], { maxTokens: 1100 });
+  ], { maxTokens: 350 });
 
   return extractAIResponse(result);
 }
@@ -1256,9 +1285,9 @@ function stageBHeuristicCheck(answer) {
   return { pass: issues.length === 0, issues };
 }
 
-async function verifyStageBAnswer(env, userMessage, taskType, answer, council, taskProfile=null) {
+async function verifyStageBAnswer(env, userMessage, taskType, answer, council, taskProfile=null, stageBActive=false) {
   const heuristic = stageBHeuristicCheck(answer);
-  if (!stageBComplexity(userMessage, taskType, taskProfile)) {
+  if (!stageBActive || !stageBComplexity(userMessage, taskType, taskProfile)) {
     return { pass: heuristic.pass, mode: "heuristic", issues: heuristic.issues, feedback: heuristic.issues.join(", ") };
   }
 
@@ -1426,6 +1455,14 @@ function classifyAIError(error) {
   // ----------------------------------------------------------
   // PAID PLAN
   // ----------------------------------------------------------
+
+  if (text.includes("3040") || lower.includes("out of capacity") || lower.includes("capacity temporarily exceeded")) {
+    return { code:"AI_CAPACITY_BUSY", status:429, message:"محرك الذكاء الاصطناعي مشغول حاليًا. تم تشغيل المسار الاحتياطي الآمن." };
+  }
+
+  if (text.includes("5007") || text.includes("3042") || lower.includes("no such model") || lower.includes("invalid model")) {
+    return { code:"AI_MODEL_UNAVAILABLE", status:503, message:"النموذج الحالي غير متاح، وسيحاول AMON استخدام نموذج احتياطي متاح." };
+  }
 
   if (
     text.includes("5035") ||
@@ -2571,6 +2608,36 @@ async function handleChat(
   const responsePresentationInstructionText = responsePresentationInstruction(userMessage);
 
   // ----------------------------------------------------------
+  // ----------------------------------------------------------
+  // CENTRAL DECISION GATE — PLAN 2
+  // ----------------------------------------------------------
+  if (understanding.profile.decision === "CLARIFY") {
+    const missing = understanding.missing.missing || [];
+    const clarification = missing.includes("comparison_targets")
+      ? "ما العنصران اللذان تريد مقارنتهما تحديدًا؟"
+      : missing.includes("source_text")
+        ? "أرسل النص الذي تريد ترجمته."
+        : missing.includes("research_scope")
+          ? "ما السؤال أو الموضوع الذي تريد البحث فيه تحديدًا؟"
+          : missing.includes("goal_details")
+            ? "ما الهدف الذي تريد الوصول إليه تحديدًا؟"
+            : "ما المطلوب تحديدًا حتى أنفذ المهمة بالشكل الصحيح؟";
+    return json({
+      success:true,name:AMON.name,version:AMON.version,status:"online",
+      response:clarification,message:clarification,reply:clarification,
+      decision:"CLARIFY",
+      understanding:{
+        taskType:understanding.taskType,
+        secondaryTaskTypes:understanding.profile.secondaryTaskTypes,
+        profile:understanding.profile,
+        missing:understanding.missing,
+        goal:understanding.goalManager.goal,
+        subtasks:understanding.goalManager.subtasks
+      },
+      stageB:{active:false,paths:0,status:"clarification_required",verification:"NOT_RUN"}
+    });
+  }
+
   // STAGE B — MULTI-PATH REASONING / INTERNAL COUNCIL
   // ----------------------------------------------------------
 
@@ -2663,7 +2730,8 @@ ${localToolContext ? "\n" + localToolContext : ""}${qualityHint ? "\n" + quality
       understanding.taskType,
       answer,
       stageB.council,
-      understanding.profile
+      understanding.profile,
+      stageB.active
     );
 
     if (!stageBVerification.pass && stageB.active) {
@@ -3167,9 +3235,11 @@ const AMON_RECOVERY_POLICY = Object.freeze({
 
 function recoveryModelCandidates(env, primaryModel) {
   const configured = configuredModelIds(env);
-  const candidates = [primaryModel, ...configured, AMON.model];
+  const freeFallbacks = ["@cf/google/gemma-4-26b-a4b-it", "@cf/zai-org/glm-4.7-flash"];
+  const candidates = [primaryModel, ...configured, ...freeFallbacks, AMON.model];
   return [...new Set(candidates.map(x => String(x || "").trim()).filter(Boolean))]
     .filter(id => modelCatalogEntry(id))
+    .filter(id => AMON.mode !== "FREE_ONLY" || modelCatalogEntry(id)?.freeEligible !== false)
     .slice(0, AMON_RECOVERY_POLICY.maxFallbackModels + 1);
 }
 
@@ -3210,6 +3280,8 @@ function safeRecoveryMessage(classified) {
   if (classified.code === "FREE_DAILY_LIMIT_REACHED") return "تم الوصول إلى الحد المجاني المتاح حاليًا لـ AMON. حاول لاحقًا.";
   if (classified.code === "MODEL_REQUIRES_PAID_PLAN") return "النموذج الحالي غير متاح في الخطة الحالية، ولم يتمكن AMON من إيجاد مسار احتياطي متاح.";
   if (classified.code === "AI_BINDING_MISSING") return "خدمة الذكاء الاصطناعي غير متصلة حاليًا.";
+  if (classified.code === "AI_CAPACITY_BUSY") return "محرك الذكاء الاصطناعي مشغول حاليًا. حاول مرة أخرى بعد قليل.";
+  if (classified.code === "AI_MODEL_UNAVAILABLE") return "النموذج الحالي غير متاح، ولم يتم العثور على مسار احتياطي قابل للتنفيذ.";
   return "تعذر تنفيذ طلب AMON حاليًا. تم تشغيل آلية الاسترداد الآمنة دون كشف تفاصيل داخلية.";
 }
 
