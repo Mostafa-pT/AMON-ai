@@ -52,7 +52,7 @@ export const AMON_MASTER_RULES = Object.freeze({
     "راجع الادعاءات بعد التوليد عندما تكون المهمة حساسة للزمن أو الأدلة أو عالية التأثير."
   ],
 
-  grounding: [  grounding: [
+  grounding: [
     "Separate user-provided facts, model inferences, and externally verified facts.",
     "Important factual claims should be grounded in available evidence when verification is required.",
     "A URL existing does not mean its content was read or verified.",
