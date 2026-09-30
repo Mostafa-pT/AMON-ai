@@ -428,7 +428,7 @@ function inferAMONTaskProfile(message,taskType,history){
   const highImpact=/طب|طبي|دواء|مرض|قانون|محامي|استثمار|مال|بنك|انتخابات|سياسة|أمن|اختراق|medical|legal|finance|election|security/.test(lower);
   const privacySensitive=/كلمة مرور|رمز|مفتاح|سر|خصوص|بيانات شخصية|حسابي|password|token|secret|private|personal data/.test(lower);
   const ambiguity=q.length<=18||/ساعدني|اعمل|افعل|حل|اشرح$/i.test(q);
-  const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\\b[^.!?\\n]*/gi)||[]).slice(0,6);
+  const explicitConstraints=(q.match(/(?:بدون|فقط|لا تستخدم|استخدم|بحد أقصى|حد أقصى|أقصى|قبل|بعد|only|without|do not|must|under|less than|at most)\b[^.!?\n]*/gi)||[]).slice(0,6);
   const outputFormat=/جدول|table/.test(lower)?"table":/كود|code/.test(lower)?"code":/خطوات|مراحل|خطة|roadmap|steps/.test(lower)?"steps":/قائمة|نقاط|list/.test(lower)?"list":/مختصر|باختصار|short|brief/.test(lower)?"concise":"auto";
   const contextContinuity=safeHistory.length>0;
   const contextDepth=Math.min(10,safeHistory.length);
