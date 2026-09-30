@@ -1280,7 +1280,7 @@ async function runStageBCouncil(env, userMessage, taskType, pathA, pathB) {
     { role: "system", content: buildSystemPrompt() },
     { role: "system", content: prompt },
     { role: "user", content: "المهمة: " + userMessage + "\nنوع المهمة: " + taskType }
-  ], { maxTokens: 350 });
+  ], { maxTokens: 650 });
 
   return extractAIResponse(result);
 }
@@ -1317,7 +1317,7 @@ async function verifyStageBAnswer(env, userMessage, taskType, answer, council, t
       "السؤال:\n" + String(userMessage).slice(0, 9000) +
       "\n\nقرار المجلس:\n" + String(council || "").slice(0, 8000) +
       "\n\nالإجابة:\n" + String(answer || "").slice(0, 14000) }
-  ], { maxTokens: 650 });
+  ], { maxTokens: 350 });
 
   const review = extractAIResponse(result);
   const firstLine = review.split(/\n+/).map(x => x.trim()).find(Boolean) || "";
